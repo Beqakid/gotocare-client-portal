@@ -28,9 +28,9 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
       const escaped = body.replace(/'/g, "'\\''");
       const cmd = `curl -s -X POST '${API_BASE}/api/client-login' -H 'Content-Type: application/json' -d '${escaped}'`;
       const result = await window.tasklet.runCommand(cmd);
-      
-      if (!result.stdout) throw new Error('No response from server');
-      const data = JSON.parse(result.stdout);
+      const output = result.log || result.stdout || '';
+      if (!output) throw new Error('No response from server');
+      const data = JSON.parse(output);
       
       if (data.error) {
         setError(data.error);

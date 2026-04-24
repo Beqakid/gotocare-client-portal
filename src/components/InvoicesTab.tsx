@@ -1,6 +1,6 @@
 // @ts-nocheck
 import React, { useState, useEffect } from 'react';
-import { FileText, Download, Eye, RefreshCw, DollarSign, CheckCircle, Clock, AlertTriangle, X } from 'lucide-react';
+import { FileText, Download, Eye, RefreshCw, DollarSign, CheckCircle, Clock, AlertTriangle, CreditCard, ExternalLink, X } from 'lucide-react';
 import { ClientSession, Invoice } from '../types';
 
 interface InvoicesTabProps {
@@ -11,32 +11,84 @@ export const InvoicesTab: React.FC<InvoicesTabProps> = ({ session }) => {
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedInv, setSelectedInv] = useState<Invoice | null>(null);
+  const [payingId, setPayingId] = useState<number | null>(null);
+  const [paymentError, setPaymentError] = useState<string | null>(null);
+
+  const API_BASE = 'https://gotocare-original.jjioji.workers.dev';
 
   const fetchInvoices = async () => {
     setLoading(true);
     try {
-      const API_BASE = 'https://gotocare-original.jjioji.workers.dev';
       const cmd = `curl -s '${API_BASE}/api/client-portal/invoices?clientId=${session.clientId}'`;
       const result = await window.tasklet.runCommand(cmd);
-      if (!result.stdout) throw new Error('No response');
-      const data = JSON.parse(result.stdout);
+      const output = result.log || '';
+      if (!output) throw new Error('No response');
+      const data = JSON.parse(output);
       if (data.error) throw new Error(data.error);
       setInvoices(data.invoices || data.docs || []);
     } catch {
-      // Demo data
-      setInvoices([
-        { id: 1, invoiceNumber: 'INV-2025-001', date: '2025-04-01', dueDate: '2025-04-15', totalAmount: 1250.00, status: 'paid' },
-        { id: 2, invoiceNumber: 'INV-2025-002', date: '2025-04-15', dueDate: '2025-04-30', totalAmount: 980.00, status: 'sent' },
-        { id: 3, invoiceNumber: 'INV-2025-003', date: '2025-03-01', dueDate: '2025-03-15', totalAmount: 1100.00, status: 'paid' },
-        { id: 4, invoiceNumber: 'INV-2025-004', date: '2025-02-01', dueDate: '2025-02-15', totalAmount: 1350.00, status: 'paid' },
-        { id: 5, invoiceNumber: 'INV-2025-005', date: '2025-01-15', dueDate: '2025-01-31', totalAmount: 750.00, status: 'overdue' },
-      ]);
+      setInvoices([]);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => { fetchInvoices(); }, []);
+
+  const handlePayNow = async (inv: Invoice) => {
+    setPayingId(inv.id);
+    setPaymentError(null);
+    try {
+      const body = JSON.stringify({
+        invoiceId: inv.id,
+        clientId: session.clientId,
+        email: session.email || '',
+      });
+      const cmd = `curl -s -X POST '${API_BASE}/api/client-portal/create-checkout' -H 'Content-Type: application/json' -d '${body.replace(/'/g, "'\\''")}'`;
+      const result = await window.tasklet.runCommand(cmd);
+      const output = result.log || '';
+      if (!output) throw new Error('No response from server');
+      const data = JSON.parse(output);
+      if (data.error) throw new Error(data.error);
+      if (data.checkoutUrl) {
+        // Open Stripe Checkout in a new window
+        window.open(data.checkoutUrl, '_blank');
+        // Show a message and start polling for payment status
+        setPaymentError(null);
+        pollPaymentStatus(inv.id);
+      } else {
+        throw new Error('No checkout URL received');
+      }
+    } catch (err: any) {
+      setPaymentError(err.message || 'Failed to start payment');
+    } finally {
+      setPayingId(null);
+    }
+  };
+
+  const pollPaymentStatus = (invoiceId: number) => {
+    let attempts = 0;
+    const maxAttempts = 30; // Poll for up to 5 minutes
+    const interval = setInterval(async () => {
+      attempts++;
+      if (attempts > maxAttempts) {
+        clearInterval(interval);
+        return;
+      }
+      try {
+        const cmd = `curl -s '${API_BASE}/api/client-portal/check-payment?invoiceId=${invoiceId}'`;
+        const result = await window.tasklet.runCommand(cmd);
+        const output = result.log || '';
+        if (output) {
+          const data = JSON.parse(output);
+          if (data.status === 'paid') {
+            clearInterval(interval);
+            fetchInvoices(); // Refresh the list
+          }
+        }
+      } catch {}
+    }, 10000); // every 10 seconds
+  };
 
   const formatCurrency = (n: number) => '$' + n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
@@ -48,13 +100,17 @@ export const InvoicesTab: React.FC<InvoicesTabProps> = ({ session }) => {
   const statusConfig: Record<string, { icon: React.ReactNode; badge: string; label: string }> = {
     paid: { icon: <CheckCircle size={14} />, badge: 'badge-success', label: 'Paid' },
     sent: { icon: <Clock size={14} />, badge: 'badge-info', label: 'Pending' },
+    pending: { icon: <Clock size={14} />, badge: 'badge-warning', label: 'Processing' },
     draft: { icon: <FileText size={14} />, badge: 'badge-ghost', label: 'Draft' },
     overdue: { icon: <AlertTriangle size={14} />, badge: 'badge-error', label: 'Overdue' },
   };
 
-  const totalPaid = invoices.filter(i => i.status === 'paid').reduce((a, b) => a + b.totalAmount, 0);
-  const totalPending = invoices.filter(i => i.status === 'sent' || i.status === 'overdue').reduce((a, b) => a + b.totalAmount, 0);
+  const isPayable = (status: string) => ['sent', 'pending', 'overdue', 'draft'].includes(status);
 
+  const totalPaid = invoices.filter(i => i.status === 'paid').reduce((a, b) => a + b.totalAmount, 0);
+  const totalPending = invoices.filter(i => i.status !== 'paid' && i.status !== 'cancelled').reduce((a, b) => a + b.totalAmount, 0);
+
+  // Detail view
   if (selectedInv) {
     const inv = selectedInv;
     const sc = statusConfig[inv.status] || statusConfig.draft;
@@ -118,6 +174,43 @@ export const InvoicesTab: React.FC<InvoicesTabProps> = ({ session }) => {
               <span className="text-lg font-bold text-base-content">Total</span>
               <span className="text-2xl font-bold text-primary">{formatCurrency(inv.totalAmount)}</span>
             </div>
+
+            {/* Pay Now Button */}
+            {isPayable(inv.status) && (
+              <div className="mt-6">
+                {paymentError && (
+                  <div className="alert alert-error mb-3 text-sm">
+                    <AlertTriangle size={16} />
+                    <span>{paymentError}</span>
+                    <button className="btn btn-ghost btn-xs" onClick={() => setPaymentError(null)}>
+                      <X size={14} />
+                    </button>
+                  </div>
+                )}
+                <button
+                  className="btn btn-primary btn-block gap-2"
+                  onClick={() => handlePayNow(inv)}
+                  disabled={payingId === inv.id}
+                >
+                  {payingId === inv.id ? (
+                    <><span className="loading loading-spinner loading-sm" /> Creating secure checkout...</>
+                  ) : (
+                    <><CreditCard size={18} /> Pay Now — {formatCurrency(inv.totalAmount)}</>
+                  )}
+                </button>
+                <p className="text-xs text-base-content/40 text-center mt-2 flex items-center justify-center gap-1">
+                  <ExternalLink size={12} /> Secure payment via Stripe
+                </p>
+              </div>
+            )}
+
+            {inv.status === 'paid' && (
+              <div className="mt-6 bg-success/10 rounded-xl p-4 text-center">
+                <CheckCircle size={24} className="mx-auto text-success mb-2" />
+                <p className="text-sm font-semibold text-success">Payment Received</p>
+                <p className="text-xs text-base-content/50">Thank you for your payment</p>
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -163,6 +256,7 @@ export const InvoicesTab: React.FC<InvoicesTabProps> = ({ session }) => {
         <div className="space-y-3">
           {invoices.map((inv) => {
             const sc = statusConfig[inv.status] || statusConfig.draft;
+            const canPay = isPayable(inv.status);
             return (
               <div
                 key={inv.id}
@@ -177,13 +271,37 @@ export const InvoicesTab: React.FC<InvoicesTabProps> = ({ session }) => {
                     </div>
                     <div className="text-right">
                       <p className="font-bold text-base-content">{formatCurrency(inv.totalAmount)}</p>
-                      <span className={`badge badge-sm ${sc.badge} gap-1`}>{sc.icon}{sc.label}</span>
+                      <div className="flex items-center gap-2 justify-end mt-1">
+                        <span className={`badge badge-sm ${sc.badge} gap-1`}>{sc.icon}{sc.label}</span>
+                        {canPay && (
+                          <button
+                            className="btn btn-primary btn-xs gap-1"
+                            onClick={(e) => { e.stopPropagation(); handlePayNow(inv); }}
+                            disabled={payingId === inv.id}
+                          >
+                            {payingId === inv.id ? (
+                              <span className="loading loading-spinner loading-xs" />
+                            ) : (
+                              <><CreditCard size={12} /> Pay</>
+                            )}
+                          </button>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
             );
           })}
+        </div>
+      )}
+
+      {paymentError && (
+        <div className="toast toast-end toast-bottom pb-20">
+          <div className="alert alert-error text-sm">
+            <span>{paymentError}</span>
+            <button className="btn btn-ghost btn-xs" onClick={() => setPaymentError(null)}>✕</button>
+          </div>
         </div>
       )}
     </div>

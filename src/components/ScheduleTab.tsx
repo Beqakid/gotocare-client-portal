@@ -21,8 +21,9 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({ session }) => {
       const API_BASE = 'https://gotocare-original.jjioji.workers.dev';
       const cmd = `curl -s '${API_BASE}/api/client-portal/schedule?clientId=${session.clientId}'`;
       const result = await window.tasklet.runCommand(cmd);
-      if (!result.stdout) throw new Error('No response');
-      const data = JSON.parse(result.stdout);
+      const output = result.log || result.stdout || '';
+      if (!output) throw new Error('No response');
+      const data = JSON.parse(output);
       if (data.error) throw new Error(data.error);
       setShifts(data.shifts || data.docs || []);
     } catch (err: any) {
