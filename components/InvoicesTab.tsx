@@ -19,11 +19,8 @@ export const InvoicesTab: React.FC<InvoicesTabProps> = ({ session }) => {
   const fetchInvoices = async () => {
     setLoading(true);
     try {
-      const cmd = `curl -s '${API_BASE}/api/client-portal/invoices?clientId=${session.clientId}'`;
-      const result = await window.tasklet.runCommand(cmd);
-      const output = result.log || '';
-      if (!output) throw new Error('No response');
-      const data = JSON.parse(output);
+      const res = await fetch(`${API_BASE}/api/client-portal/invoices?clientId=${session.clientId}`);
+      const data = await res.json();
       if (data.error) throw new Error(data.error);
       setInvoices(data.invoices || data.docs || []);
     } catch {
@@ -39,16 +36,16 @@ export const InvoicesTab: React.FC<InvoicesTabProps> = ({ session }) => {
     setPayingId(inv.id);
     setPaymentError(null);
     try {
-      const body = JSON.stringify({
-        invoiceId: inv.id,
-        clientId: session.clientId,
-        email: session.email || '',
+      const res = await fetch(`${API_BASE}/api/client-portal/create-checkout`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          invoiceId: inv.id,
+          clientId: session.clientId,
+          email: session.email || '',
+        }),
       });
-      const cmd = `curl -s -X POST '${API_BASE}/api/client-portal/create-checkout' -H 'Content-Type: application/json' -d '${body.replace(/'/g, "'\\''")}'`;
-      const result = await window.tasklet.runCommand(cmd);
-      const output = result.log || '';
-      if (!output) throw new Error('No response from server');
-      const data = JSON.parse(output);
+      const data = await res.json();
       if (data.error) throw new Error(data.error);
       if (data.checkoutUrl) {
         // Open Stripe Checkout in a new window
@@ -76,11 +73,9 @@ export const InvoicesTab: React.FC<InvoicesTabProps> = ({ session }) => {
         return;
       }
       try {
-        const cmd = `curl -s '${API_BASE}/api/client-portal/check-payment?invoiceId=${invoiceId}'`;
-        const result = await window.tasklet.runCommand(cmd);
-        const output = result.log || '';
-        if (output) {
-          const data = JSON.parse(output);
+        const res = await fetch(`${API_BASE}/api/client-portal/check-payment?invoiceId=${invoiceId}`);
+        const data = await res.json();
+        if (data) {
           if (data.status === 'paid') {
             clearInterval(interval);
             fetchInvoices(); // Refresh the list
