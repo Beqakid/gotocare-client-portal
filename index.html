@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <!-- GoToCare Client Portal Marketplace v2.0 -->
   <title>GoToCare - Find Your Caregiver</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
@@ -35,7 +36,6 @@
   <script>
     // ============ DUAL-MODE API LAYER ============
     async function apiCall(endpoint, options = {}) {
-      // Preview mode (Tasklet)
       if (window.tasklet?.runCommand) {
         try {
           const result = await window.tasklet.runCommand('fetch', {
@@ -48,8 +48,6 @@
           console.error('Preview API error:', e);
         }
       }
-      
-      // Production mode (Cloudflare Pages)
       const url = 'https://gotocare-original.jjioji.workers.dev' + endpoint;
       const response = await fetch(url, {
         method: options.method || 'GET',
@@ -61,7 +59,7 @@
 
     // ============ STATE MANAGEMENT ============
     let state = {
-      currentPage: 'browse', // browse, profile, booking, checkout, confirmation
+      currentPage: 'browse',
       caregivers: [],
       selectedCaregiver: null,
       booking: { date: '', time: '', specialRequests: '' },
@@ -93,19 +91,17 @@
     function BrowsePage() {
       return `
         <div class="max-w-4xl mx-auto px-4 py-8">
-          <!-- Search & Filter -->
           <div class="mb-8">
             <h2 class="text-3xl font-bold mb-6">Find Your Caregiver</h2>
-            
-            <div class="glass p-6 rounded-xl mb-6">
+            <div class="bg-white shadow p-6 rounded-xl mb-6">
               <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
                   <label class="block text-sm font-medium mb-2">Location</label>
-                  <input type="text" id="filterLocation" placeholder="City or ZIP" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-primary">
+                  <input type="text" id="filterLocation" placeholder="City or ZIP" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500">
                 </div>
                 <div>
                   <label class="block text-sm font-medium mb-2">Specialty</label>
-                  <select id="filterSpecialty" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-primary">
+                  <select id="filterSpecialty" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500">
                     <option value="">Any</option>
                     <option value="elderly">Elderly Care</option>
                     <option value="child">Childcare</option>
@@ -115,78 +111,48 @@
                 </div>
                 <div>
                   <label class="block text-sm font-medium mb-2">Date</label>
-                  <input type="date" id="filterDate" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-primary">
+                  <input type="date" id="filterDate" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500">
                 </div>
               </div>
-              <button onclick="applyFilters()" class="w-full mt-4 bg-purple-primary text-white py-2 rounded-lg font-semibold hover:opacity-90 transition-all">Search</button>
+              <button onclick="applyFilters()" class="w-full mt-4 bg-purple-600 text-white py-2 rounded-lg font-semibold hover:bg-purple-700 transition-all">Search Caregivers</button>
             </div>
           </div>
 
-          <!-- Caregiver Cards -->
           <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             ${state.caregivers.map(caregiver => `
               <div class="bg-white rounded-xl shadow-md hover:shadow-lg transition-all overflow-hidden cursor-pointer" onclick="selectCaregiver(${caregiver.id})">
-                <!-- Header with avatar -->
                 <div class="hero-gradient p-6 text-white">
                   <div class="flex gap-4">
-                    <div class="w-16 h-16 rounded-full bg-white/20 flex items-center justify-center text-2xl">
-                      ${caregiver.name.charAt(0)}
-                    </div>
+                    <div class="w-16 h-16 rounded-full bg-white/20 flex items-center justify-center text-2xl font-bold">${caregiver.name.charAt(0)}</div>
                     <div class="flex-1">
                       <h3 class="text-xl font-bold">${caregiver.name}</h3>
                       <p class="text-white/80">${caregiver.specialty}</p>
                     </div>
                   </div>
                 </div>
-
-                <!-- Content -->
                 <div class="p-6">
                   <div class="flex items-center justify-between mb-4">
                     <div>
-                      <p class="text-2xl font-bold purple-primary">$${caregiver.hourlyRate}/hr</p>
+                      <p class="text-2xl font-bold text-purple-600">$${caregiver.hourlyRate}/hr</p>
                       <p class="text-sm text-gray-600">${caregiver.experience} years exp</p>
                     </div>
                     <div class="text-right">
-                      <div class="flex gap-1">
-                        ${[...Array(5)].map((_, i) => `<span class="text-lg">${i < caregiver.rating ? '⭐' : '☆'}</span>`).join('')}
-                      </div>
+                      <div class="text-yellow-400 text-lg">${'⭐'.repeat(Math.floor(caregiver.rating))}</div>
                       <p class="text-sm text-gray-600">${caregiver.reviews} reviews</p>
                     </div>
                   </div>
-
-                  <!-- Skills -->
                   <div class="mb-4">
-                    <p class="text-xs font-semibold text-gray-600 mb-2">SKILLS</p>
                     <div class="flex flex-wrap gap-2">
-                      ${caregiver.skills.map(skill => `<span class="px-3 py-1 bg-purple-primary/10 text-purple-primary text-xs rounded-full">${skill}</span>`).join('')}
+                      ${caregiver.skills.map(skill => `<span class="px-3 py-1 bg-purple-100 text-purple-700 text-xs rounded-full">${skill}</span>`).join('')}
                     </div>
                   </div>
-
-                  <!-- Availability -->
-                  <p class="text-sm text-green-600 font-semibold">✓ Available Today</p>
-                </div>
-
-                <!-- Footer -->
-                <div class="px-6 pb-6">
-                  <button onclick="selectCaregiver(${caregiver.id})" class="w-full bg-purple-primary text-white py-2 rounded-lg font-semibold hover:opacity-90 transition-all">
-                    View Profile
-                  </button>
+                  <p class="text-sm text-green-600 font-semibold mb-4">✓ Available Today</p>
+                  <button onclick="event.stopPropagation(); selectCaregiver(${caregiver.id})" class="w-full bg-purple-600 text-white py-2 rounded-lg font-semibold hover:bg-purple-700 transition-all">View Profile</button>
                 </div>
               </div>
             `).join('')}
           </div>
-
-          ${state.caregivers.length === 0 && !state.loading ? `
-            <div class="text-center py-16">
-              <p class="text-gray-600 mb-4">No caregivers found. Try adjusting your filters.</p>
-            </div>
-          ` : ''}
-
-          ${state.loading ? `
-            <div class="text-center py-16">
-              <p class="text-gray-600">Loading caregivers...</p>
-            </div>
-          ` : ''}
+          ${state.loading ? `<div class="text-center py-16"><p class="text-gray-600">Loading caregivers...</p></div>` : ''}
         </div>
       `;
     }
@@ -195,82 +161,46 @@
     function ProfilePage() {
       const c = state.selectedCaregiver;
       if (!c) return '';
-
       return `
         <div class="max-w-2xl mx-auto px-4 py-8">
-          <!-- Header -->
           <div class="hero-gradient text-white rounded-xl p-8 mb-8">
             <div class="flex gap-6 mb-6">
-              <div class="w-24 h-24 rounded-full bg-white/20 flex items-center justify-center text-5xl">${c.name.charAt(0)}</div>
+              <div class="w-24 h-24 rounded-full bg-white/20 flex items-center justify-center text-5xl font-bold">${c.name.charAt(0)}</div>
               <div>
                 <h1 class="text-3xl font-bold">${c.name}</h1>
-                <p class="text-white/80 mb-2">${c.specialty}</p>
-                <div class="flex gap-4">
-                  <div>
-                    <p class="text-sm text-white/80">Experience</p>
-                    <p class="text-xl font-bold">${c.experience} years</p>
-                  </div>
-                  <div>
-                    <p class="text-sm text-white/80">Hourly Rate</p>
-                    <p class="text-xl font-bold">$${c.hourlyRate}</p>
-                  </div>
-                  <div>
-                    <p class="text-sm text-white/80">Rating</p>
-                    <p class="text-xl font-bold">${c.rating}/5 ⭐</p>
-                  </div>
+                <p class="text-white/80 mb-4">${c.specialty}</p>
+                <div class="flex gap-6">
+                  <div><p class="text-sm text-white/70">Experience</p><p class="text-xl font-bold">${c.experience} yrs</p></div>
+                  <div><p class="text-sm text-white/70">Rate</p><p class="text-xl font-bold">$${c.hourlyRate}/hr</p></div>
+                  <div><p class="text-sm text-white/70">Rating</p><p class="text-xl font-bold">${c.rating}⭐</p></div>
                 </div>
               </div>
             </div>
             <p class="text-white/90">${c.bio}</p>
           </div>
-
-          <!-- Sections -->
           <div class="space-y-6">
-            <!-- Skills -->
             <div class="bg-white p-6 rounded-xl shadow-md">
               <h3 class="text-xl font-bold mb-4">Skills & Specializations</h3>
-              <div class="flex flex-wrap gap-2">
-                ${c.skills.map(skill => `<span class="px-4 py-2 bg-purple-primary/10 text-purple-primary rounded-lg font-medium">${skill}</span>`).join('')}
-              </div>
+              <div class="flex flex-wrap gap-2">${c.skills.map(s => `<span class="px-4 py-2 bg-purple-100 text-purple-700 rounded-lg font-medium">${s}</span>`).join('')}</div>
             </div>
-
-            <!-- Availability -->
             <div class="bg-white p-6 rounded-xl shadow-md">
               <h3 class="text-xl font-bold mb-4">Availability</h3>
-              <div class="space-y-2">
+              <div class="space-y-2 text-gray-700">
                 <p>Monday - Friday: 6 AM - 6 PM</p>
                 <p>Saturday: 8 AM - 4 PM</p>
                 <p class="text-green-600 font-semibold">✓ Available starting tomorrow</p>
               </div>
             </div>
-
-            <!-- Reviews -->
             <div class="bg-white p-6 rounded-xl shadow-md">
               <h3 class="text-xl font-bold mb-4">Reviews (${c.reviews})</h3>
               <div class="space-y-4">
-                <div class="border-b pb-4">
-                  <div class="flex items-center justify-between mb-2">
-                    <p class="font-semibold">Jane D.</p>
-                    <span class="text-yellow-400">⭐⭐⭐⭐⭐</span>
-                  </div>
-                  <p class="text-gray-700">Amazing caregiver! Very professional and caring.</p>
-                </div>
-                <div>
-                  <div class="flex items-center justify-between mb-2">
-                    <p class="font-semibold">Robert S.</p>
-                    <span class="text-yellow-400">⭐⭐⭐⭐⭐</span>
-                  </div>
-                  <p class="text-gray-700">Highly recommended. Great with my elderly parents.</p>
-                </div>
+                <div class="border-b pb-4"><div class="flex justify-between mb-1"><p class="font-semibold">Jane D.</p><span class="text-yellow-400">⭐⭐⭐⭐⭐</span></div><p class="text-gray-700">Amazing caregiver! Very professional and caring.</p></div>
+                <div><div class="flex justify-between mb-1"><p class="font-semibold">Robert S.</p><span class="text-yellow-400">⭐⭐⭐⭐⭐</span></div><p class="text-gray-700">Highly recommended. Great with my elderly parents.</p></div>
               </div>
             </div>
           </div>
-
-          <!-- CTA -->
           <div class="mt-8">
-            <button onclick="goToBooking()" class="w-full bg-purple-primary text-white py-3 rounded-xl font-bold text-lg hover:opacity-90 transition-all">
-              Book Now
-            </button>
+            <button onclick="goToBooking()" class="w-full bg-purple-600 text-white py-4 rounded-xl font-bold text-lg hover:bg-purple-700 transition-all">Book Now — $${c.hourlyRate}/hr</button>
           </div>
         </div>
       `;
@@ -282,85 +212,37 @@
       return `
         <div class="max-w-2xl mx-auto px-4 py-8">
           <h2 class="text-3xl font-bold mb-8">Book ${c.name}</h2>
-
           <div class="bg-white p-8 rounded-xl shadow-md">
-            <!-- Personal Info -->
             <div class="mb-8">
               <h3 class="text-xl font-bold mb-4">Your Information</h3>
               <div class="space-y-4">
-                <div>
-                  <label class="block text-sm font-medium mb-2">Full Name</label>
-                  <input type="text" id="bookingName" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-primary" placeholder="Your full name">
-                </div>
-                <div>
-                  <label class="block text-sm font-medium mb-2">Email</label>
-                  <input type="email" id="bookingEmail" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-primary" placeholder="your@email.com">
-                </div>
-                <div>
-                  <label class="block text-sm font-medium mb-2">Phone</label>
-                  <input type="tel" id="bookingPhone" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-primary" placeholder="(555) 123-4567">
-                </div>
+                <div><label class="block text-sm font-medium mb-2">Full Name *</label><input type="text" id="bookingName" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500" placeholder="Your full name"></div>
+                <div><label class="block text-sm font-medium mb-2">Email *</label><input type="email" id="bookingEmail" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500" placeholder="your@email.com"></div>
+                <div><label class="block text-sm font-medium mb-2">Phone *</label><input type="tel" id="bookingPhone" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500" placeholder="(555) 123-4567"></div>
               </div>
             </div>
-
-            <!-- Care Details -->
             <div class="mb-8 border-t pt-8">
               <h3 class="text-xl font-bold mb-4">Care Details</h3>
               <div class="space-y-4">
-                <div>
-                  <label class="block text-sm font-medium mb-2">Date Needed</label>
-                  <input type="date" id="bookingDate" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-primary">
-                </div>
+                <div><label class="block text-sm font-medium mb-2">Date Needed *</label><input type="date" id="bookingDate" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"></div>
                 <div class="grid grid-cols-2 gap-4">
-                  <div>
-                    <label class="block text-sm font-medium mb-2">Start Time</label>
-                    <input type="time" id="bookingStartTime" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-primary">
-                  </div>
-                  <div>
-                    <label class="block text-sm font-medium mb-2">Duration (hours)</label>
-                    <select id="bookingDuration" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-primary">
-                      <option value="1">1 hour</option>
-                      <option value="2">2 hours</option>
-                      <option value="3">3 hours</option>
-                      <option value="4">4 hours</option>
-                      <option value="8">Full day (8 hrs)</option>
-                    </select>
-                  </div>
+                  <div><label class="block text-sm font-medium mb-2">Start Time *</label><input type="time" id="bookingStartTime" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"></div>
+                  <div><label class="block text-sm font-medium mb-2">Duration</label><select id="bookingDuration" onchange="updatePriceSummary()" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"><option value="1">1 hour</option><option value="2">2 hours</option><option value="3">3 hours</option><option value="4">4 hours</option><option value="8">Full day (8 hrs)</option></select></div>
                 </div>
-                <div>
-                  <label class="block text-sm font-medium mb-2">Special Requests</label>
-                  <textarea id="bookingSpecialRequests" rows="4" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-primary" placeholder="Any special needs or requirements?"></textarea>
-                </div>
+                <div><label class="block text-sm font-medium mb-2">Special Requests</label><textarea id="bookingSpecialRequests" rows="3" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500" placeholder="Any special needs?"></textarea></div>
               </div>
             </div>
-
-            <!-- Price Summary -->
-            <div class="mb-8 border-t pt-8 bg-purple-primary/5 p-4 rounded-lg">
+            <div class="mb-8 border-t pt-8 bg-purple-50 p-4 rounded-lg">
               <h3 class="text-xl font-bold mb-4">Price Summary</h3>
-              <div class="space-y-2 mb-4">
-                <div class="flex justify-between">
-                  <span>Hourly Rate</span>
-                  <span>$${c.hourlyRate}/hr</span>
-                </div>
-                <div class="flex justify-between">
-                  <span id="summaryDuration">Duration</span>
-                  <span id="summaryHours">-- hours</span>
-                </div>
-                <div class="flex justify-between font-semibold border-t pt-2">
-                  <span>Total</span>
-                  <span id="summaryTotal" class="text-2xl purple-primary">$0</span>
-                </div>
+              <div class="space-y-2">
+                <div class="flex justify-between"><span>Rate</span><span>$${c.hourlyRate}/hr</span></div>
+                <div class="flex justify-between"><span>Duration</span><span id="summaryHours">1 hour</span></div>
+                <div class="flex justify-between font-bold border-t pt-2 text-lg"><span>Total</span><span id="summaryTotal" class="text-purple-600">$${c.hourlyRate}.00</span></div>
               </div>
             </div>
-
-            <!-- Actions -->
             <div class="flex gap-4">
-              <button onclick="goBack()" class="flex-1 px-6 py-3 border-2 border-purple-primary text-purple-primary rounded-lg font-bold hover:bg-purple-primary/5 transition-all">
-                Cancel
-              </button>
-              <button onclick="goToCheckout()" class="flex-1 px-6 py-3 bg-purple-primary text-white rounded-lg font-bold hover:opacity-90 transition-all">
-                Continue to Payment
-              </button>
+              <button onclick="goBack()" class="flex-1 px-6 py-3 border-2 border-purple-600 text-purple-600 rounded-lg font-bold hover:bg-purple-50 transition-all">Cancel</button>
+              <button onclick="goToCheckout()" class="flex-1 px-6 py-3 bg-purple-600 text-white rounded-lg font-bold hover:bg-purple-700 transition-all">Continue to Payment</button>
             </div>
           </div>
         </div>
@@ -371,71 +253,35 @@
     function CheckoutPage() {
       const c = state.selectedCaregiver;
       const hours = state.booking.hours || 1;
-      const total = c.hourlyRate * hours;
-
+      const subtotal = c.hourlyRate * hours;
+      const fee = subtotal * 0.1;
+      const total = subtotal + fee;
       return `
         <div class="max-w-2xl mx-auto px-4 py-8">
-          <h2 class="text-3xl font-bold mb-8">Confirm Booking</h2>
-
+          <h2 class="text-3xl font-bold mb-8">Confirm & Pay</h2>
           <div class="space-y-6">
-            <!-- Booking Summary -->
             <div class="bg-white p-6 rounded-xl shadow-md">
               <h3 class="text-lg font-bold mb-4">Booking Summary</h3>
-              <div class="flex gap-4 pb-4 border-b">
-                <div class="w-16 h-16 rounded-full bg-purple-primary/10 flex items-center justify-center text-2xl">${c.name.charAt(0)}</div>
-                <div>
-                  <p class="font-bold text-lg">${c.name}</p>
-                  <p class="text-gray-600">${c.specialty}</p>
-                </div>
+              <div class="flex gap-4 pb-4 border-b mb-4">
+                <div class="w-16 h-16 rounded-full bg-purple-100 flex items-center justify-center text-2xl font-bold text-purple-600">${c.name.charAt(0)}</div>
+                <div><p class="font-bold text-lg">${c.name}</p><p class="text-gray-600">${c.specialty}</p></div>
               </div>
-              <div class="mt-4 space-y-2">
-                <div class="flex justify-between">
-                  <span>Date & Time</span>
-                  <span class="font-semibold">${state.booking.date} at ${state.booking.time}</span>
-                </div>
-                <div class="flex justify-between">
-                  <span>Duration</span>
-                  <span class="font-semibold">${hours} hours</span>
-                </div>
+              <div class="space-y-2 text-gray-700">
+                <div class="flex justify-between"><span>Date</span><span class="font-medium">${state.booking.date}</span></div>
+                <div class="flex justify-between"><span>Time</span><span class="font-medium">${state.booking.time}</span></div>
+                <div class="flex justify-between"><span>Duration</span><span class="font-medium">${hours} hour(s)</span></div>
               </div>
             </div>
-
-            <!-- Price Breakdown -->
             <div class="bg-white p-6 rounded-xl shadow-md">
               <h3 class="text-lg font-bold mb-4">Price Breakdown</h3>
-              <div class="space-y-2 mb-4">
-                <div class="flex justify-between">
-                  <span>$${c.hourlyRate} × ${hours} hours</span>
-                  <span>$${(c.hourlyRate * hours).toFixed(2)}</span>
-                </div>
-                <div class="flex justify-between text-gray-600">
-                  <span>Service Fee (10%)</span>
-                  <span>$${(total * 0.1).toFixed(2)}</span>
-                </div>
-                <div class="border-t pt-2 flex justify-between font-bold text-lg">
-                  <span>Total Due</span>
-                  <span class="purple-primary">$${(total * 1.1).toFixed(2)}</span>
-                </div>
+              <div class="space-y-2">
+                <div class="flex justify-between text-gray-700"><span>$${c.hourlyRate} × ${hours} hr(s)</span><span>$${subtotal.toFixed(2)}</span></div>
+                <div class="flex justify-between text-gray-500"><span>Service Fee (10%)</span><span>$${fee.toFixed(2)}</span></div>
+                <div class="border-t pt-2 flex justify-between font-bold text-xl"><span>Total</span><span class="text-purple-600">$${total.toFixed(2)}</span></div>
               </div>
             </div>
-
-            <!-- Payment Method -->
-            <div class="bg-white p-6 rounded-xl shadow-md">
-              <h3 class="text-lg font-bold mb-4">Payment Method</h3>
-              <div class="border-2 border-purple-primary rounded-lg p-4 flex items-center gap-3 cursor-pointer">
-                <input type="radio" name="payment" value="card" checked>
-                <span class="text-lg">💳 Credit/Debit Card</span>
-              </div>
-            </div>
-
-            <!-- Confirm Button -->
-            <button onclick="processPayment()" class="w-full bg-purple-primary text-white py-4 rounded-xl font-bold text-lg hover:opacity-90 transition-all">
-              Pay $${(total * 1.1).toFixed(2)} to Book
-            </button>
-
-            <p class="text-center text-sm text-gray-600">
-              By booking, you agree to our Terms of Service and cancellation policy.
-            </p>
+            <button onclick="processPayment()" class="w-full bg-purple-600 text-white py-4 rounded-xl font-bold text-lg hover:bg-purple-700 transition-all">Pay $${total.toFixed(2)} — Confirm Booking</button>
+            <p class="text-center text-sm text-gray-500">By booking, you agree to our Terms of Service.</p>
           </div>
         </div>
       `;
@@ -445,60 +291,33 @@
     function ConfirmationPage() {
       const c = state.selectedCaregiver;
       const hours = state.booking.hours || 1;
-      const total = c.hourlyRate * hours * 1.1;
-
+      const total = (c.hourlyRate * hours * 1.1).toFixed(2);
+      const bookingId = 'BK' + Math.random().toString(36).substr(2, 8).toUpperCase();
       return `
         <div class="max-w-2xl mx-auto px-4 py-8">
-          <div class="text-center py-12">
+          <div class="text-center py-8">
             <div class="text-7xl mb-6">✅</div>
             <h1 class="text-3xl font-bold mb-2">Booking Confirmed!</h1>
             <p class="text-xl text-gray-600 mb-8">Your caregiver has been notified</p>
-
-            <!-- Booking Details Card -->
-            <div class="bg-white rounded-xl shadow-md p-8 mb-8">
-              <div class="flex gap-6 items-center mb-8 pb-8 border-b">
-                <div class="w-20 h-20 rounded-full bg-purple-primary/10 flex items-center justify-center text-4xl">${c.name.charAt(0)}</div>
-                <div class="text-left">
-                  <p class="text-sm text-gray-600">Your Caregiver</p>
-                  <p class="text-2xl font-bold">${c.name}</p>
-                  <p class="text-gray-600">${c.specialty}</p>
-                </div>
+            <div class="bg-white rounded-xl shadow-md p-8 mb-8 text-left">
+              <div class="flex gap-6 items-center mb-8 pb-6 border-b">
+                <div class="w-20 h-20 rounded-full bg-purple-100 flex items-center justify-center text-4xl font-bold text-purple-600">${c.name.charAt(0)}</div>
+                <div><p class="text-sm text-gray-500">Your Caregiver</p><p class="text-2xl font-bold">${c.name}</p><p class="text-gray-600">${c.specialty}</p></div>
               </div>
-
-              <div class="space-y-4 mb-8">
-                <div class="flex justify-between items-center">
-                  <span class="text-gray-600">Booking ID</span>
-                  <span class="font-mono font-bold">#BK${Math.random().toString(36).substr(2, 9).toUpperCase()}</span>
-                </div>
-                <div class="flex justify-between items-center">
-                  <span class="text-gray-600">Date & Time</span>
-                  <span class="font-semibold">${state.booking.date} at ${state.booking.time}</span>
-                </div>
-                <div class="flex justify-between items-center">
-                  <span class="text-gray-600">Duration</span>
-                  <span class="font-semibold">${hours} hours</span>
-                </div>
-                <div class="flex justify-between items-center">
-                  <span class="text-gray-600">Total Paid</span>
-                  <span class="text-2xl font-bold purple-primary">$${total.toFixed(2)}</span>
-                </div>
+              <div class="space-y-3 mb-6">
+                <div class="flex justify-between"><span class="text-gray-600">Booking ID</span><span class="font-mono font-bold">#${bookingId}</span></div>
+                <div class="flex justify-between"><span class="text-gray-600">Date & Time</span><span class="font-semibold">${state.booking.date} at ${state.booking.time}</span></div>
+                <div class="flex justify-between"><span class="text-gray-600">Duration</span><span class="font-semibold">${hours} hour(s)</span></div>
+                <div class="flex justify-between"><span class="text-gray-600">Total Paid</span><span class="text-2xl font-bold text-purple-600">$${total}</span></div>
               </div>
-
-              <div class="bg-blue-accent/10 border border-blue-accent/30 rounded-lg p-4 mb-8">
-                <p class="text-sm"><span class="font-bold">Next Steps:</span> ${c.name} will contact you shortly. A confirmation email has been sent to your inbox.</p>
+              <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+                <p class="text-sm text-blue-800"><strong>Next Steps:</strong> ${c.name} will contact you within 30 minutes. A confirmation email has been sent.</p>
               </div>
-
               <div class="flex gap-4">
-                <button onclick="window.location.href='/'" class="flex-1 px-6 py-3 border-2 border-purple-primary text-purple-primary rounded-lg font-bold hover:bg-purple-primary/5 transition-all">
-                  Browse More Caregivers
-                </button>
-                <button onclick="alert('Bookings feature coming soon')" class="flex-1 px-6 py-3 bg-purple-primary text-white rounded-lg font-bold hover:opacity-90 transition-all">
-                  View Bookings
-                </button>
+                <button onclick="resetToHome()" class="flex-1 px-6 py-3 border-2 border-purple-600 text-purple-600 rounded-lg font-bold hover:bg-purple-50 transition-all">Find More Caregivers</button>
+                <button onclick="alert('My Bookings coming soon!')" class="flex-1 px-6 py-3 bg-purple-600 text-white rounded-lg font-bold hover:bg-purple-700 transition-all">View My Bookings</button>
               </div>
             </div>
-
-            <p class="text-gray-600">Questions? <a href="#" class="text-purple-primary font-semibold">Contact Support</a></p>
           </div>
         </div>
       `;
@@ -508,40 +327,27 @@
     function render() {
       const root = document.getElementById('root');
       let content = '';
-
       switch(state.currentPage) {
-        case 'browse':
-          content = BrowsePage();
-          break;
-        case 'profile':
-          content = ProfilePage();
-          break;
-        case 'booking':
-          content = BookingPage();
-          break;
-        case 'checkout':
-          content = CheckoutPage();
-          break;
-        case 'confirmation':
-          content = ConfirmationPage();
-          break;
+        case 'browse': content = BrowsePage(); break;
+        case 'profile': content = ProfilePage(); break;
+        case 'booking': content = BookingPage(); break;
+        case 'checkout': content = CheckoutPage(); break;
+        case 'confirmation': content = ConfirmationPage(); break;
       }
-
       root.innerHTML = Header() + content;
     }
 
     // ============ NAVIGATION ============
     function goBack() {
-      if (state.currentPage === 'profile') {
-        state.currentPage = 'browse';
-      } else if (state.currentPage === 'booking') {
-        state.currentPage = 'profile';
-      } else if (state.currentPage === 'checkout') {
-        state.currentPage = 'booking';
-      } else if (state.currentPage === 'confirmation') {
-        state.currentPage = 'browse';
-        state.selectedCaregiver = null;
-      }
+      const flow = ['browse', 'profile', 'booking', 'checkout', 'confirmation'];
+      const idx = flow.indexOf(state.currentPage);
+      if (idx > 0) { state.currentPage = flow[idx - 1]; render(); }
+    }
+
+    function resetToHome() {
+      state.currentPage = 'browse';
+      state.selectedCaregiver = null;
+      state.booking = {};
       render();
     }
 
@@ -549,93 +355,65 @@
       state.selectedCaregiver = state.caregivers.find(c => c.id === id);
       state.currentPage = 'profile';
       render();
+      window.scrollTo(0, 0);
     }
 
     function goToBooking() {
       state.currentPage = 'booking';
       render();
+      window.scrollTo(0, 0);
+    }
+
+    function updatePriceSummary() {
+      const c = state.selectedCaregiver;
+      if (!c) return;
+      const hours = parseInt(document.getElementById('bookingDuration')?.value || 1);
+      const total = c.hourlyRate * hours;
+      const hoursEl = document.getElementById('summaryHours');
+      const totalEl = document.getElementById('summaryTotal');
+      if (hoursEl) hoursEl.textContent = hours + ' hour' + (hours > 1 ? 's' : '');
+      if (totalEl) totalEl.textContent = '$' + total.toFixed(2);
     }
 
     function goToCheckout() {
-      // Collect booking details
+      const name = document.getElementById('bookingName')?.value;
+      const email = document.getElementById('bookingEmail')?.value;
+      const date = document.getElementById('bookingDate')?.value;
+      const time = document.getElementById('bookingStartTime')?.value;
+      if (!name || !email || !date || !time) { alert('Please fill in all required fields'); return; }
       state.booking = {
-        name: document.getElementById('bookingName').value,
-        email: document.getElementById('bookingEmail').value,
-        phone: document.getElementById('bookingPhone').value,
-        date: document.getElementById('bookingDate').value,
-        time: document.getElementById('bookingStartTime').value,
-        duration: parseInt(document.getElementById('bookingDuration').value),
-        specialRequests: document.getElementById('bookingSpecialRequests').value,
-        hours: parseInt(document.getElementById('bookingDuration').value),
+        name, email,
+        phone: document.getElementById('bookingPhone')?.value,
+        date, time,
+        hours: parseInt(document.getElementById('bookingDuration')?.value || 1),
+        specialRequests: document.getElementById('bookingSpecialRequests')?.value,
       };
-
-      if (!state.booking.name || !state.booking.email || !state.booking.date || !state.booking.time) {
-        alert('Please fill in all required fields');
-        return;
-      }
-
       state.currentPage = 'checkout';
       render();
+      window.scrollTo(0, 0);
     }
 
     function processPayment() {
-      // Simulate payment processing
+      // TODO: Wire to /api/create-marketplace-checkout for Stripe
       state.currentPage = 'confirmation';
       render();
+      window.scrollTo(0, 0);
     }
 
     function applyFilters() {
-      // Would filter caregivers here based on search
-      console.log('Filters applied');
+      const location = document.getElementById('filterLocation')?.value;
+      const specialty = document.getElementById('filterSpecialty')?.value;
+      console.log('Filters:', { location, specialty });
+      // TODO: Wire to /api/search-caregivers
     }
 
     // ============ MOCK DATA ============
     function loadMockCaregivers() {
       state.caregivers = [
-        {
-          id: 1,
-          name: 'Maria Santos',
-          specialty: 'Elderly Care Specialist',
-          hourlyRate: 28,
-          experience: 8,
-          rating: 5,
-          reviews: 47,
-          skills: ['Mobility Assistance', 'Medication Reminder', 'Companionship', 'Meal Prep'],
-          bio: 'Compassionate caregiver with 8 years of experience in elderly care. CPR certified and trained in mobility assistance.',
-        },
-        {
-          id: 2,
-          name: 'James Chen',
-          specialty: 'Medical Support Technician',
-          hourlyRate: 35,
-          experience: 6,
-          rating: 5,
-          reviews: 32,
-          skills: ['Catheter Care', 'Wound Dressing', 'Medical Equipment', 'Post-Surgery Care'],
-          bio: 'Certified medical support technician with expertise in post-operative care and medical device management.',
-        },
-        {
-          id: 3,
-          name: 'Sofia Lopez',
-          specialty: 'Childcare Provider',
-          hourlyRate: 22,
-          experience: 12,
-          rating: 4.8,
-          reviews: 89,
-          skills: ['Infant Care', 'Tutoring', 'Activity Planning', 'Emergency First Aid'],
-          bio: 'Loving childcare provider with 12 years of experience. Background in early childhood education.',
-        },
-        {
-          id: 4,
-          name: 'Robert Johnson',
-          specialty: 'Companion Care',
-          hourlyRate: 20,
-          experience: 5,
-          rating: 4.9,
-          reviews: 56,
-          skills: ['Companionship', 'Errand Running', 'Light Housekeeping', 'Transportation'],
-          bio: 'Friendly and reliable companion caregiver. Great with seniors and always punctual.',
-        },
+        { id: 1, name: 'Maria Santos', specialty: 'Elderly Care Specialist', hourlyRate: 28, experience: 8, rating: 5, reviews: 47, skills: ['Mobility Assistance', 'Medication Reminder', 'Companionship', 'Meal Prep'], bio: 'Compassionate caregiver with 8 years of experience in elderly care. CPR certified.' },
+        { id: 2, name: 'James Chen', specialty: 'Medical Support Technician', hourlyRate: 35, experience: 6, rating: 5, reviews: 32, skills: ['Catheter Care', 'Wound Dressing', 'Medical Equipment', 'Post-Surgery Care'], bio: 'Certified medical support technician with expertise in post-operative care.' },
+        { id: 3, name: 'Sofia Lopez', specialty: 'Childcare Provider', hourlyRate: 22, experience: 12, rating: 4.8, reviews: 89, skills: ['Infant Care', 'Tutoring', 'Activity Planning', 'Emergency First Aid'], bio: 'Loving childcare provider with 12 years of experience in early childhood education.' },
+        { id: 4, name: 'Robert Johnson', specialty: 'Companion Care', hourlyRate: 20, experience: 5, rating: 4.9, reviews: 56, skills: ['Companionship', 'Errand Running', 'Light Housekeeping', 'Transportation'], bio: 'Friendly and reliable companion caregiver. Great with seniors and always punctual.' },
       ];
     }
 
