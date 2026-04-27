@@ -1002,6 +1002,10 @@ function showInterviewConfirmation({ email, cg, date, time, type }) {
   const timeLabels = { morning: '9 – 11 AM', afternoon: '12 – 3 PM', evening: '4 – 7 PM' };
   const typeLabels = { video: '📹 Video Call', inperson: '🏠 In Person' };
   const dateFormatted = new Date(date + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+  // Drop this caregiver from the shortlist
+  shortlist = shortlist.filter(s => s.id !== cg.id);
+  renderShortlist();
+
   document.getElementById('confirm-icon').textContent = '📅';
   document.getElementById('confirm-title').textContent = 'Interview Request Sent!';
   document.getElementById('confirm-sub').textContent = `${cgName} has been notified and will confirm within 24 hours. Check your email for updates.`;
