@@ -45,7 +45,7 @@
     .dispatch-hero h1 span { background: linear-gradient(90deg, #a78bfa, #60a5fa); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
     .dispatch-hero p { color: rgba(255,255,255,0.7); font-size: 16px; }
     
-    .care-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 24px; }
+    .care-grid { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 24px; }
     .care-tile {
       background: rgba(255,255,255,0.08); border: 2px solid rgba(255,255,255,0.12);
       border-radius: 16px; padding: 14px 8px; text-align: center; cursor: pointer;
@@ -324,7 +324,7 @@
     textarea.form-input { min-height: 80px; resize: none; font-family: inherit; }
 
     @media (min-width: 480px) {
-      .care-grid { grid-template-columns: repeat(4, 1fr); }
+      /* care-grid uses flex-wrap — no override needed */
       .cg-card { padding: 0 24px; }
       #screen-swiper.active { align-items: center; justify-content: center; }
       .card-viewport { max-width: 480px; width: 100%; }
@@ -344,17 +344,30 @@
     <p>Tell us what you need — we'll match you instantly</p>
   </div>
   <div class="care-grid" id="care-grid">
-    <div class="care-tile" data-value="Elder Care"><div class="tile-icon">👴</div><div class="tile-label">Elder Care</div></div>
-    <div class="care-tile" data-value="Dementia Care"><div class="tile-icon">🧠</div><div class="tile-label">Dementia</div></div>
-    <div class="care-tile" data-value="Wheelchair Assist"><div class="tile-icon">♿</div><div class="tile-label">Wheelchair</div></div>
-    <div class="care-tile" data-value="Post-Surgery"><div class="tile-icon">🏥</div><div class="tile-label">Post-Surgery</div></div>
-    <div class="care-tile" data-value="Medication"><div class="tile-icon">💊</div><div class="tile-label">Medication</div></div>
-    <div class="care-tile" data-value="Bathing Assist"><div class="tile-icon">🛁</div><div class="tile-label">Bathing</div></div>
-    <div class="care-tile" data-value="Meal Prep"><div class="tile-icon">🍳</div><div class="tile-label">Meal Prep</div></div>
-    <div class="care-tile" data-value="Companionship"><div class="tile-icon">🤝</div><div class="tile-label">Companion</div></div>
-    <div class="care-tile" data-value="Transportation"><div class="tile-icon">🚗</div><div class="tile-label">Transport</div></div>
-    <div class="care-tile" data-value="Child Care"><div class="tile-icon">👶</div><div class="tile-label">Child Care</div></div>
-    <div class="care-tile" data-value="Overnight Care"><div class="tile-icon">🌙</div><div class="tile-label">Overnight</div></div>
+    <div class="care-tile" data-value="Elder Care">Elder Care</div>
+    <div class="care-tile" data-value="Dementia Care">Dementia Care</div>
+    <div class="care-tile" data-value="Alzheimer's Support">Alzheimer's Support</div>
+    <div class="care-tile" data-value="Wheelchair Assistance">Wheelchair Assistance</div>
+    <div class="care-tile" data-value="Post-Surgery Recovery">Post-Surgery Recovery</div>
+    <div class="care-tile" data-value="Medication Management">Medication Management</div>
+    <div class="care-tile" data-value="Bathing &amp; Grooming">Bathing &amp; Grooming</div>
+    <div class="care-tile" data-value="Meal Preparation">Meal Preparation</div>
+    <div class="care-tile" data-value="Companionship">Companionship</div>
+    <div class="care-tile" data-value="Transportation">Transportation</div>
+    <div class="care-tile" data-value="Child Care">Child Care</div>
+    <div class="care-tile" data-value="Overnight Care">Overnight Care</div>
+    <div class="care-tile" data-value="Physical Therapy Aid">Physical Therapy Aid</div>
+    <div class="care-tile" data-value="Wound Care">Wound Care</div>
+    <div class="care-tile" data-value="Hospice Support">Hospice Support</div>
+    <div class="care-tile" data-value="Mental Health Support">Mental Health Support</div>
+    <div class="care-tile" data-value="Feeding Assistance">Feeding Assistance</div>
+    <div class="care-tile" data-value="Incontinence Care">Incontinence Care</div>
+    <div class="care-tile" data-value="Fall Prevention">Fall Prevention</div>
+    <div class="care-tile" data-value="Light Housekeeping">Light Housekeeping</div>
+    <div class="care-tile" data-value="Errands &amp; Shopping">Errands &amp; Shopping</div>
+    <div class="care-tile" data-value="Respiratory Care">Respiratory Care</div>
+    <div class="care-tile" data-value="Stroke Recovery">Stroke Recovery</div>
+    <div class="care-tile" data-value="Disability Support">Disability Support</div>
   </div>
   <div class="location-row">
     <input class="location-input" id="location-input" type="text" placeholder="📍 Enter city or zip code" />
@@ -1095,11 +1108,26 @@ if (paramUrg) {
 
 // Auto-load caregivers for browse mode or when location param is present
 if (browseMode || paramLoc) {
-  // Use setTimeout to ensure all event listeners are bound before simulating click
-  if (paramLoc) document.getElementById('location-input').value = paramLoc;
-  setTimeout(() => {
-    document.getElementById('find-btn').click();
-  }, 200);
+  (async () => {
+    setLoading(true, 'Finding caregivers near you…');
+    try {
+      const loc = paramLoc || 'Atlanta, GA';
+      const sp = new URLSearchParams({ location: loc, page: 1, limit: 20 });
+      if (paramCare) sp.append('specialty', paramCare.split(',')[0].trim());
+      const res = await fetch(`${API}/search-caregivers?${sp}`);
+      const data = await res.json();
+      caregivers = data.caregivers || data.docs || [];
+      if (!caregivers.length) caregivers = getDemoCaregivers();
+    } catch(e) {
+      caregivers = getDemoCaregivers();
+    } finally {
+      setLoading(false);
+    }
+    currentIndex = 0;
+    renderSwiperCard();
+    showScreen('screen-swiper');
+    checkSubscription();
+  })();
 }
 
 // ── PWA INSTALL ──
