@@ -1,4 +1,4 @@
-const CACHE_NAME = 'gotocare-client-v2';
+const CACHE_NAME = 'gotocare-client-v4';
 const STATIC_ASSETS = [
   '/',
   '/index.html'
@@ -22,7 +22,7 @@ self.addEventListener('activate', e => {
   self.clients.claim();
 });
 
-// Fetch — network first, cache fallback for HTML; cache first for static assets
+// Fetch — network first for HTML (always fresh), cache fallback for static
 self.addEventListener('fetch', e => {
   const url = new URL(e.request.url);
 
@@ -31,24 +31,38 @@ self.addEventListener('fetch', e => {
   if (url.pathname.startsWith('/api/')) return;
   if (url.hostname.includes('stripe.com')) return;
 
+  // Always network-first for HTML pages — never serve stale index.html
+  if (url.pathname === '/' || url.pathname.endsWith('.html')) {
+    e.respondWith(
+      fetch(e.request)
+        .then(res => {
+          if (res.ok) {
+            const clone = res.clone();
+            caches.open(CACHE_NAME).then(cache => cache.put(e.request, clone));
+          }
+          return res;
+        })
+        .catch(() => caches.match(e.request).then(cached => cached || caches.match('/index.html')))
+    );
+    return;
+  }
+
   e.respondWith(
     fetch(e.request)
       .then(res => {
-        // Cache fresh responses
-        if (res.ok && (url.pathname === '/' || url.pathname.endsWith('.html') || url.pathname.endsWith('.js') || url.pathname.endsWith('.css'))) {
+        if (res.ok) {
           const clone = res.clone();
           caches.open(CACHE_NAME).then(cache => cache.put(e.request, clone));
         }
         return res;
       })
-      .catch(() => caches.match(e.request).then(cached => cached || caches.match('/index.html')))
+      .catch(() => caches.match(e.request))
   );
 });
 
 // Background sync placeholder for offline bookings
 self.addEventListener('sync', e => {
   if (e.tag === 'sync-booking') {
-    // Future: replay queued bookings when back online
     console.log('[SW] Background sync: booking');
   }
 });
