@@ -552,11 +552,16 @@ let bookingCaregiver = null;
 let subscription = null;
 
 // ── SCREEN NAV ──
-function showScreen(id) {
+function showScreen(id, pushHistory = true) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.getElementById(id).classList.add('active');
   window.scrollTo(0, 0);
+  if (pushHistory) history.pushState({ screen: id }, '');
 }
+window.addEventListener('popstate', (e) => {
+  showScreen((e.state && e.state.screen) || 'screen-dispatch', false);
+});
+history.replaceState({ screen: 'screen-dispatch' }, '');
 
 // ── TOAST ──
 function toast(msg, duration = 3000) {
@@ -998,19 +1003,69 @@ async function checkSubscription() {
   } catch (e) {}
 }
 
-// Check if returning from subscription success
+// ── STARTUP: URL PARAMS ──
 const urlParams = new URLSearchParams(window.location.search);
+
+// Subscription return handling
 if (urlParams.get('subscription') === 'success') {
   const plan = urlParams.get('plan') || 'family';
   const email = urlParams.get('email');
   if (email) localStorage.setItem('gc_email', email);
   subscription = { subscribed: true, plan };
   toast(`🎉 You're now on the ${plan.charAt(0).toUpperCase() + plan.slice(1)} plan! Contact info unlocked.`);
-  history.replaceState({}, '', window.location.pathname);
+  history.replaceState({ screen: 'screen-dispatch' }, '', window.location.pathname);
 }
 if (urlParams.get('subscription') === 'cancelled') {
   toast('Payment cancelled. Your shortlist is still saved.');
-  history.replaceState({}, '', window.location.pathname);
+  history.replaceState({ screen: 'screen-dispatch' }, '', window.location.pathname);
+}
+
+// Browse/landing-page param handling
+const browseMode = urlParams.get('browse') === 'true';
+const paramCare   = urlParams.get('care');
+const paramLoc    = urlParams.get('location');
+const paramUrg    = urlParams.get('urgency');
+
+if (paramLoc) document.getElementById('location-input').value = paramLoc;
+if (paramCare) {
+  paramCare.split(',').forEach(ct => {
+    ct = ct.trim();
+    const tile = document.querySelector(`.care-tile[data-value="${ct}"]`);
+    if (tile && !tile.classList.contains('selected')) {
+      tile.classList.add('selected');
+      selectedCareTypes.push(ct);
+    }
+  });
+  updateFindBtn();
+}
+if (paramUrg) {
+  document.querySelectorAll('.urgency-pill').forEach(p => p.classList.remove('selected'));
+  const pill = document.querySelector(`.urgency-pill[data-value="${paramUrg}"]`);
+  if (pill) { pill.classList.add('selected'); urgency = paramUrg; }
+}
+
+// Auto-load caregivers for browse mode or when location param is present
+if (browseMode || paramLoc) {
+  (async () => {
+    setLoading(true, 'Finding caregivers near you…');
+    try {
+      const loc = paramLoc || 'Atlanta, GA';
+      const sp = new URLSearchParams({ location: loc, page: 1, limit: 20 });
+      if (paramCare) sp.append('specialty', paramCare.split(',')[0].trim());
+      const res = await fetch(`${API}/search-caregivers?${sp}`);
+      const data = await res.json();
+      caregivers = data.caregivers || data.docs || [];
+      if (!caregivers.length) caregivers = getDemoCaregivers();
+    } catch(e) {
+      caregivers = getDemoCaregivers();
+    } finally {
+      setLoading(false);
+    }
+    currentIndex = 0;
+    renderSwiperCard();
+    showScreen('screen-swiper');
+    checkSubscription();
+  })();
 }
 
 // ── PWA INSTALL ──
