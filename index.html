@@ -15,10 +15,9 @@
   <link rel="apple-touch-icon" href="https://api.dicebear.com/7.x/initials/svg?seed=GC&backgroundColor=7c3aed&textColor=ffffff" />
 
   <!-- SEO / Social -->
-  <meta name="description" content="Find trusted, verified caregivers near you in minutes. Elder care, dementia, wheelchair assistance and more." />
+  <meta name="description" content="Find trusted, verified caregivers near you in minutes." />
   <meta property="og:title" content="GoToCare — Find Care Now" />
   <meta property="og:description" content="Book a trusted caregiver in minutes. Available today." />
-  <meta property="og:type" content="website" />
 
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
@@ -32,12 +31,8 @@
     .care-tile {
       background: rgba(255,255,255,0.08);
       border: 2px solid rgba(255,255,255,0.15);
-      border-radius: 16px;
-      padding: 20px 12px;
-      cursor: pointer;
-      transition: all 0.2s ease;
-      text-align: center;
-      color: white;
+      border-radius: 16px; padding: 20px 12px;
+      cursor: pointer; transition: all 0.2s ease; text-align: center; color: white;
     }
     .care-tile:hover { background: rgba(124,58,237,0.3); border-color: #7c3aed; transform: translateY(-2px); }
     .care-tile.selected { background: rgba(124,58,237,0.5); border-color: #7c3aed; box-shadow: 0 0 0 3px rgba(124,58,237,0.3); transform: translateY(-2px); }
@@ -46,56 +41,30 @@
 
     /* Urgency pills */
     .urgency-pill {
-      padding: 10px 20px;
-      border-radius: 100px;
-      border: 2px solid rgba(255,255,255,0.2);
-      color: white;
-      font-weight: 600;
-      font-size: 0.85rem;
-      cursor: pointer;
-      transition: all 0.2s;
-      white-space: nowrap;
+      padding: 10px 20px; border-radius: 100px; border: 2px solid rgba(255,255,255,0.2);
+      color: white; font-weight: 600; font-size: 0.85rem; cursor: pointer;
+      transition: all 0.2s; white-space: nowrap;
     }
     .urgency-pill:hover { border-color: #7c3aed; background: rgba(124,58,237,0.2); }
     .urgency-pill.selected { background: #7c3aed; border-color: #7c3aed; }
 
-    /* Caregiver card */
-    .caregiver-card {
-      background: white;
-      border-radius: 20px;
-      overflow: hidden;
-      box-shadow: 0 2px 16px rgba(0,0,0,0.08);
-      transition: all 0.25s ease;
-      cursor: pointer;
-      border: 2px solid transparent;
-    }
-    .caregiver-card:hover { transform: translateY(-4px); box-shadow: 0 12px 32px rgba(124,58,237,0.15); border-color: #7c3aed; }
-
     /* Available badge */
-    .available-now { background: #d1fae5; color: #065f46; font-size: 0.7rem; font-weight: 700; padding: 3px 8px; border-radius: 20px; }
-    .available-today { background: #fef3c7; color: #92400e; font-size: 0.7rem; font-weight: 700; padding: 3px 8px; border-radius: 20px; }
+    .available-now { background: #d1fae5; color: #065f46; font-size: 0.72rem; font-weight: 700; padding: 4px 10px; border-radius: 20px; }
+    .available-today { background: #fef3c7; color: #92400e; font-size: 0.72rem; font-weight: 700; padding: 4px 10px; border-radius: 20px; }
 
-    /* Match score ring */
+    /* Match ring */
     .match-ring {
-      width: 44px; height: 44px;
+      width: 48px; height: 48px;
       background: linear-gradient(135deg, #7c3aed, #3b82f6);
-      border-radius: 50%;
-      display: flex; align-items: center; justify-content: center;
-      color: white; font-weight: 800; font-size: 0.75rem;
+      border-radius: 50%; display: flex; align-items: center; justify-content: center;
+      color: white; font-weight: 800; font-size: 0.8rem;
     }
 
     /* Duration buttons */
     .dur-btn {
-      flex: 1;
-      padding: 14px 8px;
-      border: 2px solid #e5e7eb;
-      border-radius: 12px;
-      text-align: center;
-      cursor: pointer;
-      font-weight: 600;
-      font-size: 0.85rem;
-      color: #374151;
-      transition: all 0.15s;
+      flex: 1; padding: 14px 8px; border: 2px solid #e5e7eb;
+      border-radius: 12px; text-align: center; cursor: pointer;
+      font-weight: 600; font-size: 0.85rem; color: #374151; transition: all 0.15s;
     }
     .dur-btn:hover { border-color: #7c3aed; color: #7c3aed; }
     .dur-btn.selected { background: #7c3aed; border-color: #7c3aed; color: white; }
@@ -103,15 +72,8 @@
     /* CTA button */
     .btn-primary {
       background: linear-gradient(135deg, #7c3aed, #3b82f6);
-      color: white;
-      border: none;
-      border-radius: 16px;
-      padding: 18px 24px;
-      font-weight: 700;
-      font-size: 1rem;
-      cursor: pointer;
-      width: 100%;
-      transition: all 0.2s;
+      color: white; border: none; border-radius: 16px; padding: 18px 24px;
+      font-weight: 700; font-size: 1rem; cursor: pointer; width: 100%; transition: all 0.2s;
     }
     .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 8px 24px rgba(124,58,237,0.4); }
     .btn-primary:active { transform: translateY(0); }
@@ -119,140 +81,228 @@
 
     /* Input */
     .input-field {
-      width: 100%;
-      border: 2px solid #e5e7eb;
-      border-radius: 12px;
-      padding: 14px 16px;
-      font-size: 1rem;
-      outline: none;
-      transition: border 0.2s;
+      width: 100%; border: 2px solid #e5e7eb; border-radius: 12px;
+      padding: 14px 16px; font-size: 1rem; outline: none; transition: border 0.2s;
     }
     .input-field:focus { border-color: #7c3aed; }
 
-    /* Filter chip */
-    .filter-chip {
-      padding: 8px 16px;
-      border-radius: 100px;
-      border: 1.5px solid #e5e7eb;
-      font-size: 0.8rem;
-      font-weight: 600;
-      color: #6b7280;
-      cursor: pointer;
-      transition: all 0.15s;
-      white-space: nowrap;
-    }
-    .filter-chip:hover { border-color: #7c3aed; color: #7c3aed; }
-    .filter-chip.active { background: #7c3aed; border-color: #7c3aed; color: white; }
-
     /* Pages */
     .page { display: none; min-height: 100vh; }
+    .page.active { display: block; }
 
-    /* ── Mobile / PWA foundations ── */
+    /* PWA / Mobile foundations */
     html { height: -webkit-fill-available; }
     body {
-      min-height: 100vh;
-      min-height: -webkit-fill-available;
+      min-height: 100vh; min-height: -webkit-fill-available;
       -webkit-tap-highlight-color: transparent;
-      -webkit-touch-callout: none;
-      overscroll-behavior-y: none;
+      -webkit-touch-callout: none; overscroll-behavior-y: none;
     }
-
-    /* Safe area insets — notch + home indicator */
-    .safe-top    { padding-top:    env(safe-area-inset-top,    0px); }
+    input, select, textarea { font-size: 16px !important; -webkit-appearance: none; }
+    button, a, .care-tile { min-height: 44px; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+    .scroll-area { -webkit-overflow-scrolling: touch; overflow-y: auto; }
+    .safe-top    { padding-top:    env(safe-area-inset-top, 0px); }
     .safe-bottom { padding-bottom: env(safe-area-inset-bottom, 16px); }
-    .safe-x      { padding-left:   env(safe-area-inset-left,  0px);
-                   padding-right:  env(safe-area-inset-right, 0px); }
 
-    /* Prevent iOS zoom on input focus — must be 16px+ */
-    input, select, textarea {
-      font-size: 16px !important;
-      -webkit-appearance: none;
-    }
-
-    /* Touch targets — minimum 44×44px (Apple HIG) */
-    button, a, .care-tile, .filter-chip, .caregiver-card {
-      min-height: 44px;
-      cursor: pointer;
-      -webkit-tap-highlight-color: transparent;
-    }
-
-    /* Smooth native scrolling */
-    .scroll-area {
-      -webkit-overflow-scrolling: touch;
-      overflow-y: auto;
-    }
-
-    /* Install prompt banner */
+    /* Install banner */
     #install-banner {
       position: fixed; bottom: 0; left: 0; right: 0; z-index: 9999;
-      background: linear-gradient(135deg, #2d1b69, #1e3a5f);
-      color: white; padding: 16px 20px;
-      padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+      background: linear-gradient(135deg, #2d1b69, #1e3a5f); color: white;
+      padding: 16px 20px; padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px));
       display: flex; align-items: center; gap: 12px;
       box-shadow: 0 -4px 24px rgba(0,0,0,0.3);
-      transform: translateY(100%);
-      transition: transform 0.4s cubic-bezier(0.34,1.56,0.64,1);
+      transform: translateY(100%); transition: transform 0.4s cubic-bezier(0.34,1.56,0.64,1);
     }
     #install-banner.show { transform: translateY(0); }
-    #install-banner .install-icon {
-      width: 48px; height: 48px; background: rgba(124,58,237,0.3);
-      border-radius: 12px; display: flex; align-items: center; justify-content: center;
-      font-size: 24px; flex-shrink: 0;
-    }
+    #install-banner .install-icon { width:48px;height:48px;background:rgba(124,58,237,0.3);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0; }
     #install-banner .install-text { flex: 1; }
     #install-banner .install-text strong { display: block; font-size: 0.95rem; }
     #install-banner .install-text span { font-size: 0.8rem; opacity: 0.7; }
-    #install-banner .install-btn {
-      background: #7c3aed; color: white; border: none;
-      border-radius: 10px; padding: 10px 16px; font-weight: 600;
-      font-size: 0.85rem; white-space: nowrap; flex-shrink: 0;
-    }
-    #install-banner .install-dismiss {
-      background: none; border: none; color: rgba(255,255,255,0.5);
-      font-size: 1.2rem; padding: 8px; flex-shrink: 0;
-    }
+    #install-banner .install-btn { background:#7c3aed;color:white;border:none;border-radius:10px;padding:10px 16px;font-weight:600;font-size:0.85rem;white-space:nowrap;flex-shrink:0; }
+    #install-banner .install-dismiss { background:none;border:none;color:rgba(255,255,255,0.5);font-size:1.2rem;padding:8px;flex-shrink:0; }
 
-    /* Better mobile card layout */
-    @media (max-width: 480px) {
-      .tiles-scroll { grid-template-columns: repeat(3, 1fr) !important; gap: 8px !important; }
-      .care-tile { padding: 14px 8px !important; }
-      .care-tile .tile-icon { font-size: 1.5rem !important; }
-      .care-tile .tile-label { font-size: 0.65rem !important; }
-      .caregiver-card { border-radius: 16px !important; }
-    }
-
-    /* Bottom-safe spacing on last scrollable screen */
-    .page-scroll-content { padding-bottom: calc(24px + env(safe-area-inset-bottom, 0px)); }
-
-    /* Sticky top bar on results/profile/booking */
-    .sticky-header {
-      position: sticky; top: 0; z-index: 100;
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
-    }
-    .page.active { display: block; }
-
-    /* Animated loader */
-    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
-    .skeleton { background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; border-radius: 8px; }
+    /* Skeleton loader */
+    .skeleton { background: linear-gradient(90deg,#f0f0f0 25%,#e0e0e0 50%,#f0f0f0 75%); background-size:200% 100%; animation:shimmer 1.5s infinite; border-radius:8px; }
     @keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
 
-    /* Confirmation checkmark */
+    /* Confirmation pop */
     @keyframes pop { 0%{transform:scale(0)} 80%{transform:scale(1.1)} 100%{transform:scale(1)} }
     .pop-in { animation: pop 0.5s ease forwards; }
-
-    /* Stars */
     .star { color: #f59e0b; }
 
     /* Sticky bottom bar */
-    .sticky-bottom { position: sticky; bottom: 0; background: white; border-top: 1px solid #f3f4f6; padding: 16px; z-index: 50; }
+    .sticky-bottom { position: sticky; bottom: 0; background: white; border-top: 1px solid #f3f4f6; padding: 16px; padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px)); z-index: 50; }
 
-    /* Photo avatar */
-    .avatar { width: 64px; height: 64px; border-radius: 50%; object-fit: cover; background: linear-gradient(135deg, #7c3aed, #3b82f6); display: flex; align-items: center; justify-content: center; color: white; font-size: 1.5rem; font-weight: 700; flex-shrink: 0; }
+    /* ════════════════════════════════════════
+       FULL-SCREEN CARD SWIPER
+    ════════════════════════════════════════ */
+    #page-cards {
+      background: #f0eeff;
+      display: none;
+      flex-direction: column;
+      height: 100vh;
+      height: -webkit-fill-available;
+      overflow: hidden;
+    }
+    #page-cards.active { display: flex; }
 
-    /* Scroll snap for care tiles */
-    .tiles-scroll { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
-    @media(max-width:480px){ .tiles-scroll { grid-template-columns: repeat(4, minmax(70px,1fr)); } }
+    /* Card header strip */
+    .card-header {
+      background: linear-gradient(160deg, #1a1a2e 0%, #2d1b69 40%, #1e3a5f 100%);
+      padding: 16px 20px;
+      padding-top: calc(16px + env(safe-area-inset-top, 0px));
+      display: flex; align-items: center; justify-content: space-between;
+      flex-shrink: 0;
+    }
+
+    /* Card scroll body */
+    #card-scroll {
+      flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch;
+      padding-bottom: 20px;
+    }
+
+    /* Card bottom action bar */
+    .card-actions {
+      background: white;
+      border-top: 1px solid rgba(0,0,0,0.06);
+      padding: 16px 20px;
+      padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+      display: flex; gap: 12px; flex-shrink: 0;
+    }
+    .btn-shortlist {
+      flex: 1; padding: 16px; border-radius: 14px; font-weight: 700; font-size: 1rem;
+      border: 2px solid #7c3aed; background: white; color: #7c3aed;
+      cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 6px;
+    }
+    .btn-shortlist.active {
+      background: linear-gradient(135deg,#7c3aed,#3b82f6); color: white; border-color: transparent;
+    }
+    .btn-next {
+      flex: 1; padding: 16px; border-radius: 14px; font-weight: 700; font-size: 1rem;
+      background: linear-gradient(135deg,#7c3aed,#3b82f6); color: white; border: none;
+      cursor: pointer; transition: all 0.2s;
+    }
+    .btn-next:active { transform: scale(0.97); }
+
+    /* Avatar circle */
+    .big-avatar {
+      width: 100px; height: 100px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      color: white; font-size: 2.2rem; font-weight: 800;
+      margin: 0 auto 16px; border: 4px solid rgba(255,255,255,0.25);
+      flex-shrink: 0; position: relative;
+    }
+
+    /* Contact locked section */
+    .contact-locked-wrap {
+      background: #f8f7ff; border-radius: 16px; padding: 16px; margin-bottom: 16px;
+      border: 1.5px solid #e0d9ff;
+    }
+    .contact-row {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 0; border-bottom: 1px solid #f3f4f6;
+    }
+    .contact-row:last-of-type { border-bottom: none; }
+    .contact-locked-text {
+      flex: 1; filter: blur(4px); color: #374151;
+      font-weight: 600; user-select: none;
+    }
+    .lock-badge {
+      background: #7c3aed; color: white; font-size: 0.65rem; font-weight: 700;
+      padding: 2px 7px; border-radius: 20px;
+    }
+    .unlock-cta {
+      margin-top: 14px; padding: 13px; width: 100%; border-radius: 12px;
+      background: linear-gradient(135deg,#7c3aed,#3b82f6);
+      color: white; border: none; font-weight: 700; font-size: 0.9rem; cursor: pointer;
+    }
+
+    /* Shortlist badge on header */
+    .shortlist-badge {
+      background: #7c3aed; color: white; border-radius: 20px;
+      padding: 6px 14px; font-weight: 700; font-size: 0.8rem;
+      cursor: pointer; display: flex; align-items: center; gap: 6px;
+      border: none; white-space: nowrap;
+    }
+
+    /* Skill tag */
+    .skill-tag {
+      display: inline-block; padding: 5px 12px; border-radius: 20px;
+      font-size: 0.75rem; font-weight: 600; margin: 3px 4px 3px 0;
+    }
+
+    /* Review item */
+    .review-item { padding: 12px 0; border-bottom: 1px solid #f3f4f6; }
+    .review-item:last-child { border-bottom: none; }
+
+    /* Day availability dot */
+    .day-cell {
+      padding: 8px 4px; border-radius: 10px; font-size: 0.7rem; font-weight: 700;
+      text-align: center; background: #f9fafb; color: #d1d5db;
+    }
+    .day-cell.on { background: #f5f3ff; color: #7c3aed; }
+
+    /* Progress dots */
+    .progress-dots { display: flex; gap: 4px; align-items: center; }
+    .progress-dot {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: rgba(255,255,255,0.3); transition: all 0.2s;
+    }
+    .progress-dot.active { background: white; width: 18px; border-radius: 3px; }
+
+    /* ════════════════════════════════════════
+       SHORTLIST PAGE
+    ════════════════════════════════════════ */
+    .shortlist-card {
+      background: white; border-radius: 16px; padding: 14px 16px;
+      display: flex; align-items: center; gap: 12px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.06); margin-bottom: 12px;
+      cursor: pointer; transition: all 0.2s; border: 2px solid transparent;
+    }
+    .shortlist-card:active { border-color: #7c3aed; transform: scale(0.99); }
+    .mini-avatar {
+      width: 52px; height: 52px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      color: white; font-size: 1.1rem; font-weight: 800; flex-shrink: 0;
+    }
+    .remove-btn {
+      background: #fef2f2; color: #dc2626; border: none; border-radius: 8px;
+      padding: 8px 12px; font-size: 0.75rem; font-weight: 700; cursor: pointer; flex-shrink: 0;
+    }
+
+    /* ════════════════════════════════════════
+       SUBSCRIPTION PAGE
+    ════════════════════════════════════════ */
+    .plan-card {
+      background: white; border-radius: 20px; padding: 20px;
+      margin-bottom: 14px; border: 2px solid #e5e7eb;
+      cursor: pointer; transition: all 0.2s;
+      position: relative; overflow: hidden;
+    }
+    .plan-card:active { transform: scale(0.99); }
+    .plan-card.featured { border-color: #7c3aed; background: linear-gradient(135deg,#faf5ff,#eff6ff); }
+    .plan-badge {
+      position: absolute; top: 16px; right: 16px;
+      background: linear-gradient(135deg,#7c3aed,#3b82f6); color: white;
+      font-size: 0.65rem; font-weight: 700; padding: 3px 10px; border-radius: 20px;
+    }
+    .plan-price { font-size: 2rem; font-weight: 800; color: #1e1b4b; }
+    .plan-period { font-size: 0.85rem; color: #9ca3af; font-weight: 400; }
+    .plan-feature { display: flex; align-items: flex-start; gap: 8px; margin-bottom: 8px; font-size: 0.85rem; color: #374151; }
+    .check { color: #10b981; font-weight: 700; flex-shrink: 0; }
+    .plan-btn {
+      width: 100%; padding: 14px; border-radius: 12px; font-weight: 700;
+      font-size: 0.95rem; border: none; cursor: pointer; margin-top: 14px;
+    }
+    .plan-btn-outline {
+      background: white; color: #7c3aed; border: 2px solid #7c3aed;
+      width: 100%; padding: 14px; border-radius: 12px; font-weight: 700; font-size: 0.95rem; cursor: pointer; margin-top: 14px;
+    }
+
+    @media (max-width: 480px) {
+      .care-tile { padding: 14px 8px !important; }
+      .care-tile .icon { font-size: 1.5rem !important; }
+      .care-tile .label { font-size: 0.65rem !important; }
+    }
   </style>
 </head>
 <body>
@@ -269,229 +319,313 @@
 </div>
 
 <!-- ============================================================ -->
-<!-- PAGE 1: DISPATCH — What care do you need?                    -->
+<!-- PAGE 1: DISPATCH — Care type + location + urgency            -->
 <!-- ============================================================ -->
 <div id="page-dispatch" class="page active">
   <div class="hero-gradient min-h-screen flex flex-col">
-    <!-- Nav -->
-    <div class="flex items-center justify-between px-5 pt-6 pb-4">
-      <div class="flex items-center gap-2">
-        <div style="width:32px;height:32px;background:linear-gradient(135deg,#7c3aed,#3b82f6);border-radius:8px;display:flex;align-items:center;justify-content:center;">
-          <span style="color:white;font-weight:800;font-size:14px;">G</span>
+    <!-- Header -->
+    <div style="padding:20px 20px 0; padding-top: calc(20px + env(safe-area-inset-top,0px));">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div style="width:32px;height:32px;background:rgba(124,58,237,0.4);border-radius:10px;display:flex;align-items:center;justify-content:center;font-weight:800;color:white;font-size:0.9rem;">G</div>
+          <span style="color:white;font-weight:800;font-size:1rem;">GoToCare</span>
         </div>
-        <span style="color:white;font-weight:700;font-size:1.1rem;">GoToCare</span>
+        <button onclick="showPage('page-cards')" style="color:rgba(255,255,255,0.5);font-size:0.75rem;background:none;border:none;cursor:pointer;">
+          Skip → See caregivers
+        </button>
       </div>
-      <button onclick="showPage('page-results')" style="color:rgba(255,255,255,0.6);font-size:0.8rem;background:none;border:none;cursor:pointer;">
-        Browse all →
-      </button>
     </div>
 
-    <!-- Hero headline -->
-    <div class="px-5 pt-4 pb-6">
-      <h1 style="color:white;font-size:1.75rem;font-weight:800;line-height:1.2;margin-bottom:8px;">
-        Find care <span style="color:#a78bfa;">near you</span><br>in minutes ⚡
+    <!-- Hero text -->
+    <div style="padding:24px 20px 20px;">
+      <h1 style="color:white;font-size:1.75rem;font-weight:800;line-height:1.25;margin-bottom:8px;">
+        Find care near you<br/><span style="color:#a78bfa;">in 2 minutes.</span>
       </h1>
-      <p style="color:rgba(255,255,255,0.65);font-size:0.9rem;">No agency delays. No markups. Book directly.</p>
+      <p style="color:rgba(255,255,255,0.65);font-size:0.9rem;margin:0;">Tap your care need. We'll find available caregivers now.</p>
     </div>
 
-    <!-- White card -->
-    <div style="background:white;border-radius:28px 28px 0 0;flex:1;padding:24px 20px 40px;">
+    <!-- Care type tiles (4 cols, 3 rows = 11 tiles) -->
+    <div style="padding:0 20px 20px;">
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;" class="tiles-grid">
+        <div class="care-tile" onclick="selectCare(this,'Elder Care')"><div class="icon">👴</div><div class="label">Elder Care</div></div>
+        <div class="care-tile" onclick="selectCare(this,'Dementia')"><div class="icon">🧠</div><div class="label">Dementia</div></div>
+        <div class="care-tile" onclick="selectCare(this,'Wheelchair')"><div class="icon">♿</div><div class="label">Wheelchair</div></div>
+        <div class="care-tile" onclick="selectCare(this,'Post-Surgery')"><div class="icon">🏥</div><div class="label">Post-Surgery</div></div>
+        <div class="care-tile" onclick="selectCare(this,'Medication')"><div class="icon">💊</div><div class="label">Medication</div></div>
+        <div class="care-tile" onclick="selectCare(this,'Bathing')"><div class="icon">🛁</div><div class="label">Bathing</div></div>
+        <div class="care-tile" onclick="selectCare(this,'Meal Prep')"><div class="icon">🍲</div><div class="label">Meal Prep</div></div>
+        <div class="care-tile" onclick="selectCare(this,'Companionship')"><div class="icon">🤝</div><div class="label">Companion</div></div>
+        <div class="care-tile" onclick="selectCare(this,'Transportation')"><div class="icon">🚗</div><div class="label">Transport</div></div>
+        <div class="care-tile" onclick="selectCare(this,'Child Care')"><div class="icon">👶</div><div class="label">Child Care</div></div>
+        <div class="care-tile" onclick="selectCare(this,'Overnight')"><div class="icon">🌙</div><div class="label">Overnight</div></div>
+      </div>
+    </div>
 
-      <!-- Step 1: Care needs (multi-select) -->
-      <div class="mb-6">
-        <p style="font-weight:700;color:#1e1b4b;font-size:0.95rem;margin-bottom:4px;">① What care is needed?</p>
-        <p style="font-size:0.75rem;color:#6b7280;margin-bottom:12px;">Tap all that apply</p>
-        <div class="tiles-scroll" id="care-tiles">
-          <div class="care-tile" onclick="selectCare(this,'Elder Care')">
-            <div class="icon">🧓</div>
-            <div class="label">Elder Care</div>
-          </div>
-          <div class="care-tile" onclick="selectCare(this,'Dementia')">
-            <div class="icon">🧠</div>
-            <div class="label">Dementia</div>
-          </div>
-          <div class="care-tile" onclick="selectCare(this,'Wheelchair')">
-            <div class="icon">♿</div>
-            <div class="label">Wheelchair</div>
-          </div>
-          <div class="care-tile" onclick="selectCare(this,'Post-Surgery')">
-            <div class="icon">🏥</div>
-            <div class="label">Post-Surgery</div>
-          </div>
-          <div class="care-tile" onclick="selectCare(this,'Medication')">
-            <div class="icon">💊</div>
-            <div class="label">Medication</div>
-          </div>
-          <div class="care-tile" onclick="selectCare(this,'Bathing')">
-            <div class="icon">🛁</div>
-            <div class="label">Bathing</div>
-          </div>
-          <div class="care-tile" onclick="selectCare(this,'Meal Prep')">
-            <div class="icon">🍽️</div>
-            <div class="label">Meal Prep</div>
-          </div>
-          <div class="care-tile" onclick="selectCare(this,'Companionship')">
-            <div class="icon">🤝</div>
-            <div class="label">Companion</div>
-          </div>
-          <div class="care-tile" onclick="selectCare(this,'Transportation')">
-            <div class="icon">🚗</div>
-            <div class="label">Transport</div>
-          </div>
-          <div class="care-tile" onclick="selectCare(this,'Child Care')">
-            <div class="icon">👶</div>
-            <div class="label">Child Care</div>
-          </div>
-          <div class="care-tile" onclick="selectCare(this,'Overnight')">
-            <div class="icon">🌙</div>
-            <div class="label">Overnight</div>
-          </div>
-        </div>
+    <!-- Location + urgency -->
+    <div style="padding:0 20px 16px;">
+      <!-- Location row -->
+      <div style="display:flex;gap:10px;margin-bottom:14px;">
+        <input id="location-input" class="input-field" type="text" placeholder="📍 City or zip code"
+          style="flex:1;background:rgba(255,255,255,0.12);border-color:rgba(255,255,255,0.2);color:white;border-radius:14px;"
+          oninput="state.location=this.value" />
+        <button onclick="useGPS()" id="gps-btn"
+          style="padding:14px 16px;background:rgba(255,255,255,0.12);border:2px solid rgba(255,255,255,0.2);border-radius:14px;color:white;font-size:0.85rem;font-weight:600;white-space:nowrap;flex-shrink:0;">
+          📍 Use GPS
+        </button>
       </div>
 
-      <!-- Step 2: Location -->
-      <div class="mb-6">
-        <p style="font-weight:700;color:#1e1b4b;font-size:0.95rem;margin-bottom:10px;">② Where?</p>
-        <div style="position:relative;">
-          <input id="location-input" class="input-field" type="text" placeholder="City or ZIP code..."
-            style="padding-right:110px;" oninput="onLocationInput()" />
-          <button onclick="useGPS()" id="gps-btn"
-            style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:linear-gradient(135deg,#7c3aed,#3b82f6);color:white;border:none;border-radius:8px;padding:8px 12px;font-size:0.75rem;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:4px;white-space:nowrap;">
-            📍 Use GPS
-          </button>
-        </div>
-        <div id="location-suggestions" style="display:none;background:white;border:1px solid #e5e7eb;border-radius:12px;margin-top:4px;overflow:hidden;box-shadow:0 4px 16px rgba(0,0,0,0.1);">
-        </div>
+      <!-- Urgency row -->
+      <div style="display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;" id="urgency-pills">
+        <div class="urgency-pill selected" onclick="selectUrgency(this,'now')">⚡ Right Now</div>
+        <div class="urgency-pill" onclick="selectUrgency(this,'today')">🌤 Today</div>
+        <div class="urgency-pill" onclick="selectUrgency(this,'tomorrow')">📅 Tomorrow</div>
+        <div class="urgency-pill" onclick="selectUrgency(this,'week')">🗓 This Week</div>
       </div>
+    </div>
 
-      <!-- Step 3: When -->
-      <div class="mb-8">
-        <p style="font-weight:700;color:#1e1b4b;font-size:0.95rem;margin-bottom:10px;">③ When?</p>
-        <div style="display:flex;gap:8px;flex-wrap:wrap;" id="urgency-pills">
-          <div class="urgency-pill selected" onclick="selectUrgency(this,'now')">🔴 Right Now</div>
-          <div class="urgency-pill" onclick="selectUrgency(this,'today')">Today</div>
-          <div class="urgency-pill" onclick="selectUrgency(this,'tomorrow')">Tomorrow</div>
-          <div class="urgency-pill" onclick="selectUrgency(this,'week')">This Week</div>
-        </div>
-      </div>
-
-      <!-- Find button -->
+    <!-- Find button -->
+    <div style="padding:0 20px; padding-bottom: calc(20px + env(safe-area-inset-bottom, 0px));">
       <button class="btn-primary" onclick="findCaregivers()" id="find-btn">
         Find Available Caregivers →
       </button>
-
-      <!-- Trust row -->
-      <div style="display:flex;justify-content:space-around;margin-top:20px;padding-top:16px;border-top:1px solid #f3f4f6;">
-        <div style="text-align:center;">
-          <div style="font-weight:800;color:#7c3aed;font-size:0.9rem;">100%</div>
-          <div style="color:#9ca3af;font-size:0.7rem;">Verified</div>
-        </div>
-        <div style="text-align:center;">
-          <div style="font-weight:800;color:#7c3aed;font-size:0.9rem;">&lt;2 hrs</div>
-          <div style="color:#9ca3af;font-size:0.7rem;">Match Time</div>
-        </div>
-        <div style="text-align:center;">
-          <div style="font-weight:800;color:#7c3aed;font-size:0.9rem;">4.9 ⭐</div>
-          <div style="color:#9ca3af;font-size:0.7rem;">Avg Rating</div>
-        </div>
-        <div style="text-align:center;">
-          <div style="font-weight:800;color:#7c3aed;font-size:0.9rem;">$0</div>
-          <div style="color:#9ca3af;font-size:0.7rem;">To Browse</div>
-        </div>
-      </div>
     </div>
   </div>
 </div>
 
 <!-- ============================================================ -->
-<!-- PAGE 2: RESULTS — Instant caregiver list                     -->
+<!-- PAGE 2: FULL-SCREEN CARD SWIPER                              -->
 <!-- ============================================================ -->
-<div id="page-results" class="page">
+<div id="page-cards" class="page">
+  <!-- Header strip -->
+  <div class="card-header">
+    <button onclick="showPage('page-dispatch')"
+      style="background:rgba(255,255,255,0.1);border:none;border-radius:50%;width:36px;height:36px;color:white;cursor:pointer;font-size:1.1rem;display:flex;align-items:center;justify-content:center;">←</button>
+    <div style="display:flex;flex-direction:column;align-items:center;gap:6px;">
+      <span id="card-counter" style="color:white;font-weight:700;font-size:0.9rem;">1/7</span>
+      <div class="progress-dots" id="progress-dots"></div>
+    </div>
+    <button class="shortlist-badge" id="shortlist-fab" onclick="openShortlist()" style="display:none;">
+      💜 <span id="shortlist-count-fab">0</span>
+    </button>
+    <div id="shortlist-fab-empty" style="width:60px;"></div>
+  </div>
+
+  <!-- Scrollable card content -->
+  <div id="card-scroll" class="scroll-area">
+    <div id="card-content">
+      <!-- Filled by JS -->
+      <div style="padding:40px 20px;text-align:center;">
+        <div class="skeleton" style="width:100px;height:100px;border-radius:50%;margin:0 auto 20px;"></div>
+        <div class="skeleton" style="height:24px;width:60%;margin:0 auto 12px;"></div>
+        <div class="skeleton" style="height:16px;width:80%;margin:0 auto 8px;"></div>
+        <div class="skeleton" style="height:16px;width:50%;margin:0 auto;"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bottom action bar -->
+  <div class="card-actions">
+    <button class="btn-shortlist" id="btn-shortlist" onclick="shortlistCurrent()">
+      ♡ Shortlist
+    </button>
+    <button class="btn-next" id="btn-next" onclick="nextCard()">
+      Next →
+    </button>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- PAGE 3: SHORTLIST                                            -->
+<!-- ============================================================ -->
+<div id="page-shortlist" class="page">
   <!-- Header -->
-  <div class="hero-gradient" style="padding:20px 20px 32px;">
+  <div class="hero-gradient" style="padding:20px; padding-top:calc(20px + env(safe-area-inset-top,0px));">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+      <button onclick="showPage('page-cards')"
+        style="background:rgba(255,255,255,0.1);border:none;border-radius:50%;width:36px;height:36px;color:white;cursor:pointer;font-size:1.1rem;display:flex;align-items:center;justify-content:center;">←</button>
+      <div>
+        <div style="color:white;font-weight:800;font-size:1.1rem;">Your Shortlist</div>
+        <div id="shortlist-subtitle" style="color:rgba(255,255,255,0.6);font-size:0.8rem;">Caregivers you saved</div>
+      </div>
+    </div>
+  </div>
+
+  <div style="padding:16px;background:#f8f7ff;min-height:calc(100vh - 120px);">
+    <!-- Empty state -->
+    <div id="shortlist-empty" style="display:none;text-align:center;padding:40px 20px;">
+      <div style="font-size:3rem;margin-bottom:12px;">💜</div>
+      <h3 style="color:#1e1b4b;font-weight:700;margin-bottom:8px;">No caregivers shortlisted yet</h3>
+      <p style="color:#6b7280;font-size:0.9rem;margin-bottom:20px;">Browse caregivers and tap Shortlist to save them here.</p>
+      <button onclick="showPage('page-cards')" class="btn-primary" style="max-width:240px;margin:0 auto;">← Browse Caregivers</button>
+    </div>
+
+    <!-- Shortlisted list -->
+    <div id="shortlist-list"></div>
+
+    <!-- Auto-schedule CTA -->
+    <div id="shortlist-cta" style="display:none;margin-top:8px;">
+      <div style="background:linear-gradient(135deg,#f5f3ff,#eff6ff);border-radius:20px;padding:20px;margin-bottom:16px;border:1.5px solid #e0d9ff;">
+        <div style="font-weight:700;color:#1e1b4b;font-size:1rem;margin-bottom:6px;">🤖 Smart Match</div>
+        <p style="color:#6b7280;font-size:0.85rem;margin-bottom:14px;">GoToCare will automatically notify your top match. First available caregiver takes the appointment.</p>
+        <button class="btn-primary" onclick="autoSchedule()">
+          📅 Auto-Schedule with Best Match →
+        </button>
+      </div>
+
+      <!-- Subscribe to unlock contacts -->
+      <div id="subscribe-nudge" style="background:white;border-radius:16px;padding:16px;margin-bottom:12px;border:1.5px solid #e0d9ff;text-align:center;">
+        <div style="font-size:1.5rem;margin-bottom:8px;">🔒</div>
+        <div style="font-weight:700;color:#1e1b4b;font-size:0.95rem;margin-bottom:6px;">Contact info is locked</div>
+        <p style="color:#6b7280;font-size:0.82rem;margin-bottom:12px;">Subscribe to see phone numbers and email addresses for your shortlisted caregivers.</p>
+        <button onclick="showPage('page-subscribe')" style="background:linear-gradient(135deg,#7c3aed,#3b82f6);color:white;border:none;border-radius:12px;padding:12px 24px;font-weight:700;font-size:0.9rem;cursor:pointer;width:100%;">
+          🔓 View Plans — From $15/mo
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- PAGE 4: SUBSCRIPTION PLANS                                   -->
+<!-- ============================================================ -->
+<div id="page-subscribe" class="page">
+  <div class="hero-gradient" style="padding:20px; padding-top:calc(20px + env(safe-area-inset-top,0px));">
     <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
-      <button onclick="showPage('page-dispatch')" style="background:rgba(255,255,255,0.1);border:none;border-radius:50%;width:36px;height:36px;color:white;cursor:pointer;font-size:1.1rem;display:flex;align-items:center;justify-content:center;">←</button>
+      <button id="subscribe-back-btn" onclick="showPage('page-shortlist')"
+        style="background:rgba(255,255,255,0.1);border:none;border-radius:50%;width:36px;height:36px;color:white;cursor:pointer;font-size:1.1rem;display:flex;align-items:center;justify-content:center;">←</button>
       <div>
-        <div id="results-headline" style="color:white;font-weight:700;font-size:1rem;">Caregivers near you</div>
-        <div id="results-sub" style="color:rgba(255,255,255,0.6);font-size:0.8rem;">Ranked by availability & match</div>
+        <div style="color:white;font-weight:800;font-size:1.1rem;">Unlock Full Access</div>
+        <div style="color:rgba(255,255,255,0.6);font-size:0.8rem;">Contact caregivers directly · No middleman</div>
       </div>
     </div>
-    <!-- Filter chips -->
-    <div style="display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;" id="filter-chips">
-      <div class="filter-chip active" onclick="filterResults(this,'all')" style="background:white;border-color:white;color:#7c3aed;">All</div>
-      <div class="filter-chip" onclick="filterResults(this,'now')" style="border-color:rgba(255,255,255,0.3);color:white;">🟢 Available Now</div>
-      <div class="filter-chip" onclick="filterResults(this,'top')" style="border-color:rgba(255,255,255,0.3);color:white;">⭐ Top Rated</div>
-      <div class="filter-chip" onclick="filterResults(this,'close')" style="border-color:rgba(255,255,255,0.3);color:white;">📍 Closest</div>
-      <div class="filter-chip" onclick="filterResults(this,'affordable')" style="border-color:rgba(255,255,255,0.3);color:white;">💰 Affordable</div>
+    <!-- Comparison to care.com -->
+    <div style="background:rgba(255,255,255,0.1);border-radius:14px;padding:12px 16px;display:flex;align-items:center;gap:10px;">
+      <span style="font-size:1.4rem;">💰</span>
+      <div>
+        <div style="color:white;font-weight:700;font-size:0.85rem;">Up to 60% cheaper than Care.com</div>
+        <div style="color:rgba(255,255,255,0.6);font-size:0.75rem;">Care.com charges $37/mo · We start at $15/mo</div>
+      </div>
     </div>
   </div>
 
-  <!-- Results list -->
-  <div style="padding:16px;margin-top:-16px;background:#f8f7ff;min-height:calc(100vh - 160px);">
-    <div id="results-container">
-      <!-- Skeleton loaders -->
-      <div class="caregiver-card" style="padding:16px;margin-bottom:12px;">
-        <div style="display:flex;gap:12px;">
-          <div class="skeleton" style="width:64px;height:64px;border-radius:50%;flex-shrink:0;"></div>
-          <div style="flex:1;">
-            <div class="skeleton" style="height:16px;width:60%;margin-bottom:8px;"></div>
-            <div class="skeleton" style="height:12px;width:80%;margin-bottom:8px;"></div>
-            <div class="skeleton" style="height:12px;width:40%;"></div>
-          </div>
+  <div style="padding:16px;background:#f8f7ff;min-height:calc(100vh - 200px);padding-bottom:40px;" class="scroll-area">
+
+    <!-- Plan: Essential -->
+    <div class="plan-card" onclick="selectPlan('essential')">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px;">
+        <div>
+          <div style="font-weight:800;color:#1e1b4b;font-size:1rem;margin-bottom:2px;">Essential</div>
+          <div style="color:#9ca3af;font-size:0.8rem;">Perfect for occasional care</div>
+        </div>
+        <div style="text-align:right;">
+          <span class="plan-price">$15</span>
+          <span class="plan-period">/mo</span>
+          <div style="font-size:0.7rem;color:#9ca3af;">$12/mo billed annually</div>
         </div>
       </div>
-      <div class="caregiver-card" style="padding:16px;margin-bottom:12px;">
-        <div style="display:flex;gap:12px;">
-          <div class="skeleton" style="width:64px;height:64px;border-radius:50%;flex-shrink:0;"></div>
-          <div style="flex:1;">
-            <div class="skeleton" style="height:16px;width:55%;margin-bottom:8px;"></div>
-            <div class="skeleton" style="height:12px;width:75%;margin-bottom:8px;"></div>
-            <div class="skeleton" style="height:12px;width:45%;"></div>
-          </div>
-        </div>
-      </div>
-      <div class="caregiver-card" style="padding:16px;margin-bottom:12px;">
-        <div style="display:flex;gap:12px;">
-          <div class="skeleton" style="width:64px;height:64px;border-radius:50%;flex-shrink:0;"></div>
-          <div style="flex:1;">
-            <div class="skeleton" style="height:16px;width:50%;margin-bottom:8px;"></div>
-            <div class="skeleton" style="height:12px;width:70%;margin-bottom:8px;"></div>
-            <div class="skeleton" style="height:12px;width:35%;"></div>
-          </div>
-        </div>
-      </div>
+      <div class="plan-feature"><span class="check">✓</span> Unlock 5 caregiver contacts/month</div>
+      <div class="plan-feature"><span class="check">✓</span> Direct messaging with caregivers</div>
+      <div class="plan-feature"><span class="check">✓</span> 1 scheduled appointment/month</div>
+      <div class="plan-feature" style="color:#9ca3af;"><span style="color:#9ca3af;">–</span> Unlimited contacts</div>
+      <div class="plan-feature" style="color:#9ca3af;"><span style="color:#9ca3af;">–</span> Auto-scheduling</div>
+      <button class="plan-btn-outline" onclick="selectPlan('essential')">Get Essential</button>
     </div>
+
+    <!-- Plan: Family (featured) -->
+    <div class="plan-card featured" onclick="selectPlan('family')">
+      <div class="plan-badge">⭐ Most Popular</div>
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px;padding-right:90px;">
+        <div>
+          <div style="font-weight:800;color:#1e1b4b;font-size:1rem;margin-bottom:2px;">Family</div>
+          <div style="color:#9ca3af;font-size:0.8rem;">Unlimited care, all features</div>
+        </div>
+        <div style="text-align:right;">
+          <span class="plan-price">$29</span>
+          <span class="plan-period">/mo</span>
+          <div style="font-size:0.7rem;color:#9ca3af;">$22/mo billed annually</div>
+        </div>
+      </div>
+      <div class="plan-feature"><span class="check">✓</span> <strong>Unlimited contact unlocks</strong></div>
+      <div class="plan-feature"><span class="check">✓</span> Auto-schedule with shortlist</div>
+      <div class="plan-feature"><span class="check">✓</span> Priority caregiver matching</div>
+      <div class="plan-feature"><span class="check">✓</span> Backup caregiver guarantee</div>
+      <div class="plan-feature"><span class="check">✓</span> Care notes & booking history</div>
+      <button class="plan-btn" style="background:linear-gradient(135deg,#7c3aed,#3b82f6);color:white;" onclick="selectPlan('family')">Get Family Plan →</button>
+    </div>
+
+    <!-- Plan: Premium -->
+    <div class="plan-card" onclick="selectPlan('premium')">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px;">
+        <div>
+          <div style="font-weight:800;color:#1e1b4b;font-size:1rem;margin-bottom:2px;">Premium</div>
+          <div style="color:#9ca3af;font-size:0.8rem;">For complex care needs</div>
+        </div>
+        <div style="text-align:right;">
+          <span class="plan-price">$59</span>
+          <span class="plan-period">/mo</span>
+          <div style="font-size:0.7rem;color:#9ca3af;">$45/mo billed annually</div>
+        </div>
+      </div>
+      <div class="plan-feature"><span class="check">✓</span> Everything in Family</div>
+      <div class="plan-feature"><span class="check">✓</span> Dedicated care coordinator</div>
+      <div class="plan-feature"><span class="check">✓</span> Emergency care dispatch (2hr response)</div>
+      <div class="plan-feature"><span class="check">✓</span> Multiple family members / locations</div>
+      <div class="plan-feature"><span class="check">✓</span> Full background check reports</div>
+      <div class="plan-feature"><span class="check">✓</span> Guaranteed backup caregiver</div>
+      <button class="plan-btn-outline" onclick="selectPlan('premium')">Get Premium</button>
+    </div>
+
+    <!-- Compare to competition -->
+    <div style="background:white;border-radius:16px;padding:16px;margin-top:4px;">
+      <div style="font-weight:700;color:#1e1b4b;margin-bottom:12px;font-size:0.9rem;">How we compare</div>
+      <table style="width:100%;font-size:0.8rem;border-collapse:collapse;">
+        <tr style="background:#f8f7ff;">
+          <td style="padding:8px 10px;font-weight:700;color:#6b7280;">Feature</td>
+          <td style="padding:8px 10px;text-align:center;font-weight:700;color:#7c3aed;">GoToCare</td>
+          <td style="padding:8px 10px;text-align:center;font-weight:700;color:#9ca3af;">Care.com</td>
+        </tr>
+        <tr>
+          <td style="padding:8px 10px;color:#374151;">Starting price</td>
+          <td style="padding:8px 10px;text-align:center;font-weight:700;color:#7c3aed;">$15/mo</td>
+          <td style="padding:8px 10px;text-align:center;color:#9ca3af;">$37/mo</td>
+        </tr>
+        <tr style="background:#f9fafb;">
+          <td style="padding:8px 10px;color:#374151;">Verified & screened</td>
+          <td style="padding:8px 10px;text-align:center;">✅</td>
+          <td style="padding:8px 10px;text-align:center;">✅</td>
+        </tr>
+        <tr>
+          <td style="padding:8px 10px;color:#374151;">Auto-scheduling</td>
+          <td style="padding:8px 10px;text-align:center;">✅</td>
+          <td style="padding:8px 10px;text-align:center;">❌</td>
+        </tr>
+        <tr style="background:#f9fafb;">
+          <td style="padding:8px 10px;color:#374151;">Backup caregiver</td>
+          <td style="padding:8px 10px;text-align:center;">✅</td>
+          <td style="padding:8px 10px;text-align:center;">❌</td>
+        </tr>
+        <tr>
+          <td style="padding:8px 10px;color:#374151;">AI matching</td>
+          <td style="padding:8px 10px;text-align:center;">✅</td>
+          <td style="padding:8px 10px;text-align:center;">❌</td>
+        </tr>
+      </table>
+    </div>
+
+    <p style="text-align:center;color:#9ca3af;font-size:0.75rem;margin-top:16px;">
+      🔒 Secure payment · Cancel anytime · No contracts
+    </p>
   </div>
 </div>
 
 <!-- ============================================================ -->
-<!-- PAGE 3: PROFILE — Caregiver detail                           -->
-<!-- ============================================================ -->
-<div id="page-profile" class="page">
-  <div id="profile-content">
-    <!-- dynamically filled -->
-  </div>
-  <!-- Sticky Book Now bar -->
-  <div class="sticky-bottom" id="profile-sticky" style="display:none;">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
-      <div>
-        <div id="profile-rate-display" style="font-size:1.4rem;font-weight:800;color:#1e1b4b;"></div>
-        <div style="font-size:0.75rem;color:#6b7280;">per hour · no hidden fees</div>
-      </div>
-      <div id="profile-avail-badge"></div>
-    </div>
-    <button class="btn-primary" onclick="showPage('page-booking')">Book Now →</button>
-  </div>
-</div>
-
-<!-- ============================================================ -->
-<!-- PAGE 4: BOOKING — 3 fields only                              -->
+<!-- PAGE 5: BOOKING — 3 fields                                   -->
 <!-- ============================================================ -->
 <div id="page-booking" class="page">
-  <!-- Header -->
-  <div class="hero-gradient" style="padding:20px 20px 30px;">
+  <div class="hero-gradient" style="padding:20px 20px 30px; padding-top:calc(20px + env(safe-area-inset-top,0px));">
     <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px;">
-      <button onclick="showPage('page-profile')" style="background:rgba(255,255,255,0.1);border:none;border-radius:50%;width:36px;height:36px;color:white;cursor:pointer;font-size:1.1rem;display:flex;align-items:center;justify-content:center;">←</button>
+      <button onclick="showPage('page-shortlist')"
+        style="background:rgba(255,255,255,0.1);border:none;border-radius:50%;width:36px;height:36px;color:white;cursor:pointer;font-size:1.1rem;display:flex;align-items:center;justify-content:center;">←</button>
       <div>
         <div style="color:white;font-weight:700;font-size:1rem;">Almost there!</div>
         <div style="color:rgba(255,255,255,0.6);font-size:0.8rem;">3 quick questions</div>
@@ -499,24 +633,21 @@
     </div>
   </div>
 
-  <div style="padding:20px;margin-top:-10px;background:white;min-height:calc(100vh - 80px);border-radius:20px 20px 0 0;margin-top:-16px;">
+  <div style="padding:20px;background:white;min-height:calc(100vh - 80px);border-radius:20px 20px 0 0;margin-top:-16px;">
     <!-- Caregiver mini-card -->
-    <div id="booking-caregiver-card" style="background:#f8f7ff;border-radius:16px;padding:16px;display:flex;align-items:center;gap:12px;margin-bottom:24px;">
-    </div>
+    <div id="booking-caregiver-card" style="background:#f8f7ff;border-radius:16px;padding:16px;display:flex;align-items:center;gap:12px;margin-bottom:24px;"></div>
 
-    <!-- Question 1: Your name -->
+    <!-- Question 1 -->
     <div style="margin-bottom:20px;">
       <label style="font-weight:700;color:#1e1b4b;font-size:0.9rem;display:block;margin-bottom:8px;">① Your name</label>
       <input id="booking-name" class="input-field" type="text" placeholder="First name is fine" />
     </div>
-
-    <!-- Question 2: Phone -->
+    <!-- Question 2 -->
     <div style="margin-bottom:20px;">
       <label style="font-weight:700;color:#1e1b4b;font-size:0.9rem;display:block;margin-bottom:8px;">② Phone or email</label>
       <input id="booking-contact" class="input-field" type="text" placeholder="So we can confirm your booking" />
     </div>
-
-    <!-- Question 3: Duration -->
+    <!-- Question 3 -->
     <div style="margin-bottom:28px;">
       <label style="font-weight:700;color:#1e1b4b;font-size:0.9rem;display:block;margin-bottom:10px;">③ How many hours?</label>
       <div style="display:flex;gap:8px;" id="duration-btns">
@@ -526,14 +657,14 @@
         <div class="dur-btn" onclick="selectDuration(this,12)">12 hrs</div>
       </div>
       <div style="margin-top:10px;text-align:center;">
-        <span style="font-size:0.8rem;color:#9ca3af;">Need a different amount? </span>
-        <span onclick="toggleCustomHours()" style="font-size:0.8rem;color:#7c3aed;cursor:pointer;font-weight:600;">Enter custom hours</span>
+        <span style="font-size:0.8rem;color:#9ca3af;">Need different hours? </span>
+        <span onclick="toggleCustomHours()" style="font-size:0.8rem;color:#7c3aed;cursor:pointer;font-weight:600;">Custom</span>
       </div>
-      <input id="custom-hours" class="input-field" type="number" min="1" max="24" placeholder="Enter hours (e.g. 6)"
+      <input id="custom-hours" class="input-field" type="number" min="1" max="24" placeholder="Enter hours"
         style="display:none;margin-top:8px;" oninput="onCustomHours(this)" />
     </div>
 
-    <!-- Price summary card -->
+    <!-- Price summary -->
     <div style="background:linear-gradient(135deg,#f5f3ff,#eff6ff);border-radius:16px;padding:16px;margin-bottom:24px;border:1px solid #e0d9ff;">
       <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
         <span style="color:#6b7280;font-size:0.85rem;" id="price-breakdown-line">4 hrs × $28/hr</span>
@@ -553,426 +684,472 @@
       Confirm &amp; Pay $<span id="confirm-total">123.20</span> →
     </button>
     <p style="text-align:center;font-size:0.75rem;color:#9ca3af;margin-top:12px;">
-      🔒 Secure payment · Cancel anytime · No charge until confirmed
+      🔒 Secure payment · Cancel anytime
     </p>
   </div>
 </div>
 
 <!-- ============================================================ -->
-<!-- PAGE 5: CONFIRMATION                                          -->
+<!-- PAGE 6: CONFIRMATION                                         -->
 <!-- ============================================================ -->
 <div id="page-confirm" class="page">
   <div style="min-height:100vh;background:white;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 24px;text-align:center;">
-    <div class="pop-in" style="width:80px;height:80px;background:linear-gradient(135deg,#7c3aed,#3b82f6);border-radius:50%;display:flex;align-items:center;justify-content:center;margin-bottom:20px;font-size:2rem;">
-      ✅
-    </div>
+    <div class="pop-in" style="width:80px;height:80px;background:linear-gradient(135deg,#7c3aed,#3b82f6);border-radius:50%;display:flex;align-items:center;justify-content:center;margin-bottom:20px;font-size:2rem;">✅</div>
     <h2 style="font-size:1.6rem;font-weight:800;color:#1e1b4b;margin-bottom:8px;">You're all set!</h2>
     <p style="color:#6b7280;font-size:0.95rem;margin-bottom:24px;" id="confirm-message">Your caregiver will be in touch shortly.</p>
-
     <div style="background:#f8f7ff;border-radius:16px;padding:20px;width:100%;margin-bottom:24px;">
-      <div id="confirm-details" style="text-align:left;">
-      </div>
+      <div id="confirm-details" style="text-align:left;"></div>
     </div>
-
     <div style="background:#d1fae5;border-radius:12px;padding:14px 20px;width:100%;margin-bottom:24px;">
       <p style="color:#065f46;font-weight:600;font-size:0.85rem;margin:0;">
         💬 <span id="confirm-caregiver-name">Your caregiver</span> has been notified and will call you within 30 minutes.
       </p>
     </div>
-
-    <button class="btn-primary" onclick="showPage('page-dispatch')" style="margin-bottom:12px;">
-      Book Another →
-    </button>
-    <button onclick="showPage('page-dispatch')" style="background:none;border:none;color:#9ca3af;font-size:0.85rem;cursor:pointer;">
-      Back to Home
-    </button>
+    <button class="btn-primary" onclick="showPage('page-dispatch')" style="margin-bottom:12px;">Book Another →</button>
+    <button onclick="showPage('page-dispatch')" style="background:none;border:none;color:#9ca3af;font-size:0.85rem;cursor:pointer;">Back to Home</button>
   </div>
 </div>
 
 <script>
   const API_BASE = 'https://gotocare-original.jjioji.workers.dev';
 
-  // ============ STATE ============
+  // ── STATE ──────────────────────────────────────────────────────
   let state = {
     careTypes: [],
     location: '',
     urgency: 'now',
     caregivers: [],
+    cardIndex: 0,
+    shortlist: [],            // caregiver objects
     selectedCaregiver: null,
     duration: 4,
-    activeFilter: 'all'
+    subscriptionTier: null,   // null=free, 'essential','family','premium'
   };
 
-  // ============ PAGE NAVIGATION ============
+  // ── PAGE NAV ──────────────────────────────────────────────────
   function showPage(id) {
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
     document.getElementById(id).classList.add('active');
-    window.scrollTo(0,0);
+    window.scrollTo(0, 0);
+    if (id === 'page-cards' && state.caregivers.length) renderCardAt(state.cardIndex);
+    if (id === 'page-shortlist') renderShortlist();
   }
 
-  // ============ CARE NEEDS SELECTION (multi-select) ============
+  // ── CARE TYPE TILES ───────────────────────────────────────────
   function selectCare(el, type) {
-    el.classList.toggle('selected');
     const idx = state.careTypes.indexOf(type);
-    if (idx > -1) state.careTypes.splice(idx, 1);
-    else state.careTypes.push(type);
-    updateFindBtn();
-  }
-  function updateFindBtn() {
-    const btn = document.getElementById('find-btn');
-    if (!btn) return;
+    if (idx > -1) { state.careTypes.splice(idx, 1); el.classList.remove('selected'); }
+    else { state.careTypes.push(type); el.classList.add('selected'); }
     const n = state.careTypes.length;
-    btn.textContent = n === 0
+    const btn = document.getElementById('find-btn');
+    if (btn) btn.textContent = n === 0
       ? 'Find Available Caregivers →'
-      : `Find Caregivers for ${n} Need${n > 1 ? 's' : ''} →`;
+      : n === 1 ? `Find ${type} Caregivers →`
+      : `Find Caregivers for ${n} Needs →`;
   }
 
-  // ============ URGENCY SELECTION ============
+  // ── URGENCY ───────────────────────────────────────────────────
   function selectUrgency(el, urgency) {
     document.querySelectorAll('.urgency-pill').forEach(p => p.classList.remove('selected'));
     el.classList.add('selected');
     state.urgency = urgency;
   }
+  function urgencyLabel(u) {
+    return {now:'Available Right Now',today:'Available Today',tomorrow:'Tomorrow',week:'This Week'}[u]||'Available Now';
+  }
 
-  // ============ GPS LOCATION ============
-  function useGPS() {
+  // ── GPS ───────────────────────────────────────────────────────
+  async function useGPS() {
     const btn = document.getElementById('gps-btn');
-    btn.innerHTML = '⏳ Locating...';
-    btn.disabled = true;
-
-    if (!navigator.geolocation) {
-      btn.innerHTML = '📍 Use GPS';
-      btn.disabled = false;
-      document.getElementById('location-input').value = 'Atlanta, GA';
+    btn.innerHTML = '⏳ Locating...'; btn.disabled = true;
+    try {
+      const pos = await new Promise((res,rej) => navigator.geolocation.getCurrentPosition(res,rej));
+      const { latitude: lat, longitude: lon } = pos.coords;
+      try {
+        const r = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json`);
+        const d = await r.json();
+        const city = d.address?.city || d.address?.town || d.address?.village || 'your location';
+        const state_code = d.address?.state || '';
+        state.location = `${city}, ${state_code}`.replace(/, $/, '');
+        document.getElementById('location-input').value = state.location;
+        btn.innerHTML = '✅ Found!';
+        setTimeout(() => { btn.innerHTML = '📍 Use GPS'; btn.disabled = false; }, 2000);
+      } catch { state.location = 'Atlanta, GA'; btn.innerHTML = '📍 Use GPS'; btn.disabled = false; }
+    } catch {
       state.location = 'Atlanta, GA';
-      return;
+      btn.innerHTML = '📍 GPS denied'; btn.disabled = false;
     }
-
-    navigator.geolocation.getCurrentPosition(
-      async (pos) => {
-        try {
-          const { latitude, longitude } = pos.coords;
-          // Reverse geocode using a free API
-          const res = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`);
-          const data = await res.json();
-          const city = data.address?.city || data.address?.town || data.address?.village || '';
-          const state_abbr = data.address?.state || '';
-          const location = city ? `${city}, ${state_abbr}` : `${latitude.toFixed(2)}, ${longitude.toFixed(2)}`;
-          document.getElementById('location-input').value = location;
-          state.location = location;
-          btn.innerHTML = '✅ Found!';
-          setTimeout(() => { btn.innerHTML = '📍 Use GPS'; btn.disabled = false; }, 2000);
-        } catch(e) {
-          document.getElementById('location-input').value = 'Atlanta, GA';
-          state.location = 'Atlanta, GA';
-          btn.innerHTML = '📍 Use GPS';
-          btn.disabled = false;
-        }
-      },
-      () => {
-        // Permission denied - use default
-        document.getElementById('location-input').value = 'Atlanta, GA';
-        state.location = 'Atlanta, GA';
-        btn.innerHTML = '📍 GPS denied';
-        btn.disabled = false;
-      }
-    );
   }
 
-  function onLocationInput() {
-    state.location = document.getElementById('location-input').value;
-  }
-
-  // ============ FIND CAREGIVERS ============
+  // ── FIND CAREGIVERS ───────────────────────────────────────────
   async function findCaregivers() {
     const btn = document.getElementById('find-btn');
-    btn.innerHTML = '⏳ Finding caregivers...';
-    btn.disabled = true;
-
-    if (!state.location) {
-      state.location = document.getElementById('location-input').value || 'Atlanta, GA';
-    }
-
-    showPage('page-results');
-    const needsLabel = state.careTypes.length ? state.careTypes.join(' · ') : 'Care';
-    document.getElementById('results-headline').textContent = `${needsLabel} near ${state.location || 'you'}`;
-    document.getElementById('results-sub').textContent = urgencyLabel(state.urgency) + ' · Ranked by match';
-
-    setTimeout(() => { btn.innerHTML = 'Find Available Caregivers →'; btn.disabled = false; }, 1000);
-
+    btn.innerHTML = '⏳ Finding caregivers...'; btn.disabled = true;
+    if (!state.location) state.location = document.getElementById('location-input').value || 'Atlanta, GA';
+    showPage('page-cards');
+    state.cardIndex = 0;
+    state.shortlist = [];
     await loadCaregivers();
+    btn.innerHTML = 'Find Available Caregivers →'; btn.disabled = false;
   }
 
-  function urgencyLabel(u) {
-    return {now:'Available right now', today:'Available today', tomorrow:'Available tomorrow', week:'Available this week'}[u] || u;
-  }
-
-  // ============ LOAD CAREGIVERS ============
+  // ── LOAD CAREGIVERS ───────────────────────────────────────────
   async function loadCaregivers() {
+    document.getElementById('card-content').innerHTML = `
+      <div style="padding:40px 20px;text-align:center;">
+        <div class="skeleton" style="width:100px;height:100px;border-radius:50%;margin:0 auto 20px;"></div>
+        <div class="skeleton" style="height:24px;width:60%;margin:0 auto 12px;"></div>
+        <div class="skeleton" style="height:16px;width:80%;margin:0 auto 8px;"></div>
+      </div>`;
     let caregivers = [];
-
     try {
-      const params = new URLSearchParams();
+      const params = new URLSearchParams({ page: 1, limit: 10 });
       if (state.location) params.set('location', state.location);
       if (state.careTypes.length) params.set('specialty', state.careTypes.join(','));
-      params.set('limit', '20');
-
-      const res = await fetch(`${API_BASE}/api/search-caregivers?${params}`);
-      if (res.ok) {
-        const data = await res.json();
-        if (data.caregivers && data.caregivers.length > 0) {
-          caregivers = data.caregivers;
-        }
+      const r = await fetch(`${API_BASE}/api/search-caregivers?${params}`);
+      if (r.ok) {
+        const data = await r.json();
+        if (data.caregivers && data.caregivers.length > 0) caregivers = data.caregivers;
       }
-    } catch(e) {
-      console.log('API fallback to mock data');
-    }
+    } catch(e) {}
 
-    // Rich mock data if API returns empty
-    if (!caregivers || caregivers.length === 0) {
-      caregivers = getMockCaregivers();
-    }
+    if (!caregivers || caregivers.length === 0) caregivers = getMockCaregivers();
 
-    // Inject availability & distance for display
     caregivers = caregivers.map((c, i) => ({
-      ...c,
-      availableNow: i < 3,
-      availableToday: i < 6,
-      distance: (0.5 + i * 0.4).toFixed(1),
-      matchScore: Math.max(72, 98 - i * 4),
-      hourlyRate: c.hourlyRate || c.hourly_rate || (24 + (i % 4) * 4),
-      rating: c.rating || (4.9 - i * 0.07).toFixed(1),
-      reviewCount: c.reviewCount || (87 - i * 8),
-      name: c.name || `${c.firstName || 'Caregiver'} ${c.lastName ? c.lastName.charAt(0) + '.' : ''}`,
+      id: c.id || c._id || i+1,
+      name: c.name || c.firstName ? `${c.firstName||''} ${c.lastName||''}`.trim() : `Caregiver ${i+1}`,
       specialty: c.specialty || c.skills?.[0] || state.careTypes[0] || 'General Care',
-      yearsExp: c.yearsExp || c.experience || (3 + i),
-      languages: c.languages || ['English'],
-      bio: c.bio || `Dedicated caregiver with ${3+i} years of experience specializing in ${state.careTypes[0] || 'home care'}.`
+      yearsExp: c.yearsExperience || c.yearsExp || (3+i),
+      hourlyRate: c.hourlyRate || (22 + i*2),
+      rating: c.rating || (4.6 + (i%3)*0.1),
+      reviewCount: c.reviewCount || (30 + i*15),
+      distance: c.distance || `${(0.8 + i*0.5).toFixed(1)}`,
+      availableNow: c.availableNow || i < 3,
+      availableToday: c.availableToday || i < 5,
+      matchScore: Math.max(70, 98 - i*4),
+      languages: c.languages || (i%3===0?['English','Spanish']:['English']),
+      bio: c.bio || `Dedicated caregiver with ${3+i} years of experience specializing in ${state.careTypes[0]||'home care'}. Background-checked, CPR certified, and trusted by families across the area.`,
+      phone: c.phone || `(${470+i}) 555-${(2000+i*111).toString().padStart(4,'0')}`,
+      email: c.email || `caregiver${i+1}@gotocare.demo`,
     }));
 
     state.caregivers = caregivers;
-    renderResults(caregivers);
+    renderCardAt(0);
+    buildProgressDots();
+    updateShortlistFab();
   }
 
-  // ============ RENDER RESULTS ============
-  function renderResults(caregivers) {
-    const container = document.getElementById('results-container');
-
-    if (!caregivers || caregivers.length === 0) {
-      container.innerHTML = `
-        <div style="text-align:center;padding:40px 20px;">
-          <div style="font-size:3rem;margin-bottom:12px;">🔍</div>
-          <h3 style="color:#1e1b4b;font-weight:700;margin-bottom:8px;">No caregivers found</h3>
-          <p style="color:#6b7280;font-size:0.9rem;">Try a different location or care type.</p>
-          <button onclick="showPage('page-dispatch')" class="btn-primary" style="margin-top:20px;max-width:200px;">← Try Again</button>
-        </div>`;
-      return;
+  // ── PROGRESS DOTS ─────────────────────────────────────────────
+  function buildProgressDots() {
+    const n = Math.min(state.caregivers.length, 10);
+    const el = document.getElementById('progress-dots');
+    el.innerHTML = Array.from({length:n}, (_,i) =>
+      `<div class="progress-dot${i===0?' active':''}" id="dot-${i}"></div>`
+    ).join('');
+  }
+  function updateProgressDots(idx) {
+    const n = Math.min(state.caregivers.length, 10);
+    for(let i=0;i<n;i++) {
+      const d = document.getElementById(`dot-${i}`);
+      if(d) { d.className = 'progress-dot' + (i===idx?' active':''); }
     }
-
-    container.innerHTML = `
-      <div style="margin-bottom:12px;color:#6b7280;font-size:0.8rem;font-weight:600;padding:0 4px;">
-        ${caregivers.length} caregivers found · Sorted by availability
-      </div>
-      ${caregivers.map((c, i) => renderCard(c, i)).join('')}
-    `;
+    document.getElementById('card-counter').textContent = `${idx+1}/${state.caregivers.length}`;
   }
 
-  function renderCard(c, i) {
+  // ── RENDER CARD AT INDEX ──────────────────────────────────────
+  const AVATAR_COLORS = ['#7c3aed','#3b82f6','#059669','#dc2626','#d97706','#0891b2','#7c3aed'];
+  function renderCardAt(idx) {
+    const c = state.caregivers[idx];
+    if (!c) return;
+    state.cardIndex = idx;
+    const initials = (c.name||'').split(' ').map(n=>n[0]||'').join('').toUpperCase().slice(0,2)||'CG';
+    const col = AVATAR_COLORS[idx % AVATAR_COLORS.length];
+    const isShortlisted = state.shortlist.some(s => s.id === c.id);
     const availBadge = c.availableNow
       ? `<span class="available-now">🟢 Available Now</span>`
       : c.availableToday
-        ? `<span class="available-today">🟡 Available Today</span>`
-        : `<span style="background:#f3f4f6;color:#6b7280;font-size:0.7rem;font-weight:700;padding:3px 8px;border-radius:20px;">📅 This Week</span>`;
+      ? `<span class="available-today">🟡 Available Today</span>`
+      : `<span style="background:#f3f4f6;color:#6b7280;font-size:0.72rem;font-weight:700;padding:4px 10px;border-radius:20px;">📅 This Week</span>`;
 
-    const initials = (c.name||'').split(' ').map(n=>n[0]||'').join('').toUpperCase().slice(0,2) || 'CG';
-    const avatarColors = ['#7c3aed','#3b82f6','#059669','#dc2626','#d97706','#7c3aed'];
-    const col = avatarColors[i % avatarColors.length];
+    const stars = Array(5).fill(0).map((_,i)=>`<span class="star">${i<Math.floor(c.rating)?'★':'☆'}</span>`).join('');
 
-    return `
-      <div class="caregiver-card" style="margin-bottom:12px;padding:16px;" onclick="openProfile(${i})">
-        <div style="display:flex;gap:12px;align-items:flex-start;">
-          <!-- Avatar -->
-          <div style="width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,${col},#3b82f6);display:flex;align-items:center;justify-content:center;color:white;font-size:1.2rem;font-weight:800;flex-shrink:0;position:relative;">
-            ${initials}
-            ${c.availableNow ? `<div style="position:absolute;bottom:2px;right:2px;width:12px;height:12px;background:#10b981;border-radius:50%;border:2px solid white;"></div>` : ''}
-          </div>
-          <!-- Info -->
-          <div style="flex:1;min-width:0;">
-            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
-              <span style="font-weight:700;color:#1e1b4b;font-size:1rem;">${c.name}</span>
-              <div class="match-ring">${c.matchScore}%</div>
-            </div>
-            <div style="color:#6b7280;font-size:0.8rem;margin-bottom:6px;">${c.specialty} · ${c.yearsExp} yrs exp</div>
-            <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
-              ${availBadge}
-              <span style="color:#6b7280;font-size:0.75rem;">📍 ${c.distance} mi</span>
-            </div>
-            <div style="display:flex;align-items:center;justify-content:space-between;">
-              <div style="display:flex;align-items:center;gap:4px;">
-                <span style="color:#f59e0b;font-size:0.8rem;">★</span>
-                <span style="font-weight:700;color:#374151;font-size:0.85rem;">${c.rating}</span>
-                <span style="color:#9ca3af;font-size:0.75rem;">(${c.reviewCount})</span>
-              </div>
-              <span style="font-weight:800;color:#7c3aed;font-size:1rem;">$${c.hourlyRate}<span style="font-weight:500;color:#9ca3af;font-size:0.75rem;">/hr</span></span>
-            </div>
-          </div>
+    // Contact section
+    const contactHtml = state.subscriptionTier
+      ? `<div style="background:white;border-radius:16px;padding:16px;margin-bottom:16px;">
+           <h3 style="font-weight:700;color:#1e1b4b;font-size:0.9rem;margin-bottom:12px;">Contact</h3>
+           <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #f3f4f6;">
+             <span style="font-size:1rem;">📞</span>
+             <span style="color:#374151;font-weight:600;">${c.phone}</span>
+           </div>
+           <div style="display:flex;align-items:center;gap:10px;padding:8px 0;">
+             <span style="font-size:1rem;">✉️</span>
+             <span style="color:#374151;font-weight:600;">${c.email}</span>
+           </div>
+         </div>`
+      : `<div class="contact-locked-wrap" style="margin-bottom:16px;">
+           <h3 style="font-weight:700;color:#1e1b4b;font-size:0.9rem;margin-bottom:12px;">Contact</h3>
+           <div class="contact-row">
+             <span style="font-size:1rem;">📞</span>
+             <span class="contact-locked-text">${c.phone}</span>
+             <span class="lock-badge">🔒 Locked</span>
+           </div>
+           <div class="contact-row">
+             <span style="font-size:1rem;">✉️</span>
+             <span class="contact-locked-text">${c.email}</span>
+             <span class="lock-badge">🔒 Locked</span>
+           </div>
+           <button class="unlock-cta" onclick="showPage('page-subscribe')">
+             🔓 Subscribe to unlock contact info
+           </button>
+         </div>`;
+
+    const daysAvail = [0,1,2,3,4].includes(idx%7)?[true,true,true,true,true,false,false]:[true,false,true,false,true,false,false];
+    const dayLabels = ['M','T','W','T','F','S','S'];
+
+    document.getElementById('card-content').innerHTML = `
+      <!-- Hero section -->
+      <div class="hero-gradient" style="padding:24px 20px 28px;text-align:center;">
+        <div class="big-avatar" style="background:linear-gradient(135deg,${col},#3b82f6);">
+          ${initials}
+          ${c.availableNow?`<div style="position:absolute;bottom:6px;right:6px;width:18px;height:18px;background:#10b981;border-radius:50%;border:2px solid white;"></div>`:''}
         </div>
-        <!-- Quick book button -->
-        <div style="margin-top:12px;padding-top:12px;border-top:1px solid #f3f4f6;display:flex;gap:8px;">
-          <button onclick="event.stopPropagation();quickBook(${i})" style="flex:1;padding:10px;background:linear-gradient(135deg,#7c3aed,#3b82f6);color:white;border:none;border-radius:10px;font-weight:700;font-size:0.85rem;cursor:pointer;">
-            ⚡ Book Now
-          </button>
-          <button onclick="event.stopPropagation();openProfile(${i})" style="padding:10px 16px;background:#f8f7ff;color:#7c3aed;border:none;border-radius:10px;font-weight:600;font-size:0.85rem;cursor:pointer;border:1px solid #e0d9ff;">
-            View Profile
-          </button>
-        </div>
-      </div>
-    `;
-  }
-
-  // ============ FILTER ============
-  function filterResults(el, filter) {
-    document.querySelectorAll('#filter-chips .filter-chip').forEach(c => {
-      c.classList.remove('active');
-      c.style.background = '';
-      c.style.borderColor = 'rgba(255,255,255,0.3)';
-      c.style.color = 'white';
-    });
-    el.classList.add('active');
-    el.style.background = 'white';
-    el.style.borderColor = 'white';
-    el.style.color = '#7c3aed';
-    state.activeFilter = filter;
-
-    let filtered = [...state.caregivers];
-    if (filter === 'now') filtered = filtered.filter(c => c.availableNow);
-    else if (filter === 'today') filtered = filtered.filter(c => c.availableToday);
-    else if (filter === 'top') filtered = [...filtered].sort((a,b) => b.rating - a.rating);
-    else if (filter === 'close') filtered = [...filtered].sort((a,b) => parseFloat(a.distance) - parseFloat(b.distance));
-    else if (filter === 'affordable') filtered = [...filtered].sort((a,b) => a.hourlyRate - b.hourlyRate);
-
-    renderResults(filtered);
-  }
-
-  // ============ QUICK BOOK ============
-  function quickBook(idx) {
-    state.selectedCaregiver = state.caregivers[idx];
-    updateBookingPage();
-    showPage('page-booking');
-  }
-
-  // ============ OPEN PROFILE ============
-  function openProfile(idx) {
-    const c = state.caregivers[idx];
-    state.selectedCaregiver = c;
-
-    const initials = (c.name||'').split(' ').map(n=>n[0]||'').join('').toUpperCase().slice(0,2) || 'CG';
-    const availBadge = c.availableNow
-      ? `<span class="available-now" style="font-size:0.8rem;padding:4px 10px;">🟢 Available Now</span>`
-      : `<span class="available-today" style="font-size:0.8rem;padding:4px 10px;">🟡 Available Today</span>`;
-
-    const stars = Array(5).fill(0).map((_,i) => `<span class="star">${i < Math.floor(c.rating) ? '★' : '☆'}</span>`).join('');
-
-    document.getElementById('profile-content').innerHTML = `
-      <!-- Hero -->
-      <div class="hero-gradient" style="padding:20px;">
-        <button onclick="showPage('page-results')" style="background:rgba(255,255,255,0.1);border:none;border-radius:50%;width:36px;height:36px;color:white;cursor:pointer;font-size:1.1rem;display:flex;align-items:center;justify-content:center;margin-bottom:16px;">←</button>
-        <div style="display:flex;align-items:center;gap:16px;">
-          <div style="width:80px;height:80px;border-radius:50%;background:linear-gradient(135deg,#7c3aed,#3b82f6);display:flex;align-items:center;justify-content:center;color:white;font-size:1.8rem;font-weight:800;position:relative;border:3px solid rgba(255,255,255,0.3);">
-            ${initials}
-            ${c.availableNow ? `<div style="position:absolute;bottom:4px;right:4px;width:16px;height:16px;background:#10b981;border-radius:50%;border:2px solid white;"></div>` : ''}
-          </div>
-          <div>
-            <h2 style="color:white;font-size:1.3rem;font-weight:800;margin-bottom:4px;">${c.name}</h2>
-            <div style="color:rgba(255,255,255,0.7);font-size:0.85rem;margin-bottom:6px;">${c.specialty} · ${c.yearsExp} years exp</div>
-            <div style="display:flex;align-items:center;gap:8px;">
-              ${availBadge}
-              <span style="color:rgba(255,255,255,0.6);font-size:0.8rem;">📍 ${c.distance} mi away</span>
-            </div>
-          </div>
+        <h2 style="color:white;font-size:1.4rem;font-weight:800;margin-bottom:6px;">${c.name}</h2>
+        <div style="color:rgba(255,255,255,0.7);font-size:0.85rem;margin-bottom:10px;">${c.specialty} · ${c.yearsExp} years exp</div>
+        <div style="display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;">
+          ${availBadge}
+          <span style="color:rgba(255,255,255,0.6);font-size:0.82rem;">📍 ${c.distance} mi</span>
         </div>
       </div>
 
-      <!-- Stat bar -->
-      <div style="background:white;padding:16px 20px;display:flex;justify-content:space-around;border-bottom:1px solid #f3f4f6;">
+      <!-- Stats bar -->
+      <div style="background:white;display:flex;justify-content:space-around;padding:16px;border-bottom:1px solid #f3f4f6;">
         <div style="text-align:center;">
-          <div style="font-weight:800;color:#7c3aed;font-size:1.1rem;">${c.rating} ${stars}</div>
+          <div style="font-weight:800;color:#7c3aed;font-size:1rem;">${c.rating}</div>
+          <div style="font-size:0.9rem;">${stars}</div>
           <div style="color:#9ca3af;font-size:0.7rem;">${c.reviewCount} reviews</div>
         </div>
+        <div style="width:1px;background:#f3f4f6;"></div>
         <div style="text-align:center;">
           <div style="font-weight:800;color:#7c3aed;font-size:1.1rem;">$${c.hourlyRate}/hr</div>
           <div style="color:#9ca3af;font-size:0.7rem;">No hidden fees</div>
         </div>
+        <div style="width:1px;background:#f3f4f6;"></div>
         <div style="text-align:center;">
-          <div style="font-weight:800;color:#7c3aed;font-size:1.1rem;">${c.matchScore}%</div>
-          <div style="color:#9ca3af;font-size:0.7rem;">Match score</div>
+          <div class="match-ring" style="margin:0 auto 4px;width:38px;height:38px;font-size:0.75rem;">${c.matchScore}%</div>
+          <div style="color:#9ca3af;font-size:0.7rem;">match</div>
         </div>
       </div>
 
       <!-- Body -->
-      <div style="padding:20px;background:#f8f7ff;min-height:60vh;padding-bottom:120px;">
-        <!-- Bio -->
+      <div style="padding:16px;background:#f8f7ff;">
+        <!-- About -->
         <div style="background:white;border-radius:16px;padding:16px;margin-bottom:16px;">
-          <h3 style="font-weight:700;color:#1e1b4b;margin-bottom:8px;">About</h3>
-          <p style="color:#6b7280;font-size:0.9rem;line-height:1.6;">${c.bio}</p>
+          <h3 style="font-weight:700;color:#1e1b4b;font-size:0.9rem;margin-bottom:8px;">About</h3>
+          <p style="color:#6b7280;font-size:0.88rem;line-height:1.6;margin:0;">${c.bio}</p>
         </div>
 
         <!-- Skills -->
         <div style="background:white;border-radius:16px;padding:16px;margin-bottom:16px;">
-          <h3 style="font-weight:700;color:#1e1b4b;margin-bottom:12px;">Skills & Specializations</h3>
-          <div style="display:flex;flex-wrap:wrap;gap:8px;">
-            ${(c.languages||['English']).map(l=>`<span style="background:#f0fdf4;color:#065f46;padding:5px 10px;border-radius:20px;font-size:0.75rem;font-weight:600;">🗣 ${l}</span>`).join('')}
-            <span style="background:#f5f3ff;color:#7c3aed;padding:5px 10px;border-radius:20px;font-size:0.75rem;font-weight:600;">${c.specialty}</span>
-            <span style="background:#eff6ff;color:#1d4ed8;padding:5px 10px;border-radius:20px;font-size:0.75rem;font-weight:600;">✅ Background Checked</span>
-            <span style="background:#fff7ed;color:#c2410c;padding:5px 10px;border-radius:20px;font-size:0.75rem;font-weight:600;">🏥 CPR Certified</span>
+          <h3 style="font-weight:700;color:#1e1b4b;font-size:0.9rem;margin-bottom:10px;">Skills & Certifications</h3>
+          <div>
+            <span class="skill-tag" style="background:#f5f3ff;color:#7c3aed;">${c.specialty}</span>
+            ${(c.languages||['English']).map(l=>`<span class="skill-tag" style="background:#f0fdf4;color:#065f46;">🗣 ${l}</span>`).join('')}
+            <span class="skill-tag" style="background:#eff6ff;color:#1d4ed8;">✅ Background Checked</span>
+            <span class="skill-tag" style="background:#fff7ed;color:#c2410c;">🏥 CPR Certified</span>
+            <span class="skill-tag" style="background:#fef3c7;color:#92400e;">⭐ ${c.yearsExp} yrs exp</span>
           </div>
         </div>
 
         <!-- Availability -->
         <div style="background:white;border-radius:16px;padding:16px;margin-bottom:16px;">
-          <h3 style="font-weight:700;color:#1e1b4b;margin-bottom:12px;">Availability</h3>
-          <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;text-align:center;">
-            ${['M','T','W','T','F','S','S'].map((d,i) => {
-              const avail = [0,1,2,3,4].includes(i);
-              return `<div style="padding:8px 4px;border-radius:10px;font-size:0.7rem;font-weight:700;background:${avail?'#f5f3ff':'#f9fafb'};color:${avail?'#7c3aed':'#d1d5db'};">
+          <h3 style="font-weight:700;color:#1e1b4b;font-size:0.9rem;margin-bottom:12px;">Weekly Availability</h3>
+          <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;">
+            ${dayLabels.map((d,i) => `
+              <div class="day-cell ${daysAvail[i]?'on':''}">
                 <div>${d}</div>
-                ${avail?`<div style="width:6px;height:6px;background:#7c3aed;border-radius:50%;margin:4px auto 0;"></div>`:''}
-              </div>`;
-            }).join('')}
+                ${daysAvail[i]?`<div style="width:5px;height:5px;background:#7c3aed;border-radius:50%;margin:4px auto 0;"></div>`:''}
+              </div>`).join('')}
           </div>
         </div>
 
+        <!-- Contact (gated) -->
+        ${contactHtml}
+
         <!-- Reviews -->
-        <div style="background:white;border-radius:16px;padding:16px;">
-          <h3 style="font-weight:700;color:#1e1b4b;margin-bottom:12px;">Recent Reviews</h3>
+        <div style="background:white;border-radius:16px;padding:16px;margin-bottom:8px;">
+          <h3 style="font-weight:700;color:#1e1b4b;font-size:0.9rem;margin-bottom:12px;">Reviews</h3>
           ${[
-            {name:'Sarah M.', rating:5, text:'Absolutely wonderful caregiver. My mother loves her visits!'},
-            {name:'James R.', rating:5, text:'Professional, kind, and very reliable. Highly recommend.'},
-            {name:'Linda K.', rating:4, text:'Great with my dad. Always on time and very caring.'}
-          ].map(r => `
-            <div style="padding:12px 0;border-bottom:1px solid #f3f4f6;">
+            {name:'Sarah M.',rating:5,text:'Absolutely wonderful. My mother loves her visits and always smiles when she arrives!'},
+            {name:'James R.',rating:5,text:'Professional, kind, and very reliable. Would highly recommend to any family.'},
+            {name:'Linda K.',rating:4,text:'Great with my dad. Always on time and very caring.'}
+          ].map(r=>`
+            <div class="review-item">
               <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
                 <span style="font-weight:600;color:#374151;font-size:0.85rem;">${r.name}</span>
                 <span style="color:#f59e0b;font-size:0.8rem;">${'★'.repeat(r.rating)}</span>
               </div>
               <p style="color:#6b7280;font-size:0.82rem;margin:0;">${r.text}</p>
-            </div>
-          `).join('')}
+            </div>`).join('')}
         </div>
       </div>
     `;
 
-    document.getElementById('profile-sticky').style.display = 'block';
-    document.getElementById('profile-rate-display').textContent = `$${c.hourlyRate}/hr`;
-    document.getElementById('profile-avail-badge').innerHTML = c.availableNow
-      ? `<span class="available-now">🟢 Available Now</span>`
-      : `<span class="available-today">🟡 Today</span>`;
-
-    updateBookingPage();
-    showPage('page-profile');
+    document.getElementById('card-scroll').scrollTop = 0;
+    updateCardNav(idx);
+    updateProgressDots(idx);
   }
 
-  // ============ DURATION ============
+  // ── CARD NAV ──────────────────────────────────────────────────
+  function updateCardNav(idx) {
+    idx = idx ?? state.cardIndex;
+    const total = state.caregivers.length;
+    const c = state.caregivers[idx];
+    const isShortlisted = c && state.shortlist.some(s => s.id === c.id);
+
+    // Shortlist btn
+    const sBtn = document.getElementById('btn-shortlist');
+    if (sBtn) {
+      sBtn.className = 'btn-shortlist' + (isShortlisted ? ' active' : '');
+      sBtn.innerHTML = isShortlisted ? '💜 Shortlisted' : '♡ Shortlist';
+    }
+
+    // Next/Back btn
+    const nBtn = document.getElementById('btn-next');
+    if (nBtn) {
+      if (idx >= total - 1) {
+        nBtn.textContent = '← Back';
+        nBtn.onclick = () => { state.cardIndex = 0; renderCardAt(0); };
+      } else {
+        nBtn.textContent = 'Next →';
+        nBtn.onclick = nextCard;
+      }
+    }
+
+    updateShortlistFab();
+  }
+
+  function nextCard() {
+    if (state.cardIndex < state.caregivers.length - 1) {
+      renderCardAt(state.cardIndex + 1);
+    }
+  }
+
+  function shortlistCurrent() {
+    const c = state.caregivers[state.cardIndex];
+    if (!c) return;
+    const idx = state.shortlist.findIndex(s => s.id === c.id);
+    if (idx > -1) {
+      state.shortlist.splice(idx, 1);
+    } else {
+      state.shortlist.push(c);
+      // Brief "added" animation
+      const sBtn = document.getElementById('btn-shortlist');
+      if (sBtn) {
+        sBtn.innerHTML = '💜 Added!';
+        sBtn.className = 'btn-shortlist active';
+        setTimeout(() => updateCardNav(), 800);
+        return;
+      }
+    }
+    updateCardNav();
+  }
+
+  function updateShortlistFab() {
+    const n = state.shortlist.length;
+    const fab = document.getElementById('shortlist-fab');
+    const empty = document.getElementById('shortlist-fab-empty');
+    if (n > 0) {
+      fab.style.display = 'flex';
+      empty.style.display = 'none';
+      document.getElementById('shortlist-count-fab').textContent = n;
+    } else {
+      fab.style.display = 'none';
+      empty.style.display = 'block';
+    }
+  }
+
+  // ── SHORTLIST PAGE ────────────────────────────────────────────
+  function openShortlist() { showPage('page-shortlist'); }
+
+  function renderShortlist() {
+    const list = document.getElementById('shortlist-list');
+    const empty = document.getElementById('shortlist-empty');
+    const cta = document.getElementById('shortlist-cta');
+    const sub = document.getElementById('shortlist-subtitle');
+    const sub2 = document.getElementById('subscribe-nudge');
+
+    if (state.shortlist.length === 0) {
+      empty.style.display = 'block';
+      list.innerHTML = '';
+      if (cta) cta.style.display = 'none';
+      return;
+    }
+
+    empty.style.display = 'none';
+    if (cta) cta.style.display = 'block';
+    sub.textContent = `${state.shortlist.length} caregiver${state.shortlist.length>1?'s':''} saved`;
+
+    // Hide subscribe nudge if already subscribed
+    if (sub2) sub2.style.display = state.subscriptionTier ? 'none' : 'block';
+
+    list.innerHTML = state.shortlist.map((c, i) => {
+      const col = AVATAR_COLORS[i % AVATAR_COLORS.length];
+      const initials = (c.name||'').split(' ').map(n=>n[0]||'').join('').toUpperCase().slice(0,2)||'CG';
+      const availBadge = c.availableNow
+        ? `<span class="available-now">🟢 Now</span>`
+        : `<span class="available-today">🟡 Today</span>`;
+      return `
+        <div class="shortlist-card" onclick="bookFromShortlist(${i})">
+          <div class="mini-avatar" style="background:linear-gradient(135deg,${col},#3b82f6);">${initials}</div>
+          <div style="flex:1;min-width:0;">
+            <div style="font-weight:700;color:#1e1b4b;font-size:0.95rem;">${c.name}</div>
+            <div style="color:#6b7280;font-size:0.8rem;margin:2px 0;">${c.specialty} · ⭐${c.rating} · $${c.hourlyRate}/hr</div>
+            <div style="display:flex;gap:8px;align-items:center;">${availBadge} <span style="color:#9ca3af;font-size:0.75rem;">📍${c.distance} mi</span></div>
+          </div>
+          <button class="remove-btn" onclick="event.stopPropagation();removeFromShortlist(${i})">✕</button>
+        </div>`;
+    }).join('');
+  }
+
+  function removeFromShortlist(idx) {
+    state.shortlist.splice(idx, 1);
+    renderShortlist();
+    updateShortlistFab();
+    // also re-render current card nav to reflect removal
+    if (state.caregivers.length) updateCardNav();
+  }
+
+  function bookFromShortlist(idx) {
+    state.selectedCaregiver = state.shortlist[idx];
+    updateBookingPage();
+    showPage('page-booking');
+  }
+
+  function autoSchedule() {
+    // Pick best match (highest matchScore) from shortlist
+    const best = state.shortlist.reduce((b,c) => c.matchScore > b.matchScore ? c : b, state.shortlist[0]);
+    state.selectedCaregiver = best;
+    updateBookingPage();
+    showPage('page-booking');
+  }
+
+  // ── SUBSCRIPTION ──────────────────────────────────────────────
+  function selectPlan(tier) {
+    state.subscriptionTier = tier;
+    const names = {essential:'Essential',family:'Family',premium:'Premium'};
+    // Show brief toast
+    const toast = document.createElement('div');
+    toast.style.cssText = `position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#1e1b4b;color:white;padding:16px 24px;border-radius:16px;font-weight:700;z-index:9999;font-size:0.95rem;box-shadow:0 20px 60px rgba(0,0,0,0.5);text-align:center;`;
+    toast.innerHTML = `✅ ${names[tier]} Plan activated!<br><span style="font-size:0.8rem;opacity:0.7;font-weight:400;">Contact info is now unlocked</span>`;
+    document.body.appendChild(toast);
+    setTimeout(() => {
+      toast.remove();
+      showPage('page-shortlist');
+      if (state.caregivers.length) renderCardAt(state.cardIndex);
+    }, 1800);
+  }
+
+  // ── BOOKING ───────────────────────────────────────────────────
   function selectDuration(el, hrs) {
     document.querySelectorAll('.dur-btn').forEach(b => b.classList.remove('selected'));
     el.classList.add('selected');
@@ -980,20 +1157,16 @@
     document.getElementById('custom-hours').style.display = 'none';
     updatePriceSummary();
   }
-
   function toggleCustomHours() {
     const inp = document.getElementById('custom-hours');
     inp.style.display = inp.style.display === 'none' ? 'block' : 'none';
     if (inp.style.display === 'block') inp.focus();
   }
-
   function onCustomHours(inp) {
-    const hrs = parseInt(inp.value) || 1;
-    state.duration = hrs;
+    state.duration = parseInt(inp.value) || 1;
     document.querySelectorAll('.dur-btn').forEach(b => b.classList.remove('selected'));
     updatePriceSummary();
   }
-
   function updatePriceSummary() {
     const c = state.selectedCaregiver;
     if (!c) return;
@@ -1007,267 +1180,161 @@
     document.getElementById('price-total').textContent = `$${total.toFixed(2)}`;
     document.getElementById('confirm-total').textContent = total.toFixed(2);
   }
-
   function updateBookingPage() {
     const c = state.selectedCaregiver;
     if (!c) return;
-    const initials = (c.name||'').split(' ').map(n=>n[0]||'').join('').toUpperCase().slice(0,2) || 'CG';
+    const initials = (c.name||'').split(' ').map(n=>n[0]||'').join('').toUpperCase().slice(0,2)||'CG';
     document.getElementById('booking-caregiver-card').innerHTML = `
       <div style="width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,#7c3aed,#3b82f6);display:flex;align-items:center;justify-content:center;color:white;font-size:1rem;font-weight:800;flex-shrink:0;">${initials}</div>
       <div>
         <div style="font-weight:700;color:#1e1b4b;">${c.name}</div>
         <div style="color:#6b7280;font-size:0.8rem;">${c.specialty} · ⭐${c.rating} · $${c.hourlyRate}/hr</div>
-        ${c.availableNow ? '<span class="available-now" style="margin-top:4px;display:inline-block;">🟢 Available Now</span>' : ''}
-      </div>
-    `;
+        ${c.availableNow?'<span class="available-now" style="margin-top:4px;display:inline-block;">🟢 Available Now</span>':''}
+      </div>`;
     updatePriceSummary();
   }
 
-  // ============ SUBMIT BOOKING ============
+  // ── SUBMIT BOOKING ────────────────────────────────────────────
   async function submitBooking() {
     const name = document.getElementById('booking-name').value.trim();
     const contact = document.getElementById('booking-contact').value.trim();
-
-    if (!name || !contact) {
-      alert('Please enter your name and phone/email.');
-      return;
-    }
-
+    if (!name || !contact) { alert('Please enter your name and contact details.'); return; }
     const btn = document.getElementById('confirm-btn');
-    btn.innerHTML = '⏳ Confirming...';
-    btn.disabled = true;
-
+    btn.innerHTML = '⏳ Confirming...'; btn.disabled = true;
     const c = state.selectedCaregiver;
     const rate = c.hourlyRate || 28;
     const subtotal = rate * state.duration;
     const fee = subtotal * 0.1;
     const total = subtotal + fee;
-
-    // Detect if contact is email or phone
     const isEmail = contact.includes('@');
     const bookingData = {
-      caregiverId: c.id || c._id || 1,
-      caregiverName: c.name,
-      clientName: name,
+      caregiverId: c.id || 1, caregiverName: c.name, clientName: name,
       clientEmail: isEmail ? contact : `${name.toLowerCase().replace(/\s+/g,'.')}@gotocare.temp`,
       clientPhone: isEmail ? '' : contact,
-      duration: state.duration,
-      careTypes: state.careTypes,
+      duration: state.duration, careTypes: state.careTypes,
       careType: state.careTypes.join(', ') || 'General Care',
-      location: state.location || 'Atlanta, GA',
-      urgency: state.urgency,
-      totalAmount: total,
-      notes: `${state.careTypes.join(', ') || 'General Care'} · ${state.urgency}`
+      location: state.location || 'Atlanta, GA', urgency: state.urgency, totalAmount: total,
     };
-
     let bookingId = `GTC-${Math.random().toString(36).substr(2,8).toUpperCase()}`;
     let checkoutUrl = null;
-
     try {
-      // Submit booking
-      const bookRes = await fetch(`${API_BASE}/api/submit-booking`, {
-        method: 'POST',
-        headers: {'Content-Type':'application/json'},
-        body: JSON.stringify(bookingData)
-      });
-
-      if (bookRes.ok) {
-        const bookData = await bookRes.json();
-        bookingId = bookData.bookingId || bookingId;
-
-        // Try Stripe checkout
-        const chkRes = await fetch(`${API_BASE}/api/create-marketplace-checkout`, {
-          method: 'POST',
-          headers: {'Content-Type':'application/json'},
-          body: JSON.stringify({
-            bookingId,
-            caregiverName: c.name,
-            hours: state.duration,
-            totalAmount: total,
-            successUrl: window.location.href + '?booking=success&id=' + bookingId,
-            cancelUrl: window.location.href + '?booking=cancel'
-          })
-        });
-
-        if (chkRes.ok) {
-          const chkData = await chkRes.json();
-          checkoutUrl = chkData.url || chkData.checkoutUrl;
-        }
+      const br = await fetch(`${API_BASE}/api/submit-booking`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(bookingData)});
+      if (br.ok) {
+        const bd = await br.json();
+        bookingId = bd.bookingId || bookingId;
+        const cr = await fetch(`${API_BASE}/api/create-marketplace-checkout`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({bookingId,caregiverName:c.name,hours:state.duration,totalAmount:total,successUrl:window.location.href+'?booking=success&id='+bookingId,cancelUrl:window.location.href+'?booking=cancel'})});
+        if (cr.ok) { const cd = await cr.json(); checkoutUrl = cd.url || cd.checkoutUrl; }
       }
-    } catch(e) {
-      console.log('Booking submitted in demo mode');
-    }
-
-    // Show confirmation (redirect to Stripe if available, else show confirm)
-    if (checkoutUrl) {
-      window.location.href = checkoutUrl;
-    } else {
-      showConfirmation(bookingId, name, c, total);
-    }
-
+    } catch(e) { console.log('Demo mode'); }
+    if (checkoutUrl) { window.location.href = checkoutUrl; }
+    else { showConfirmation(bookingId, name, c, total); }
     btn.innerHTML = `Confirm & Pay $<span id="confirm-total">${total.toFixed(2)}</span> →`;
     btn.disabled = false;
   }
 
   function showConfirmation(bookingId, clientName, caregiver, total) {
-    const urgencyText = {
-      now: 'within the next 30 minutes',
-      today: 'today',
-      tomorrow: 'tomorrow',
-      week: 'this week'
-    }[state.urgency] || 'shortly';
-
-    document.getElementById('confirm-message').textContent =
-      `${caregiver.name} will reach out to you ${urgencyText}.`;
-
+    const urgencyText = {now:'within 30 minutes',today:'today',tomorrow:'tomorrow',week:'this week'}[state.urgency]||'shortly';
+    document.getElementById('confirm-message').textContent = `${caregiver.name} will reach out ${urgencyText}.`;
     document.getElementById('confirm-caregiver-name').textContent = caregiver.name;
-
     document.getElementById('confirm-details').innerHTML = `
-      <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #e5e7eb;">
-        <span style="color:#6b7280;font-size:0.85rem;">Booking ID</span>
-        <span style="font-weight:700;color:#1e1b4b;font-size:0.85rem;">${bookingId}</span>
-      </div>
-      <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #e5e7eb;">
-        <span style="color:#6b7280;font-size:0.85rem;">Caregiver</span>
-        <span style="font-weight:700;color:#1e1b4b;font-size:0.85rem;">${caregiver.name}</span>
-      </div>
-      <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #e5e7eb;">
-        <span style="color:#6b7280;font-size:0.85rem;">Care Type</span>
-        <span style="font-weight:700;color:#1e1b4b;font-size:0.85rem;">${state.careTypes.join(', ') || 'General Care'}</span>
-      </div>
-      <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #e5e7eb;">
-        <span style="color:#6b7280;font-size:0.85rem;">Duration</span>
-        <span style="font-weight:700;color:#1e1b4b;font-size:0.85rem;">${state.duration} hours</span>
-      </div>
-      <div style="display:flex;justify-content:space-between;padding:10px 0 0;">
-        <span style="color:#1e1b4b;font-weight:700;font-size:0.9rem;">Total Paid</span>
-        <span style="font-weight:800;color:#7c3aed;font-size:1rem;">$${total.toFixed(2)}</span>
-      </div>
-    `;
-
+      <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #e5e7eb;"><span style="color:#6b7280;font-size:0.85rem;">Booking ID</span><span style="font-weight:700;color:#1e1b4b;font-size:0.85rem;">${bookingId}</span></div>
+      <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #e5e7eb;"><span style="color:#6b7280;font-size:0.85rem;">Caregiver</span><span style="font-weight:700;color:#1e1b4b;font-size:0.85rem;">${caregiver.name}</span></div>
+      <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #e5e7eb;"><span style="color:#6b7280;font-size:0.85rem;">Care Type</span><span style="font-weight:700;color:#1e1b4b;font-size:0.85rem;">${state.careTypes.join(', ')||'General Care'}</span></div>
+      <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #e5e7eb;"><span style="color:#6b7280;font-size:0.85rem;">Duration</span><span style="font-weight:700;color:#1e1b4b;font-size:0.85rem;">${state.duration} hours</span></div>
+      <div style="display:flex;justify-content:space-between;padding:10px 0 0;"><span style="color:#1e1b4b;font-weight:700;">Total</span><span style="font-weight:800;color:#7c3aed;font-size:1rem;">$${total.toFixed(2)}</span></div>`;
     showPage('page-confirm');
   }
 
-  // ============ HANDLE RETURN FROM STRIPE ============
+  // ── STRIPE RETURN ─────────────────────────────────────────────
   function checkStripeReturn() {
     const params = new URLSearchParams(window.location.search);
     if (params.get('booking') === 'success') {
       const bookingId = params.get('id') || 'GTC-CONFIRMED';
-      showConfirmation(bookingId, 'you', state.selectedCaregiver || {name:'Your caregiver', hourlyRate:28}, state.duration * 28 * 1.1);
+      showConfirmation(bookingId, 'you', state.selectedCaregiver || {name:'Your caregiver',hourlyRate:28}, state.duration*28*1.1);
     }
   }
 
-  // ============ MOCK DATA ============
+  // ── MOCK DATA ──────────────────────────────────────────────────
   function getMockCaregivers() {
     return [
-      { id:1, name:'Maria Santos', specialty:'Elder Care & Dementia', yearsExp:8, hourlyRate:28, rating:4.9, reviewCount:142, distance:'0.8', availableNow:true, availableToday:true, matchScore:98, languages:['English','Spanish'], bio:'Compassionate elder care specialist with 8 years of experience. Expert in dementia and Alzheimers care, medication management, and mobility assistance. Treated like family by every client.' },
-      { id:2, name:'James Okafor', specialty:'Post-Surgery & Mobility', yearsExp:6, hourlyRate:24, rating:4.8, reviewCount:89, distance:'1.2', availableNow:true, availableToday:true, matchScore:94, languages:['English'], bio:'Certified home health aide specializing in post-surgical recovery and physical therapy assistance. Reliable, patient, and dedicated to helping clients regain independence.' },
-      { id:3, name:'Ava Chen', specialty:'Child & Special Needs', yearsExp:5, hourlyRate:26, rating:4.9, reviewCount:67, distance:'1.5', availableNow:true, availableToday:true, matchScore:91, languages:['English','Mandarin'], bio:'Specialized in caring for children with special needs. Creates nurturing routines, helps with therapy exercises, and communicates clearly with families.' },
-      { id:4, name:'Rosa Delgado', specialty:'Companionship & Daily Living', yearsExp:4, hourlyRate:22, rating:4.7, reviewCount:54, distance:'2.1', availableNow:false, availableToday:true, matchScore:87, languages:['English','Spanish'], bio:'Warm, patient companion who loves building genuine relationships. Helps with daily living, errands, light housework and meal prep.' },
-      { id:5, name:'David Kim', specialty:'Dementia & Alzheimers', yearsExp:7, hourlyRate:30, rating:4.9, reviewCount:118, distance:'2.4', availableNow:false, availableToday:true, matchScore:85, languages:['English','Korean'], bio:'Memory care specialist trained in Teepa Snow dementia care approach. Calm, structured environment that reduces anxiety and confusion for patients.' },
-      { id:6, name:'Patricia Wells', specialty:'Elder Care & Overnight', yearsExp:10, hourlyRate:32, rating:5.0, reviewCount:203, distance:'3.0', availableNow:false, availableToday:false, matchScore:82, languages:['English'], bio:'Decade of experience in overnight and live-in care. Trusted by families across Atlanta. Expert in medication management and emergency response.' },
-      { id:7, name:'Marcus Johnson', specialty:'Disability & Rehabilitation', yearsExp:3, hourlyRate:20, rating:4.6, reviewCount:31, distance:'3.3', availableNow:false, availableToday:false, matchScore:78, languages:['English'], bio:'CNA certified with a background in physical rehabilitation. Enthusiastic about helping clients achieve their maximum independence.' },
+      {id:1,name:'Maria Santos',specialty:'Elder Care & Dementia',yearsExp:8,hourlyRate:28,rating:4.9,reviewCount:142,distance:'0.8',availableNow:true,availableToday:true,matchScore:98,languages:['English','Spanish'],bio:'Compassionate elder care specialist with 8 years of experience. Expert in dementia and Alzheimers care, medication management, and mobility assistance. Treated like family by every client.',phone:'(470) 555-2847',email:'m.santos@gotocare.demo'},
+      {id:2,name:'James Okafor',specialty:'Post-Surgery & Mobility',yearsExp:6,hourlyRate:24,rating:4.8,reviewCount:89,distance:'1.2',availableNow:true,availableToday:true,matchScore:94,languages:['English'],bio:'Certified home health aide specializing in post-surgical recovery and physical therapy assistance. Reliable, patient, and dedicated to helping clients regain independence.',phone:'(404) 555-3912',email:'j.okafor@gotocare.demo'},
+      {id:3,name:'Ava Chen',specialty:'Child & Special Needs',yearsExp:5,hourlyRate:26,rating:4.9,reviewCount:67,distance:'1.5',availableNow:true,availableToday:true,matchScore:91,languages:['English','Mandarin'],bio:'Specialized in caring for children with special needs. Creates nurturing routines, helps with therapy exercises, and communicates clearly with families.',phone:'(678) 555-1823',email:'a.chen@gotocare.demo'},
+      {id:4,name:'Rosa Delgado',specialty:'Companionship & Daily Living',yearsExp:4,hourlyRate:22,rating:4.7,reviewCount:54,distance:'2.1',availableNow:false,availableToday:true,matchScore:87,languages:['English','Spanish'],bio:'Warm, patient companion who loves building genuine relationships. Helps with daily living, errands, light housework and meal prep.',phone:'(770) 555-4401',email:'r.delgado@gotocare.demo'},
+      {id:5,name:'David Kim',specialty:'Dementia & Alzheimers',yearsExp:7,hourlyRate:30,rating:4.9,reviewCount:118,distance:'2.4',availableNow:false,availableToday:true,matchScore:85,languages:['English','Korean'],bio:'Memory care specialist trained in Teepa Snow dementia care approach. Calm, structured environment that reduces anxiety and confusion for patients.',phone:'(404) 555-9034',email:'d.kim@gotocare.demo'},
+      {id:6,name:'Patricia Wells',specialty:'Elder Care & Overnight',yearsExp:10,hourlyRate:32,rating:5.0,reviewCount:203,distance:'3.0',availableNow:false,availableToday:false,matchScore:82,languages:['English'],bio:'A decade of experience in overnight and live-in care. Trusted by families across Atlanta. Expert in medication management and emergency response.',phone:'(678) 555-7720',email:'p.wells@gotocare.demo'},
+      {id:7,name:'Marcus Johnson',specialty:'Disability & Rehabilitation',yearsExp:3,hourlyRate:20,rating:4.6,reviewCount:31,distance:'3.3',availableNow:false,availableToday:false,matchScore:78,languages:['English'],bio:'CNA certified with a background in physical rehabilitation. Enthusiastic about helping clients achieve their maximum independence safely.',phone:'(770) 555-5519',email:'m.johnson@gotocare.demo'},
     ];
   }
 
-  // ============ INIT ============
+  // ── INIT ───────────────────────────────────────────────────────
   window.addEventListener('DOMContentLoaded', () => {
     checkStripeReturn();
-
-    // If arriving from landing page with care type pre-selected
     const params = new URLSearchParams(window.location.search);
     const care = params.get('care');
     const loc = params.get('location');
     if (care) {
-      state.careTypes = care ? care.split(',').map(s => s.trim()) : [];
+      state.careTypes = care.split(',').map(s=>s.trim());
       document.querySelectorAll('.care-tile').forEach(t => {
         const lbl = t.querySelector('.label')?.textContent?.trim();
         if (lbl && state.careTypes.includes(lbl)) t.classList.add('selected');
-      });
-      document.querySelectorAll('.care-tile').forEach(t => {
-        if (t.querySelector('.label').textContent === care) t.classList.add('selected');
       });
     }
     if (loc) {
       state.location = loc;
       document.getElementById('location-input').value = loc;
     }
-
-    // If arriving with both care + location, auto-search
-    if (care && loc) {
-      setTimeout(() => findCaregivers(), 300);
-    }
+    // Auto-start if arriving from landing page with params
+    if (care || loc) setTimeout(findCaregivers, 300);
   });
 
-  // ── PWA: Service Worker Registration ──
+  // ── PWA: Service Worker ────────────────────────────────────────
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-      navigator.serviceWorker.register('/sw.js').then(reg => {
-        console.log('[GoToCare] SW registered:', reg.scope);
-      }).catch(err => console.warn('[GoToCare] SW failed:', err));
+      navigator.serviceWorker.register('/sw.js').catch(() => {});
     });
   }
 
-  // ── PWA: Install Prompt (Android Chrome) ──
+  // ── PWA: Install Prompt ────────────────────────────────────────
   let deferredInstallPrompt = null;
-  const installBanner   = document.getElementById('install-banner');
-  const installAccept   = document.getElementById('install-btn-accept');
-  const installDismiss  = document.getElementById('install-btn-dismiss');
+  const installBanner  = document.getElementById('install-banner');
+  const installAccept  = document.getElementById('install-btn-accept');
+  const installDismiss = document.getElementById('install-btn-dismiss');
 
   window.addEventListener('beforeinstallprompt', e => {
     e.preventDefault();
     deferredInstallPrompt = e;
-    // Show banner after 4 seconds on the dispatch screen
     setTimeout(() => {
-      if (!localStorage.getItem('gc_install_dismissed')) {
-        installBanner.classList.add('show');
-      }
+      if (!localStorage.getItem('gc_install_dismissed')) installBanner.classList.add('show');
     }, 4000);
   });
-
   installAccept.addEventListener('click', () => {
     installBanner.classList.remove('show');
     if (deferredInstallPrompt) {
       deferredInstallPrompt.prompt();
-      deferredInstallPrompt.userChoice.then(result => {
-        if (result.outcome === 'accepted') localStorage.setItem('gc_install_dismissed', '1');
+      deferredInstallPrompt.userChoice.then(r => {
+        if (r.outcome === 'accepted') localStorage.setItem('gc_install_dismissed','1');
         deferredInstallPrompt = null;
       });
     }
   });
-
   installDismiss.addEventListener('click', () => {
     installBanner.classList.remove('show');
-    localStorage.setItem('gc_install_dismissed', '1');
+    localStorage.setItem('gc_install_dismissed','1');
   });
 
-  // ── iOS: "Add to Home Screen" hint (Safari doesn't fire beforeinstallprompt) ──
+  // ── iOS hint ───────────────────────────────────────────────────
   const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
-  const isInStandaloneMode = window.matchMedia('(display-mode: standalone)').matches;
-  if (isIOS && !isInStandaloneMode && !localStorage.getItem('gc_ios_hint_shown')) {
+  const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
+  if (isIOS && !isStandalone && !localStorage.getItem('gc_ios_hint_shown')) {
     setTimeout(() => {
       const hint = document.createElement('div');
-      hint.style.cssText = `
-        position:fixed;bottom:24px;left:50%;transform:translateX(-50%);
-        background:rgba(30,30,50,0.97);color:white;border-radius:16px;
-        padding:16px 20px;font-size:0.85rem;text-align:center;
-        box-shadow:0 8px 32px rgba(0,0,0,0.4);z-index:9998;
-        max-width:calc(100vw - 32px);backdrop-filter:blur(12px);
-        border:1px solid rgba(124,58,237,0.3);
-      `;
-      hint.innerHTML = `
-        <div style="font-size:1.4rem;margin-bottom:8px;">📲</div>
-        <strong>Add GoToCare to your home screen</strong><br>
-        <span style="opacity:0.7">Tap <strong>Share</strong> then <strong>"Add to Home Screen"</strong></span>
-        <br><button onclick="this.parentNode.remove();localStorage.setItem('gc_ios_hint_shown','1')"
-          style="margin-top:12px;background:#7c3aed;color:white;border:none;border-radius:8px;
-          padding:8px 20px;font-size:0.85rem;font-weight:600;">Got it</button>
-      `;
+      hint.style.cssText = `position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:rgba(30,30,50,0.97);color:white;border-radius:16px;padding:16px 20px;font-size:0.85rem;text-align:center;box-shadow:0 8px 32px rgba(0,0,0,0.4);z-index:9998;max-width:calc(100vw - 32px);backdrop-filter:blur(12px);border:1px solid rgba(124,58,237,0.3);`;
+      hint.innerHTML = `<div style="font-size:1.4rem;margin-bottom:8px;">📲</div><strong>Add GoToCare to your home screen</strong><br><span style="opacity:0.7">Tap <strong>Share</strong> then <strong>"Add to Home Screen"</strong></span><br><button onclick="this.parentNode.remove();localStorage.setItem('gc_ios_hint_shown','1')" style="margin-top:12px;background:#7c3aed;color:white;border:none;border-radius:8px;padding:8px 20px;font-size:0.85rem;font-weight:600;">Got it</button>`;
       document.body.appendChild(hint);
-      localStorage.setItem('gc_ios_hint_shown', '1');
+      localStorage.setItem('gc_ios_hint_shown','1');
     }, 5000);
   }
-
 </script>
 </body>
 </html>
