@@ -9,3 +9,1145 @@
   <meta name="apple-mobile-web-app-title" content="GoToCare" />
   <link rel="manifest" href="manifest.json" />
   <title>GoToCare — Find Care Now</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --purple: #7c3aed;
+      --purple-light: #a78bfa;
+      --purple-dark: #5b21b6;
+      --blue: #3b82f6;
+      --navy: #1a1a2e;
+      --navy2: #2d1b69;
+      --navy3: #1e3a5f;
+      --gold: #f59e0b;
+      --green: #10b981;
+      --red: #ef4444;
+      --safe-top: env(safe-area-inset-top, 0px);
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+    }
+    html, body { height: 100%; overflow: hidden; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0f0f1a; color: #fff; }
+    
+    /* ── SCREEN SYSTEM ── */
+    .screen { display: none; position: fixed; inset: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+    .screen.active { display: flex; flex-direction: column; }
+
+    /* ── DISPATCH SCREEN ── */
+    #screen-dispatch {
+      background: linear-gradient(160deg, #1a1a2e 0%, #2d1b69 40%, #1e3a5f 100%);
+      min-height: 100dvh;
+      padding: calc(var(--safe-top) + 20px) 20px calc(var(--safe-bottom) + 20px);
+    }
+    .dispatch-logo { display: flex; align-items: center; gap: 10px; margin-bottom: 32px; }
+    .dispatch-logo .icon { width: 40px; height: 40px; background: linear-gradient(135deg, var(--purple), var(--blue)); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 20px; }
+    .dispatch-logo .brand { font-size: 22px; font-weight: 800; background: linear-gradient(90deg, #a78bfa, #60a5fa); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .dispatch-hero { text-align: center; margin-bottom: 36px; }
+    .dispatch-hero h1 { font-size: clamp(26px, 7vw, 38px); font-weight: 900; line-height: 1.1; margin-bottom: 12px; }
+    .dispatch-hero h1 span { background: linear-gradient(90deg, #a78bfa, #60a5fa); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .dispatch-hero p { color: rgba(255,255,255,0.7); font-size: 16px; }
+    
+    .care-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 24px; }
+    .care-tile {
+      background: rgba(255,255,255,0.08); border: 2px solid rgba(255,255,255,0.12);
+      border-radius: 16px; padding: 14px 8px; text-align: center; cursor: pointer;
+      transition: all 0.2s; user-select: none; -webkit-tap-highlight-color: transparent;
+    }
+    .care-tile.selected { background: rgba(124,58,237,0.35); border-color: var(--purple-light); }
+    .care-tile .tile-icon { font-size: 28px; margin-bottom: 6px; }
+    .care-tile .tile-label { font-size: 11px; font-weight: 600; color: rgba(255,255,255,0.85); }
+    
+    .location-row { display: flex; gap: 10px; margin-bottom: 24px; }
+    .location-input {
+      flex: 1; background: rgba(255,255,255,0.1); border: 2px solid rgba(255,255,255,0.15);
+      border-radius: 14px; padding: 14px 16px; color: #fff; font-size: 16px; outline: none;
+    }
+    .location-input::placeholder { color: rgba(255,255,255,0.5); }
+    .gps-btn {
+      background: rgba(255,255,255,0.1); border: 2px solid rgba(255,255,255,0.15);
+      border-radius: 14px; padding: 14px 16px; cursor: pointer; font-size: 20px;
+      min-width: 52px; -webkit-tap-highlight-color: transparent;
+    }
+    
+    .urgency-row { display: flex; gap: 8px; margin-bottom: 28px; flex-wrap: wrap; }
+    .urgency-pill {
+      background: rgba(255,255,255,0.08); border: 2px solid rgba(255,255,255,0.12);
+      border-radius: 50px; padding: 8px 16px; font-size: 13px; font-weight: 600; cursor: pointer;
+      transition: all 0.2s; white-space: nowrap; -webkit-tap-highlight-color: transparent;
+    }
+    .urgency-pill.selected { background: rgba(239,68,68,0.3); border-color: #f87171; color: #fca5a5; }
+    
+    .dispatch-btn {
+      width: 100%; background: linear-gradient(135deg, var(--purple), var(--blue));
+      border: none; border-radius: 18px; padding: 18px; font-size: 18px; font-weight: 800;
+      color: #fff; cursor: pointer; display: flex; align-items: center; justify-content: center;
+      gap: 10px; -webkit-tap-highlight-color: transparent; box-shadow: 0 8px 32px rgba(124,58,237,0.4);
+    }
+
+    /* ── FULL-SCREEN CARD SWIPER ── */
+    #screen-swiper { background: #0f0f1a; }
+    .swiper-header {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      padding: calc(var(--safe-top) + 12px) 16px 12px;
+      background: linear-gradient(to bottom, rgba(15,15,26,0.95) 80%, transparent);
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .swiper-back { background: rgba(255,255,255,0.12); border: none; border-radius: 50%; width: 40px; height: 40px; color: #fff; font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+    .swiper-counter { font-size: 13px; color: rgba(255,255,255,0.6); font-weight: 600; }
+    .shortlist-fab {
+      background: linear-gradient(135deg, var(--purple), var(--blue));
+      border: none; border-radius: 50px; padding: 8px 16px; color: #fff; font-size: 13px;
+      font-weight: 700; cursor: pointer; display: none; align-items: center; gap: 6px;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .shortlist-fab.visible { display: flex; }
+    
+    /* Full-screen card */
+    .card-viewport { height: 100dvh; overflow-y: auto; -webkit-overflow-scrolling: touch; padding-top: 70px; padding-bottom: 120px; }
+    .cg-card {
+      padding: 0 16px;
+    }
+    .cg-hero {
+      background: linear-gradient(160deg, #1a1a2e 0%, #2d1b69 50%, #1e3a5f 100%);
+      border-radius: 24px; padding: 28px 24px; text-align: center; margin-bottom: 16px; position: relative; overflow: hidden;
+    }
+    .cg-hero::before { content: ''; position: absolute; top: -40px; right: -40px; width: 120px; height: 120px; background: radial-gradient(circle, rgba(124,58,237,0.3), transparent); border-radius: 50%; }
+    .cg-avatar-wrap { position: relative; display: inline-block; margin-bottom: 16px; }
+    .cg-avatar { width: 100px; height: 100px; border-radius: 50%; object-fit: cover; border: 4px solid var(--purple-light); background: linear-gradient(135deg, var(--purple), var(--blue)); display: flex; align-items: center; justify-content: center; font-size: 40px; }
+    .cg-online { position: absolute; bottom: 4px; right: 4px; width: 18px; height: 18px; background: var(--green); border: 3px solid #1a1a2e; border-radius: 50%; }
+    .cg-name { font-size: 26px; font-weight: 800; margin-bottom: 4px; }
+    .cg-title { font-size: 14px; color: var(--purple-light); font-weight: 600; margin-bottom: 12px; }
+    .cg-rating-row { display: flex; align-items: center; justify-content: center; gap: 16px; margin-bottom: 16px; }
+    .cg-rating { display: flex; align-items: center; gap: 4px; font-size: 15px; font-weight: 700; }
+    .cg-match { background: rgba(16,185,129,0.2); border: 1px solid rgba(16,185,129,0.4); border-radius: 50px; padding: 4px 12px; font-size: 13px; font-weight: 700; color: #6ee7b7; }
+    .cg-badges { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin-bottom: 12px; }
+    .badge { background: rgba(255,255,255,0.1); border-radius: 50px; padding: 5px 12px; font-size: 12px; font-weight: 600; }
+    .cg-rate { font-size: 28px; font-weight: 900; color: var(--purple-light); }
+    .cg-rate span { font-size: 15px; font-weight: 400; color: rgba(255,255,255,0.5); }
+    
+    .cg-section { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; padding: 20px; margin-bottom: 12px; }
+    .cg-section-title { font-size: 13px; font-weight: 700; color: var(--purple-light); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 12px; }
+    .cg-bio { font-size: 15px; color: rgba(255,255,255,0.8); line-height: 1.6; }
+    .skill-list { display: flex; flex-wrap: wrap; gap: 8px; }
+    .skill-tag { background: rgba(124,58,237,0.2); border: 1px solid rgba(124,58,237,0.4); border-radius: 50px; padding: 6px 14px; font-size: 13px; font-weight: 600; color: var(--purple-light); }
+    .avail-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+    .avail-day { text-align: center; }
+    .avail-day-label { font-size: 10px; color: rgba(255,255,255,0.5); margin-bottom: 4px; font-weight: 600; }
+    .avail-dot { width: 28px; height: 28px; border-radius: 50%; margin: 0 auto; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; }
+    .avail-dot.on { background: rgba(16,185,129,0.25); color: #6ee7b7; border: 1px solid rgba(16,185,129,0.4); }
+    .avail-dot.off { background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.3); }
+    
+    .contact-locked { background: rgba(124,58,237,0.15); border: 1px solid rgba(124,58,237,0.3); border-radius: 12px; padding: 14px; display: flex; align-items: center; justify-content: space-between; }
+    .contact-locked-text { font-size: 13px; color: rgba(255,255,255,0.7); }
+    .contact-locked-text strong { display: block; color: #fff; margin-bottom: 2px; }
+    .unlock-btn { background: linear-gradient(135deg, var(--purple), var(--blue)); border: none; border-radius: 10px; padding: 8px 16px; color: #fff; font-size: 13px; font-weight: 700; cursor: pointer; white-space: nowrap; -webkit-tap-highlight-color: transparent; }
+    
+    .review-item { padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.08); }
+    .review-item:last-child { border-bottom: none; }
+    .review-author { font-size: 13px; font-weight: 700; margin-bottom: 4px; }
+    .review-text { font-size: 14px; color: rgba(255,255,255,0.7); line-height: 1.5; }
+    
+    /* Sticky action bar */
+    .action-bar {
+      position: fixed; bottom: 0; left: 0; right: 0; z-index: 200;
+      padding: 16px calc(var(--safe-bottom) + 16px) calc(var(--safe-bottom) + 16px);
+      background: linear-gradient(to top, rgba(15,15,26,0.98) 70%, transparent);
+      display: flex; gap: 12px;
+    }
+    .btn-shortlist {
+      flex: 1; background: rgba(255,255,255,0.08); border: 2px solid rgba(255,255,255,0.2);
+      border-radius: 18px; padding: 18px; font-size: 17px; font-weight: 800; color: #fff;
+      cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;
+      transition: all 0.2s; -webkit-tap-highlight-color: transparent;
+    }
+    .btn-shortlist.active { background: rgba(124,58,237,0.35); border-color: var(--purple-light); color: var(--purple-light); }
+    .btn-next {
+      flex: 1; background: linear-gradient(135deg, var(--purple), var(--blue));
+      border: none; border-radius: 18px; padding: 18px; font-size: 17px; font-weight: 800;
+      color: #fff; cursor: pointer; display: flex; align-items: center; justify-content: center;
+      gap: 8px; box-shadow: 0 6px 24px rgba(124,58,237,0.4); -webkit-tap-highlight-color: transparent;
+    }
+    .progress-dots { display: flex; justify-content: center; gap: 6px; padding: 12px 0 4px; }
+    .dot { width: 6px; height: 6px; border-radius: 50%; background: rgba(255,255,255,0.2); transition: all 0.2s; }
+    .dot.active { background: var(--purple-light); width: 18px; }
+
+    /* ── SHORTLIST SCREEN ── */
+    #screen-shortlist {
+      background: linear-gradient(160deg, #1a1a2e 0%, #2d1b69 40%, #1e3a5f 100%);
+      min-height: 100dvh; padding: calc(var(--safe-top) + 16px) 16px calc(var(--safe-bottom) + 16px);
+    }
+    .screen-header { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; }
+    .back-btn { background: rgba(255,255,255,0.1); border: none; border-radius: 50%; width: 42px; height: 42px; color: #fff; font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .screen-title { font-size: 22px; font-weight: 800; }
+    .auto-schedule-banner {
+      background: linear-gradient(135deg, rgba(124,58,237,0.3), rgba(59,130,246,0.3));
+      border: 1px solid rgba(124,58,237,0.4); border-radius: 20px; padding: 20px; margin-bottom: 20px; text-align: center;
+    }
+    .auto-schedule-banner p { font-size: 14px; color: rgba(255,255,255,0.7); margin-bottom: 14px; }
+    .btn-auto { background: linear-gradient(135deg, var(--purple), var(--blue)); border: none; border-radius: 14px; padding: 14px 24px; color: #fff; font-size: 15px; font-weight: 800; cursor: pointer; width: 100%; -webkit-tap-highlight-color: transparent; }
+    .shortlist-card {
+      background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 16px; padding: 16px; margin-bottom: 12px; display: flex; align-items: center; gap: 14px;
+    }
+    .sl-avatar { width: 56px; height: 56px; border-radius: 50%; background: linear-gradient(135deg, var(--purple), var(--blue)); display: flex; align-items: center; justify-content: center; font-size: 24px; flex-shrink: 0; border: 2px solid var(--purple-light); }
+    .sl-info { flex: 1; }
+    .sl-name { font-size: 16px; font-weight: 700; margin-bottom: 2px; }
+    .sl-meta { font-size: 13px; color: rgba(255,255,255,0.6); }
+    .sl-match { font-size: 13px; font-weight: 700; color: #6ee7b7; }
+    .sl-book-btn { background: linear-gradient(135deg, var(--purple), var(--blue)); border: none; border-radius: 10px; padding: 8px 16px; color: #fff; font-size: 13px; font-weight: 700; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+    .sl-remove-btn { background: rgba(239,68,68,0.2); border: 1px solid rgba(239,68,68,0.3); border-radius: 10px; padding: 6px 12px; color: #fca5a5; font-size: 12px; font-weight: 600; cursor: pointer; margin-top: 8px; -webkit-tap-highlight-color: transparent; }
+    
+    /* ── SUBSCRIBE SCREEN ── */
+    #screen-subscribe {
+      background: linear-gradient(160deg, #1a1a2e 0%, #2d1b69 40%, #1e3a5f 100%);
+      min-height: 100dvh; padding: calc(var(--safe-top) + 16px) 16px calc(var(--safe-bottom) + 16px);
+    }
+    .subscribe-hero { text-align: center; margin-bottom: 28px; }
+    .subscribe-hero .lock-icon { font-size: 48px; margin-bottom: 12px; }
+    .subscribe-hero h2 { font-size: 26px; font-weight: 900; margin-bottom: 8px; }
+    .subscribe-hero p { font-size: 15px; color: rgba(255,255,255,0.7); line-height: 1.5; }
+    
+    .plan-card {
+      background: rgba(255,255,255,0.07); border: 2px solid rgba(255,255,255,0.15);
+      border-radius: 20px; padding: 20px; margin-bottom: 12px; cursor: pointer; transition: all 0.2s;
+      position: relative; -webkit-tap-highlight-color: transparent;
+    }
+    .plan-card.popular { border-color: var(--purple-light); background: rgba(124,58,237,0.15); }
+    .plan-card.selected { border-color: var(--purple-light); background: rgba(124,58,237,0.25); }
+    .plan-badge { position: absolute; top: -10px; right: 16px; background: linear-gradient(135deg, var(--purple), var(--blue)); border-radius: 50px; padding: 4px 12px; font-size: 11px; font-weight: 800; color: #fff; }
+    .plan-name { font-size: 18px; font-weight: 800; margin-bottom: 4px; }
+    .plan-price { font-size: 32px; font-weight: 900; color: var(--purple-light); }
+    .plan-price span { font-size: 15px; font-weight: 400; color: rgba(255,255,255,0.5); }
+    .plan-desc { font-size: 13px; color: rgba(255,255,255,0.6); margin: 8px 0 12px; }
+    .plan-features { list-style: none; }
+    .plan-features li { font-size: 14px; padding: 3px 0; color: rgba(255,255,255,0.8); }
+    .plan-features li::before { content: '✓ '; color: var(--green); font-weight: 700; }
+    
+    .email-input-wrap { margin: 20px 0; }
+    .email-label { font-size: 13px; font-weight: 600; color: rgba(255,255,255,0.7); margin-bottom: 8px; display: block; }
+    .email-field { width: 100%; background: rgba(255,255,255,0.1); border: 2px solid rgba(255,255,255,0.2); border-radius: 14px; padding: 14px 16px; color: #fff; font-size: 16px; outline: none; }
+    .email-field:focus { border-color: var(--purple-light); }
+    .email-field::placeholder { color: rgba(255,255,255,0.4); }
+    
+    .vs-table { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; padding: 16px; margin-bottom: 20px; }
+    .vs-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.08); align-items: center; font-size: 13px; }
+    .vs-row:last-child { border-bottom: none; }
+    .vs-row .feature { color: rgba(255,255,255,0.7); }
+    .vs-row .us { color: var(--green); font-weight: 700; text-align: center; }
+    .vs-row .them { color: var(--red); text-align: center; }
+    .vs-header { font-weight: 800; color: #fff; }
+    
+    .btn-subscribe {
+      width: 100%; background: linear-gradient(135deg, var(--purple), var(--blue));
+      border: none; border-radius: 18px; padding: 18px; font-size: 18px; font-weight: 800;
+      color: #fff; cursor: pointer; display: flex; align-items: center; justify-content: center;
+      gap: 10px; box-shadow: 0 8px 32px rgba(124,58,237,0.4); -webkit-tap-highlight-color: transparent;
+    }
+    .btn-subscribe:disabled { opacity: 0.6; cursor: not-allowed; }
+    .trust-row { display: flex; justify-content: center; gap: 20px; margin-top: 12px; flex-wrap: wrap; }
+    .trust-item { font-size: 12px; color: rgba(255,255,255,0.5); display: flex; align-items: center; gap: 4px; }
+
+    /* ── BOOKING SCREEN ── */
+    #screen-booking {
+      background: linear-gradient(160deg, #1a1a2e 0%, #2d1b69 40%, #1e3a5f 100%);
+      min-height: 100dvh; padding: calc(var(--safe-top) + 16px) 20px calc(var(--safe-bottom) + 100px);
+    }
+    .booking-cg-mini { background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.12); border-radius: 16px; padding: 16px; display: flex; align-items: center; gap: 14px; margin-bottom: 20px; }
+    .booking-cg-avatar { width: 52px; height: 52px; border-radius: 50%; background: linear-gradient(135deg, var(--purple), var(--blue)); display: flex; align-items: center; justify-content: center; font-size: 22px; flex-shrink: 0; }
+    .form-group { margin-bottom: 16px; }
+    .form-label { font-size: 13px; font-weight: 600; color: rgba(255,255,255,0.7); margin-bottom: 8px; display: block; }
+    .form-input { width: 100%; background: rgba(255,255,255,0.08); border: 2px solid rgba(255,255,255,0.15); border-radius: 14px; padding: 14px 16px; color: #fff; font-size: 16px; outline: none; }
+    .form-input:focus { border-color: var(--purple-light); }
+    .form-input::placeholder { color: rgba(255,255,255,0.4); }
+    select.form-input option { background: #1a1a2e; }
+    .booking-total { background: rgba(124,58,237,0.2); border: 1px solid rgba(124,58,237,0.4); border-radius: 14px; padding: 16px; margin-bottom: 20px; }
+    .total-row { display: flex; justify-content: space-between; font-size: 14px; color: rgba(255,255,255,0.7); padding: 4px 0; }
+    .total-row.grand { color: #fff; font-weight: 800; font-size: 17px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.15); margin-top: 6px; }
+    .btn-pay { width: 100%; background: linear-gradient(135deg, #059669, #10b981); border: none; border-radius: 18px; padding: 18px; font-size: 18px; font-weight: 800; color: #fff; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; box-shadow: 0 8px 32px rgba(16,185,129,0.4); -webkit-tap-highlight-color: transparent; }
+    
+    /* ── CONFIRMATION SCREEN ── */
+    /* NOTE: do NOT set display:flex here — let .screen/.screen.active handle it */
+    #screen-confirm {
+      background: linear-gradient(160deg, #1a1a2e 0%, #0d2d1a 40%, #0f2040 100%);
+      min-height: 100dvh; padding: calc(var(--safe-top) + 40px) 24px calc(var(--safe-bottom) + 40px);
+      align-items: center; justify-content: center; text-align: center;
+    }
+    .confirm-icon { font-size: 72px; margin-bottom: 20px; animation: pop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+    @keyframes pop { from { transform: scale(0); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+    .confirm-title { font-size: 28px; font-weight: 900; margin-bottom: 12px; }
+    .confirm-sub { font-size: 16px; color: rgba(255,255,255,0.7); line-height: 1.6; max-width: 320px; margin: 0 auto 32px; }
+    .confirm-card { background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.12); border-radius: 20px; padding: 20px; margin-bottom: 24px; width: 100%; max-width: 360px; }
+    .confirm-row { display: flex; justify-content: space-between; padding: 8px 0; font-size: 14px; border-bottom: 1px solid rgba(255,255,255,0.08); }
+    .confirm-row:last-child { border-bottom: none; }
+    .confirm-label { color: rgba(255,255,255,0.6); }
+    .confirm-value { font-weight: 700; }
+    .btn-home { background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 14px; padding: 14px 32px; color: #fff; font-size: 16px; font-weight: 700; cursor: pointer; margin-top: 8px; -webkit-tap-highlight-color: transparent; }
+    
+    /* ── TOAST ── */
+    .toast { position: fixed; top: calc(var(--safe-top) + 70px); left: 50%; transform: translateX(-50%) translateY(-20px); background: rgba(30,30,50,0.97); border: 1px solid rgba(124,58,237,0.5); border-radius: 14px; padding: 12px 20px; font-size: 14px; font-weight: 600; color: #fff; z-index: 9999; opacity: 0; transition: all 0.3s; pointer-events: none; white-space: nowrap; box-shadow: 0 8px 32px rgba(0,0,0,0.4); }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+    
+    /* Loading overlay */
+    .loading-overlay { position: fixed; inset: 0; background: rgba(15,15,26,0.9); display: none; align-items: center; justify-content: center; z-index: 9998; flex-direction: column; gap: 16px; }
+    .loading-overlay.active { display: flex; }
+    .spinner { width: 48px; height: 48px; border: 4px solid rgba(124,58,237,0.3); border-top-color: var(--purple); border-radius: 50%; animation: spin 0.8s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loading-text { color: rgba(255,255,255,0.7); font-size: 15px; font-weight: 600; }
+
+    /* ── INSTALL BANNER ── */
+    #install-banner { position: fixed; bottom: calc(var(--safe-bottom) + 16px); left: 16px; right: 16px; background: rgba(20,20,40,0.97); backdrop-filter: blur(20px); border: 1px solid rgba(124,58,237,0.4); border-radius: 18px; padding: 16px 18px; display: none; align-items: center; gap: 14px; z-index: 9000; box-shadow: 0 8px 40px rgba(0,0,0,0.5); }
+    #install-banner .ib-icon { font-size: 32px; flex-shrink: 0; }
+    #install-banner .ib-text { flex: 1; }
+    #install-banner .ib-title { font-size: 14px; font-weight: 700; margin-bottom: 2px; }
+    #install-banner .ib-sub { font-size: 12px; color: rgba(255,255,255,0.6); }
+    #install-banner .ib-add { background: linear-gradient(135deg, var(--purple), var(--blue)); border: none; border-radius: 10px; padding: 8px 14px; color: #fff; font-size: 13px; font-weight: 700; cursor: pointer; white-space: nowrap; }
+    #install-banner .ib-close { background: none; border: none; color: rgba(255,255,255,0.4); font-size: 18px; cursor: pointer; padding: 4px; }
+    #ios-hint { position: fixed; bottom: calc(var(--safe-bottom) + 16px); left: 16px; right: 16px; background: rgba(20,20,40,0.97); backdrop-filter: blur(20px); border: 1px solid rgba(124,58,237,0.4); border-radius: 18px; padding: 16px; display: none; z-index: 9000; font-size: 14px; text-align: center; color: rgba(255,255,255,0.8); }
+    
+
+    /* ── INTERVIEW BOOKING SCREEN ── */
+    .form-section { margin-bottom: 20px; }
+    .date-scroll { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 8px; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+    .date-scroll::-webkit-scrollbar { display: none; }
+    .date-chip { display: flex; flex-direction: column; align-items: center; min-width: 58px; background: rgba(255,255,255,0.08); border: 2px solid rgba(255,255,255,0.15); border-radius: 14px; padding: 10px 8px; cursor: pointer; flex-shrink: 0; transition: all 0.2s; -webkit-tap-highlight-color: transparent; }
+    .date-chip.selected { background: rgba(124,58,237,0.35); border-color: var(--purple-light); }
+    .date-chip .dc-day { font-size: 10px; color: rgba(255,255,255,0.6); font-weight: 600; text-transform: uppercase; margin-bottom: 4px; }
+    .date-chip .dc-num { font-size: 22px; font-weight: 800; line-height: 1; }
+    .date-chip .dc-mon { font-size: 10px; color: rgba(255,255,255,0.5); margin-top: 3px; }
+    .time-slots { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+    .time-slot { background: rgba(255,255,255,0.08); border: 2px solid rgba(255,255,255,0.15); border-radius: 14px; padding: 14px 8px; text-align: center; cursor: pointer; font-size: 13px; font-weight: 600; color: rgba(255,255,255,0.85); transition: all 0.2s; -webkit-tap-highlight-color: transparent; line-height: 1.4; }
+    .time-slot span { display: block; font-size: 11px; font-weight: 400; color: rgba(255,255,255,0.5); margin-top: 4px; }
+    .time-slot.selected { background: rgba(124,58,237,0.35); border-color: var(--purple-light); color: #fff; }
+    .type-toggle { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .type-btn { background: rgba(255,255,255,0.08); border: 2px solid rgba(255,255,255,0.15); border-radius: 14px; padding: 14px; text-align: center; cursor: pointer; font-size: 14px; font-weight: 600; color: rgba(255,255,255,0.85); transition: all 0.2s; -webkit-tap-highlight-color: transparent; }
+    .type-btn.selected { background: rgba(124,58,237,0.35); border-color: var(--purple-light); }
+    .free-badge { text-align: center; font-size: 13px; color: #6ee7b7; font-weight: 600; background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.25); border-radius: 10px; padding: 10px; margin-bottom: 16px; }
+    .btn-interview { width: 100%; background: linear-gradient(135deg, var(--purple), var(--blue)); border: none; border-radius: 18px; padding: 18px; font-size: 18px; font-weight: 800; color: #fff; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; box-shadow: 0 8px 32px rgba(124,58,237,0.4); -webkit-tap-highlight-color: transparent; }
+    textarea.form-input { min-height: 80px; resize: none; font-family: inherit; }
+
+    @media (min-width: 480px) {
+      .care-grid { grid-template-columns: repeat(4, 1fr); }
+      .cg-card { padding: 0 24px; }
+      #screen-swiper.active { align-items: center; justify-content: center; }
+      .card-viewport { max-width: 480px; width: 100%; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── DISPATCH ── -->
+<div id="screen-dispatch" class="screen active">
+  <div class="dispatch-logo">
+    <div class="icon">🏠</div>
+    <div class="brand">GoToCare</div>
+  </div>
+  <div class="dispatch-hero">
+    <h1>Find <span>trusted care</span><br/>in minutes</h1>
+    <p>Tell us what you need — we'll match you instantly</p>
+  </div>
+  <div class="care-grid" id="care-grid">
+    <div class="care-tile" data-value="Elder Care"><div class="tile-icon">👴</div><div class="tile-label">Elder Care</div></div>
+    <div class="care-tile" data-value="Dementia Care"><div class="tile-icon">🧠</div><div class="tile-label">Dementia</div></div>
+    <div class="care-tile" data-value="Wheelchair Assist"><div class="tile-icon">♿</div><div class="tile-label">Wheelchair</div></div>
+    <div class="care-tile" data-value="Post-Surgery"><div class="tile-icon">🏥</div><div class="tile-label">Post-Surgery</div></div>
+    <div class="care-tile" data-value="Medication"><div class="tile-icon">💊</div><div class="tile-label">Medication</div></div>
+    <div class="care-tile" data-value="Bathing Assist"><div class="tile-icon">🛁</div><div class="tile-label">Bathing</div></div>
+    <div class="care-tile" data-value="Meal Prep"><div class="tile-icon">🍳</div><div class="tile-label">Meal Prep</div></div>
+    <div class="care-tile" data-value="Companionship"><div class="tile-icon">🤝</div><div class="tile-label">Companion</div></div>
+    <div class="care-tile" data-value="Transportation"><div class="tile-icon">🚗</div><div class="tile-label">Transport</div></div>
+    <div class="care-tile" data-value="Child Care"><div class="tile-icon">👶</div><div class="tile-label">Child Care</div></div>
+    <div class="care-tile" data-value="Overnight Care"><div class="tile-icon">🌙</div><div class="tile-label">Overnight</div></div>
+  </div>
+  <div class="location-row">
+    <input class="location-input" id="location-input" type="text" placeholder="📍 Enter city or zip code" />
+    <button class="gps-btn" id="gps-btn" title="Use my location">📡</button>
+  </div>
+  <div class="urgency-row" id="urgency-row">
+    <div class="urgency-pill" data-value="today">🔴 Need Today</div>
+    <div class="urgency-pill" data-value="week">This Week</div>
+    <div class="urgency-pill" data-value="month">This Month</div>
+    <div class="urgency-pill" data-value="flexible">Flexible</div>
+  </div>
+  <button class="dispatch-btn" id="find-btn">
+    <span>⚡</span> Find My Caregiver
+  </button>
+</div>
+
+<!-- ── FULL-SCREEN CARD SWIPER ── -->
+<div id="screen-swiper" class="screen">
+  <div class="swiper-header">
+    <button class="swiper-back" id="swiper-back">←</button>
+    <div class="progress-dots" id="progress-dots"></div>
+    <button class="shortlist-fab" id="shortlist-fab">💜 Shortlist (<span id="sl-count">0</span>)</button>
+    <div class="swiper-counter" id="swiper-counter"></div>
+  </div>
+  <div class="card-viewport" id="card-viewport">
+    <!-- Cards rendered by JS -->
+  </div>
+  <div class="action-bar">
+    <button class="btn-shortlist" id="btn-shortlist">♡ Shortlist</button>
+    <button class="btn-next" id="btn-next">Next →</button>
+  </div>
+</div>
+
+<!-- ── SHORTLIST ── -->
+<div id="screen-shortlist" class="screen">
+  <div class="screen-header">
+    <button class="back-btn" id="shortlist-back">←</button>
+    <div class="screen-title">My Shortlist</div>
+  </div>
+  <div class="auto-schedule-banner" id="auto-schedule-banner" style="display:none;">
+    <div style="font-size:36px;margin-bottom:10px;">🤖</div>
+    <strong style="font-size:17px;">Auto-Schedule Best Match</strong>
+    <p>GoToCare will pick your highest-rated available caregiver and book automatically</p>
+    <button class="btn-auto" id="btn-auto-schedule">⚡ Auto-Schedule Now</button>
+  </div>
+  <div id="shortlist-list"></div>
+  <div id="shortlist-empty" style="text-align:center;padding:60px 20px;color:rgba(255,255,255,0.5);">
+    <div style="font-size:48px;margin-bottom:16px;">💜</div>
+    <p style="font-size:16px;">No caregivers shortlisted yet.<br/>Swipe through to save your favorites.</p>
+  </div>
+</div>
+
+<!-- ── SUBSCRIBE ── -->
+<div id="screen-subscribe" class="screen">
+  <div class="screen-header">
+    <button class="back-btn" id="subscribe-back">←</button>
+    <div class="screen-title">Unlock Contact Info</div>
+  </div>
+  <div class="subscribe-hero">
+    <div class="lock-icon">🔓</div>
+    <h2>See phone & email — cancel anytime</h2>
+    <p>Contact caregivers directly, message them, and schedule without middlemen.</p>
+  </div>
+  
+  <div class="plan-card" id="plan-essential" data-plan="essential">
+    <div class="plan-name">Essential</div>
+    <div class="plan-price">$15<span>/mo</span></div>
+    <div class="plan-desc">Perfect for one-time needs</div>
+    <ul class="plan-features">
+      <li>5 contact unlocks per month</li>
+      <li>In-app messaging</li>
+      <li>1 scheduled appointment</li>
+      <li>Basic caregiver profiles</li>
+    </ul>
+  </div>
+  
+  <div class="plan-card popular" id="plan-family" data-plan="family">
+    <div class="plan-badge">⭐ Most Popular</div>
+    <div class="plan-name">Family</div>
+    <div class="plan-price">$29<span>/mo</span></div>
+    <div class="plan-desc">Best for ongoing care needs</div>
+    <ul class="plan-features">
+      <li>Unlimited contact unlocks</li>
+      <li>Auto-scheduling</li>
+      <li>Priority matching</li>
+      <li>Backup caregiver guarantee</li>
+      <li>Unlimited appointments</li>
+    </ul>
+  </div>
+  
+  <div class="plan-card" id="plan-premium" data-plan="premium">
+    <div class="plan-name">Premium</div>
+    <div class="plan-price">$59<span>/mo</span></div>
+    <div class="plan-desc">White-glove care coordination</div>
+    <ul class="plan-features">
+      <li>Everything in Family</li>
+      <li>Dedicated care coordinator</li>
+      <li>Emergency 2-hr dispatch</li>
+      <li>Multi-family accounts</li>
+      <li>Full background reports</li>
+    </ul>
+  </div>
+
+  <div style="margin: 16px 0 4px;">
+    <div class="vs-table">
+      <div class="vs-row">
+        <div class="feature vs-header">Feature</div>
+        <div class="us vs-header" style="font-size:13px;">GoToCare</div>
+        <div class="them vs-header" style="font-size:13px;color:#fff;">Care.com</div>
+      </div>
+      <div class="vs-row"><div class="feature">Monthly cost</div><div class="us">$15–$59</div><div class="them">$37–$197</div></div>
+      <div class="vs-row"><div class="feature">Instant matching</div><div class="us">✓ AI</div><div class="them">✗ Manual</div></div>
+      <div class="vs-row"><div class="feature">Auto-scheduling</div><div class="us">✓</div><div class="them">✗</div></div>
+      <div class="vs-row"><div class="feature">Backup guarantee</div><div class="us">✓</div><div class="them">✗</div></div>
+    </div>
+  </div>
+
+  <div class="email-input-wrap">
+    <label class="email-label">Your email address</label>
+    <input class="email-field" id="subscribe-email" type="email" placeholder="you@example.com" />
+  </div>
+  
+  <button class="btn-subscribe" id="btn-subscribe">
+    🔓 Subscribe & Unlock Contact
+  </button>
+  <div class="trust-row">
+    <span class="trust-item">🔒 SSL Secured</span>
+    <span class="trust-item">↩️ Cancel anytime</span>
+    <span class="trust-item">💳 No hidden fees</span>
+  </div>
+</div>
+
+<!-- ── BOOKING / INTERVIEW SCHEDULING ── -->
+<div id="screen-booking" class="screen">
+  <div class="screen-header">
+    <button class="back-btn" id="booking-back">←</button>
+    <div class="screen-title">Schedule Interview</div>
+  </div>
+  <div class="booking-cg-mini" id="booking-cg-mini"></div>
+
+  <!-- Date picker -->
+  <div class="form-section">
+    <label class="form-label">📅 Select a date</label>
+    <div class="date-scroll" id="date-scroll"></div>
+  </div>
+
+  <!-- Time slots -->
+  <div class="form-section">
+    <label class="form-label">⏰ Preferred time</label>
+    <div class="time-slots">
+      <button class="time-slot" data-time="morning">🌅 Morning<span>9 – 11 AM</span></button>
+      <button class="time-slot" data-time="afternoon">☀️ Afternoon<span>12 – 3 PM</span></button>
+      <button class="time-slot" data-time="evening">🌆 Evening<span>4 – 7 PM</span></button>
+    </div>
+  </div>
+
+  <!-- Interview type -->
+  <div class="form-section">
+    <label class="form-label">💬 Interview type</label>
+    <div class="type-toggle">
+      <button class="type-btn selected" data-type="video">📹 Video Call</button>
+      <button class="type-btn" data-type="inperson">🏠 In Person</button>
+    </div>
+  </div>
+
+  <!-- Email -->
+  <div class="form-group">
+    <label class="form-label">Your email (for confirmation)</label>
+    <input class="form-input" id="book-email" type="email" placeholder="you@example.com" />
+  </div>
+
+  <!-- Notes -->
+  <div class="form-group">
+    <label class="form-label">Notes for the caregiver (optional)</label>
+    <textarea class="form-input" id="book-notes" placeholder="Any special requirements, questions, or details about care needs…"></textarea>
+  </div>
+
+  <div class="free-badge">✨ Requesting an interview is completely free — no payment needed</div>
+  <button class="btn-interview" id="btn-request-interview">📅 Send Interview Request</button>
+</div>
+
+<!-- ── CONFIRMATION ── -->
+<div id="screen-confirm" class="screen">
+  <div class="confirm-icon" id="confirm-icon">📅</div>
+  <div class="confirm-title" id="confirm-title">Interview Request Sent!</div>
+  <div class="confirm-sub" id="confirm-sub">Your caregiver has been notified and will confirm within 24 hours. You'll receive a notification by email once they respond.</div>
+  <div class="confirm-card" id="confirm-card"></div>
+  <button class="btn-home" onclick="showScreen('screen-dispatch')">← Back to Home</button>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+<!-- Loading -->
+<div class="loading-overlay" id="loading-overlay">
+  <div class="spinner"></div>
+  <div class="loading-text" id="loading-text">Finding caregivers near you…</div>
+</div>
+<!-- Install Banner -->
+<div id="install-banner">
+  <div class="ib-icon">🏠</div>
+  <div class="ib-text">
+    <div class="ib-title">Install GoToCare App</div>
+    <div class="ib-sub">Add to home screen for faster access</div>
+  </div>
+  <button class="ib-add" id="ib-add-btn">Add</button>
+  <button class="ib-close" id="ib-close-btn">✕</button>
+</div>
+<div id="ios-hint">📱 Tap <strong>Share</strong> → <strong>"Add to Home Screen"</strong> to install GoToCare as an app</div>
+
+<script>
+const API = 'https://gotocare-original.jjioji.workers.dev/api';
+let caregivers = [];
+let currentIndex = 0;
+let shortlist = [];
+let selectedCareTypes = [];
+let urgency = 'flexible';
+let selectedPlan = 'family';
+let bookingCaregiver = null;
+let subscription = null;
+
+// ── SCREEN NAV ──
+function showScreen(id, pushHistory = true) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0, 0);
+  if (pushHistory) history.pushState({ screen: id }, '');
+}
+window.addEventListener('popstate', (e) => {
+  showScreen((e.state && e.state.screen) || 'screen-dispatch', false);
+});
+history.replaceState({ screen: 'screen-dispatch' }, '');
+
+// ── TOAST ──
+function toast(msg, duration = 3000) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), duration);
+}
+
+// ── LOADING ──
+function setLoading(active, text = 'Finding caregivers near you…') {
+  document.getElementById('loading-overlay').classList.toggle('active', active);
+  document.getElementById('loading-text').textContent = text;
+}
+
+// ── CARE TILES ──
+document.querySelectorAll('.care-tile').forEach(tile => {
+  tile.addEventListener('click', () => {
+    tile.classList.toggle('selected');
+    const val = tile.dataset.value;
+    if (tile.classList.contains('selected')) {
+      if (!selectedCareTypes.includes(val)) selectedCareTypes.push(val);
+    } else {
+      selectedCareTypes = selectedCareTypes.filter(v => v !== val);
+    }
+    updateFindBtn();
+  });
+});
+
+// ── URGENCY PILLS ──
+document.querySelectorAll('.urgency-pill').forEach(pill => {
+  pill.addEventListener('click', () => {
+    document.querySelectorAll('.urgency-pill').forEach(p => p.classList.remove('selected'));
+    pill.classList.add('selected');
+    urgency = pill.dataset.value;
+  });
+});
+
+function updateFindBtn() {
+  const btn = document.getElementById('find-btn');
+  if (selectedCareTypes.length > 0) {
+    btn.textContent = `⚡ Find ${selectedCareTypes.length > 1 ? selectedCareTypes.length + ' Care Types' : selectedCareTypes[0]} Match`;
+  } else {
+    btn.innerHTML = '<span>⚡</span> Find My Caregiver';
+  }
+}
+
+// ── GPS ──
+document.getElementById('gps-btn').addEventListener('click', () => {
+  const inp = document.getElementById('location-input');
+  inp.placeholder = '📡 Locating…';
+  navigator.geolocation?.getCurrentPosition(pos => {
+    fetch(`https://nominatim.openstreetmap.org/reverse?lat=${pos.coords.latitude}&lon=${pos.coords.longitude}&format=json`)
+      .then(r => r.json()).then(data => {
+        const city = data.address?.city || data.address?.town || data.address?.village || '';
+        const state = data.address?.state_code || data.address?.state || '';
+        inp.value = city && state ? `${city}, ${state}` : (city || state || 'Current Location');
+      }).catch(() => { inp.value = 'Current Location'; inp.placeholder = '📍 Enter city or zip'; });
+  }, () => { inp.placeholder = '📍 Enter city or zip'; toast('Location access denied'); });
+});
+
+// ── FIND CAREGIVERS ──
+document.getElementById('find-btn').addEventListener('click', async () => {
+  const loc = document.getElementById('location-input').value.trim() || 'Atlanta, GA';
+  setLoading(true);
+  try {
+    const params = new URLSearchParams({ location: loc, page: 1, limit: 20 });
+    if (selectedCareTypes.length) params.append('specialty', selectedCareTypes[0]);
+    const res = await fetch(`${API}/search-caregivers?${params}`);
+    const data = await res.json();
+    caregivers = data.caregivers || data.docs || [];
+    if (caregivers.length === 0) {
+      caregivers = getDemoCaregivers();
+      toast('📍 Showing demo caregivers for your area');
+    }
+    currentIndex = 0;
+    renderSwiperCard();
+    showScreen('screen-swiper');
+    // Check subscription
+    checkSubscription();
+  } catch (e) {
+    caregivers = getDemoCaregivers();
+    renderSwiperCard();
+    showScreen('screen-swiper');
+    toast('📍 Showing available caregivers');
+  } finally {
+    setLoading(false);
+  }
+});
+
+// ── DEMO DATA ──
+function getDemoCaregivers() {
+  return [
+    { id: 1, firstName: 'Maria', lastName: 'Santos', specializations: ['Elder Care', 'Dementia Care'], rating: 4.9, reviews: 47, hourlyRate: 28, yearsExp: 8, bio: 'Compassionate elder care specialist with 8 years helping families navigate dementia and Alzheimer\'s care with patience and expertise.', availability: [1,1,1,1,1,0,0], skills: ['Dementia Care', 'Medication Management', 'Fall Prevention', 'Alzheimer\'s Care', 'Vital Signs'], languages: ['English', 'Spanish'], certifications: ['CNA', 'CPR/AED', 'Dementia Specialist'] },
+    { id: 2, firstName: 'James', lastName: 'Okafor', specializations: ['Post-Surgery', 'Wheelchair Assist'], rating: 4.8, reviews: 31, hourlyRate: 32, yearsExp: 5, bio: 'Experienced post-surgical care provider specializing in mobility assistance and rehabilitation support for faster recovery at home.', availability: [1,1,0,1,1,1,0], skills: ['Post-Op Care', 'Wheelchair Transfer', 'Wound Care', 'Physical Therapy Assist', 'Pain Management'], languages: ['English', 'Yoruba'], certifications: ['CNA', 'CPR/AED', 'BLS'] },
+    { id: 3, firstName: 'Priya', lastName: 'Nair', specializations: ['Medication', 'Elder Care'], rating: 4.95, reviews: 82, hourlyRate: 30, yearsExp: 12, bio: 'Senior nurse with 12 years across hospital and home care. Expert in medication management and complex care coordination for elderly clients.', availability: [1,0,1,1,0,1,1], skills: ['Medication Administration', 'IV Care', 'Catheter Care', 'Wound Care', 'Complex Care'], languages: ['English', 'Hindi', 'Malayalam'], certifications: ['RN', 'CPR/AED', 'IV Certified'] },
+    { id: 4, firstName: 'Angela', lastName: 'Torres', specializations: ['Companionship', 'Meal Prep'], rating: 4.7, reviews: 29, hourlyRate: 22, yearsExp: 3, bio: 'Warm, engaging companion caregiver who excels at keeping seniors mentally active, socially connected, and well-nourished with healthy homemade meals.', availability: [1,1,1,0,1,1,1], skills: ['Companionship', 'Meal Planning', 'Light Housekeeping', 'Errands', 'Mental Engagement'], languages: ['English', 'Spanish'], certifications: ['Home Health Aide', 'CPR/AED'] },
+    { id: 5, firstName: 'David', lastName: 'Kim', specializations: ['Overnight Care', 'Elder Care'], rating: 4.85, reviews: 54, hourlyRate: 35, yearsExp: 7, bio: '24-hour overnight care specialist ensuring safety and comfort through the night with regular checks, emergency response, and morning routines.', availability: [0,1,1,1,0,1,1], skills: ['Overnight Monitoring', 'Night Routines', 'Emergency Response', 'Incontinence Care', 'Repositioning'], languages: ['English', 'Korean'], certifications: ['CNA', 'CPR/AED', 'First Aid'] },
+    { id: 6, firstName: 'Sofia', lastName: 'Mendez', specializations: ['Child Care', 'Transportation'], rating: 4.9, reviews: 38, hourlyRate: 25, yearsExp: 6, bio: 'Nurturing childcare specialist and certified driver offering safe school runs, activity transport, and engaging in-home care for children of all ages.', availability: [1,1,1,1,1,0,0], skills: ['Childcare', 'Safe Driving', 'School Pickup', 'Homework Help', 'Activity Planning'], languages: ['English', 'Spanish'], certifications: ['CPR/AED', 'Child First Aid', 'Clean Driving Record'] },
+  ];
+}
+
+// ── RENDER CARD ──
+function renderSwiperCard() {
+  if (caregivers.length === 0) return;
+  const cg = caregivers[currentIndex];
+  const isLast = currentIndex === caregivers.length - 1;
+  const isShortlisted = shortlist.some(s => s.id === cg.id);
+  const days = ['M','T','W','T','F','S','S'];
+  const avail = cg.availability || [1,1,1,1,1,0,0];
+  const rate = cg.hourlyRate || cg.hourly_rate || 28;
+  const match = cg.matchScore ? Math.round(cg.matchScore) : Math.round(82 + Math.random() * 15);
+  const name = `${cg.firstName || cg.first_name} ${cg.lastName || cg.last_name}`;
+  const specialties = Array.isArray(cg.specializations) ? cg.specializations.join(', ') : (cg.specializations || 'Home Care');
+  const rating = cg.rating || (4.5 + Math.random() * 0.5).toFixed(1);
+  const reviewCount = cg.reviews || cg.review_count || Math.floor(20 + Math.random() * 60);
+  const exp = cg.yearsExp || cg.years_experience || Math.floor(2 + Math.random() * 10);
+  const skills = cg.skills || cg.specializations || ['Elder Care', 'Companionship', 'Medication'];
+  const langs = cg.languages || ['English'];
+  const certs = cg.certifications || ['CNA', 'CPR/AED'];
+  const bio = cg.bio || 'Dedicated caregiver committed to providing compassionate, personalized care to help clients maintain dignity and independence at home.';
+  const avatar = cg.avatar || '👩‍⚕️';
+
+  // Contact section — locked or unlocked based on subscription
+  const contactHtml = subscription?.subscribed
+    ? `<div style="display:flex;flex-direction:column;gap:10px;">
+        <div style="display:flex;align-items:center;gap:10px;background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.3);border-radius:12px;padding:12px;">
+          <span style="font-size:20px;">📞</span>
+          <div><div style="font-size:12px;color:rgba(255,255,255,0.6);">Phone</div><div style="font-weight:700;">${cg.phone || '+1 (555) ' + String(100 + cg.id * 137).padStart(3,'0') + '-' + String(1000 + cg.id * 997).padStart(4,'0')}</div></div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.3);border-radius:12px;padding:12px;">
+          <span style="font-size:20px;">✉️</span>
+          <div><div style="font-size:12px;color:rgba(255,255,255,0.6);">Email</div><div style="font-weight:700;">${cg.email || (cg.firstName||'care').toLowerCase() + '@gotocare.com'}</div></div>
+        </div>
+      </div>`
+    : `<div class="contact-locked">
+        <div class="contact-locked-text"><strong>🔒 Contact info locked</strong>Subscribe to see phone &amp; email</div>
+        <button class="unlock-btn" onclick="showSubscribe()">Unlock →</button>
+      </div>`;
+
+  document.getElementById('card-viewport').innerHTML = `
+    <div class="cg-card">
+      <div class="cg-hero">
+        <div class="cg-avatar-wrap">
+          <div class="cg-avatar" style="width:100px;height:100px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:40px;">${avatar}</div>
+          <div class="cg-online"></div>
+        </div>
+        <div class="cg-name">${name}</div>
+        <div class="cg-title">${specialties}</div>
+        <div class="cg-rating-row">
+          <div class="cg-rating">⭐ ${Number(rating).toFixed(1)} <span style="color:rgba(255,255,255,0.5);font-weight:400;font-size:13px;">(${reviewCount})</span></div>
+          <div class="cg-match">🎯 ${match}% match</div>
+        </div>
+        <div class="cg-badges">
+          <div class="badge">📅 ${exp} yrs exp</div>
+          ${certs.slice(0,2).map(c => `<div class="badge">✅ ${c}</div>`).join('')}
+          ${langs.length > 1 ? `<div class="badge">🌐 ${langs.slice(0,2).join(', ')}</div>` : ''}
+        </div>
+        <div class="cg-rate">$${rate}<span>/hr</span></div>
+      </div>
+
+      <div class="cg-section">
+        <div class="cg-section-title">About</div>
+        <div class="cg-bio">${bio}</div>
+      </div>
+      
+      <div class="cg-section">
+        <div class="cg-section-title">Skills & Specializations</div>
+        <div class="skill-list">${(Array.isArray(skills) ? skills : [skills]).map(s => `<div class="skill-tag">${s}</div>`).join('')}</div>
+      </div>
+      
+      <div class="cg-section">
+        <div class="cg-section-title">Weekly Availability</div>
+        <div class="avail-grid">${days.map((d,i) => `<div class="avail-day"><div class="avail-day-label">${d}</div><div class="avail-dot ${avail[i] ? 'on' : 'off'}">${avail[i] ? '✓' : '–'}</div></div>`).join('')}</div>
+      </div>
+
+      <div class="cg-section">
+        <div class="cg-section-title">Contact Info</div>
+        ${contactHtml}
+      </div>
+      
+      <div class="cg-section">
+        <div class="cg-section-title">Client Reviews</div>
+        <div class="review-item"><div class="review-author">⭐⭐⭐⭐⭐ Linda H.</div><div class="review-text">"${name.split(' ')[0]} was absolutely wonderful with my mother. Patient, kind, and so professional. We couldn't be happier!"</div></div>
+        <div class="review-item"><div class="review-author">⭐⭐⭐⭐⭐ Robert T.</div><div class="review-text">"Reliable, compassionate, and goes above and beyond. I feel completely at ease knowing my father is in good hands."</div></div>
+      </div>
+
+      <div style="height:8px;"></div>
+    </div>`;
+
+  // Update counter + dots + buttons
+  document.getElementById('swiper-counter').textContent = `${currentIndex + 1}/${caregivers.length}`;
+  
+  // Dots (max 7 shown)
+  const dotsEl = document.getElementById('progress-dots');
+  const maxDots = Math.min(caregivers.length, 7);
+  dotsEl.innerHTML = Array.from({length: maxDots}, (_, i) => `<div class="dot${i === (currentIndex % maxDots) ? ' active' : ''}"></div>`).join('');
+  
+  // Shortlist btn
+  const slBtn = document.getElementById('btn-shortlist');
+  if (isShortlisted) {
+    slBtn.innerHTML = '💜 Shortlisted'; slBtn.classList.add('active');
+  } else {
+    slBtn.innerHTML = '♡ Shortlist'; slBtn.classList.remove('active');
+  }
+  
+  // Next btn
+  const nextBtn = document.getElementById('btn-next');
+  nextBtn.textContent = isLast ? '← Back' : 'Next →';
+  
+  // Scroll card to top
+  document.getElementById('card-viewport').scrollTo(0, 0);
+}
+
+// ── SHORTLIST ACTIONS ──
+document.getElementById('btn-shortlist').addEventListener('click', () => {
+  const cg = caregivers[currentIndex];
+  const idx = shortlist.findIndex(s => s.id === cg.id);
+  if (idx >= 0) {
+    shortlist.splice(idx, 1);
+    toast('Removed from shortlist');
+  } else {
+    shortlist.push(cg);
+    toast(`💜 ${cg.firstName || cg.first_name} added to shortlist!`);
+  }
+  updateShortlistFab();
+  renderSwiperCard();
+});
+
+document.getElementById('btn-next').addEventListener('click', () => {
+  if (currentIndex === caregivers.length - 1) {
+    currentIndex = 0;
+  } else {
+    currentIndex++;
+  }
+  renderSwiperCard();
+});
+
+document.getElementById('swiper-back').addEventListener('click', () => showScreen('screen-dispatch'));
+
+function updateShortlistFab() {
+  const fab = document.getElementById('shortlist-fab');
+  document.getElementById('sl-count').textContent = shortlist.length;
+  fab.classList.toggle('visible', shortlist.length > 0);
+}
+
+document.getElementById('shortlist-fab').addEventListener('click', () => {
+  renderShortlist();
+  showScreen('screen-shortlist');
+});
+
+// ── SHORTLIST SCREEN ──
+function renderShortlist() {
+  const list = document.getElementById('shortlist-list');
+  const empty = document.getElementById('shortlist-empty');
+  const banner = document.getElementById('auto-schedule-banner');
+  banner.style.display = shortlist.length > 0 ? 'block' : 'none';
+  empty.style.display = shortlist.length === 0 ? 'block' : 'none';
+  list.innerHTML = shortlist.map((cg, i) => {
+    const name = `${cg.firstName || cg.first_name} ${cg.lastName || cg.last_name}`;
+    const rate = cg.hourlyRate || cg.hourly_rate || 28;
+    const rating = cg.rating || '4.8';
+    const match = cg.matchScore ? Math.round(cg.matchScore) : (90 - i * 5);
+    return `<div class="shortlist-card">
+      <div class="sl-avatar">${cg.avatar || '👩‍⚕️'}</div>
+      <div class="sl-info">
+        <div class="sl-name">${name}</div>
+        <div class="sl-meta">⭐ ${Number(rating).toFixed(1)} · $${rate}/hr</div>
+        <div class="sl-match">🎯 ${match}% match</div>
+        <button class="sl-remove-btn" onclick="removeShortlist(${cg.id})">Remove</button>
+      </div>
+      <button class="sl-book-btn" onclick="startBooking(${i})">Book</button>
+    </div>`;
+  }).join('');
+}
+
+function removeShortlist(id) {
+  shortlist = shortlist.filter(s => s.id !== id);
+  updateShortlistFab();
+  renderShortlist();
+}
+
+document.getElementById('shortlist-back').addEventListener('click', () => showScreen('screen-swiper'));
+
+document.getElementById('btn-auto-schedule').addEventListener('click', () => {
+  // Best match = highest matchScore or first in list
+  const best = shortlist.reduce((a, b) => ((a.matchScore || 90) > (b.matchScore || 85) ? a : b));
+  const idx = shortlist.indexOf(best);
+  startBooking(idx);
+});
+
+// ── BOOKING / INTERVIEW STATE ──
+let selectedDate = null;
+let selectedTime = null;
+let selectedInterviewType = 'video';
+
+// ── BOOKING ──
+function startBooking(shortlistIdx) {
+  bookingCaregiver = shortlist[shortlistIdx];
+  const cg = bookingCaregiver;
+  const name = `${cg.firstName || cg.first_name} ${cg.lastName || cg.last_name}`;
+  const rate = cg.hourlyRate || cg.hourly_rate || 28;
+  const match = cg.matchScore ? Math.round(cg.matchScore) : 90;
+  document.getElementById('booking-cg-mini').innerHTML = `
+    <div class="booking-cg-avatar">${cg.avatar || '\u{1F469}\u200d\u2695\uFE0F'}</div>
+    <div>
+      <div style="font-size:16px;font-weight:700;">${name}</div>
+      <div style="font-size:13px;color:rgba(255,255,255,0.6);">$${rate}/hr · 🎯 ${match}% match · ⭐ ${Number(cg.rating || 4.8).toFixed(1)}</div>
+    </div>`;
+
+  // Build 14-day date picker
+  renderDateScroll();
+  // Reset selections
+  selectedDate = null; selectedTime = null; selectedInterviewType = 'video';
+  document.querySelectorAll('.time-slot').forEach(b => b.classList.remove('selected'));
+  document.querySelectorAll('.type-btn').forEach(b => b.classList.remove('selected'));
+  document.querySelector('.type-btn[data-type="video"]').classList.add('selected');
+  document.getElementById('book-email').value = localStorage.getItem('gc_email') || '';
+  document.getElementById('book-notes').value = '';
+  showScreen('screen-booking');
+}
+
+function renderDateScroll() {
+  const scroll = document.getElementById('date-scroll');
+  const days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const chips = [];
+  const today = new Date();
+  for (let i = 1; i <= 14; i++) {
+    const d = new Date(today);
+    d.setDate(today.getDate() + i);
+    const iso = d.toISOString().split('T')[0];
+    chips.push(`<div class="date-chip" data-date="${iso}" onclick="selectDate('${iso}', this)">
+      <div class="dc-day">${days[d.getDay()]}</div>
+      <div class="dc-num">${d.getDate()}</div>
+      <div class="dc-mon">${months[d.getMonth()]}</div>
+    </div>`);
+  }
+  scroll.innerHTML = chips.join('');
+}
+
+function selectDate(iso, el) {
+  selectedDate = iso;
+  document.querySelectorAll('.date-chip').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+}
+
+// Time slot clicks
+document.addEventListener('click', (e) => {
+  const ts = e.target.closest('.time-slot');
+  if (ts) {
+    document.querySelectorAll('.time-slot').forEach(b => b.classList.remove('selected'));
+    ts.classList.add('selected');
+    selectedTime = ts.dataset.time;
+  }
+  const tb = e.target.closest('.type-btn');
+  if (tb) {
+    document.querySelectorAll('.type-btn').forEach(b => b.classList.remove('selected'));
+    tb.classList.add('selected');
+    selectedInterviewType = tb.dataset.type;
+  }
+});
+
+document.getElementById('booking-back').addEventListener('click', () => showScreen('screen-shortlist'));
+
+document.getElementById('btn-request-interview').addEventListener('click', async () => {
+  const email = document.getElementById('book-email').value.trim();
+  const notes = document.getElementById('book-notes').value.trim();
+  if (!selectedDate) { toast('⚠️ Please select a date'); return; }
+  if (!selectedTime) { toast('⚠️ Please select a time slot'); return; }
+  if (!email || !email.includes('@')) { toast('⚠️ Please enter your email'); return; }
+
+  setLoading(true, 'Sending interview request…');
+  try {
+    const cg = bookingCaregiver;
+    await fetch(`${API}/book-interview`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        caregiverId: cg.id,
+        clientEmail: email,
+        careNeeds: selectedCareTypes.join(', ') || 'General Care',
+        preferredDate: selectedDate,
+        preferredTime: selectedTime,
+        interviewType: selectedInterviewType,
+        notes
+      }),
+    }).catch(() => {});
+    if (email) localStorage.setItem('gc_email', email);
+    showInterviewConfirmation({ email, cg, date: selectedDate, time: selectedTime, type: selectedInterviewType });
+  } catch (e) {
+    const cg = bookingCaregiver;
+    showInterviewConfirmation({ email, cg, date: selectedDate, time: selectedTime, type: selectedInterviewType });
+  } finally {
+    setLoading(false);
+  }
+});
+
+function showInterviewConfirmation({ email, cg, date, time, type }) {
+  const cgName = `${cg.firstName || cg.first_name} ${cg.lastName || cg.last_name}`;
+  const timeLabels = { morning: '9 – 11 AM', afternoon: '12 – 3 PM', evening: '4 – 7 PM' };
+  const typeLabels = { video: '📹 Video Call', inperson: '🏠 In Person' };
+  const dateFormatted = new Date(date + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+  document.getElementById('confirm-icon').textContent = '📅';
+  document.getElementById('confirm-title').textContent = 'Interview Request Sent!';
+  document.getElementById('confirm-sub').textContent = `${cgName} has been notified and will confirm within 24 hours. Check your email for updates.`;
+  document.getElementById('confirm-card').innerHTML = `
+    <div class="confirm-row"><span class="confirm-label">Caregiver</span><span class="confirm-value">${cgName}</span></div>
+    <div class="confirm-row"><span class="confirm-label">Date</span><span class="confirm-value">${dateFormatted}</span></div>
+    <div class="confirm-row"><span class="confirm-label">Time</span><span class="confirm-value">${timeLabels[time] || time}</span></div>
+    <div class="confirm-row"><span class="confirm-label">Format</span><span class="confirm-value">${typeLabels[type] || type}</span></div>
+    <div class="confirm-row"><span class="confirm-label">Your Email</span><span class="confirm-value">${email}</span></div>
+    <div class="confirm-row"><span class="confirm-label">Cost</span><span class="confirm-value" style="color:#6ee7b7;">FREE ✨</span></div>`;
+  showScreen('screen-confirm');
+}
+
+function showConfirmation({ name, email, cg, date, hours, rate, total }) {
+  showInterviewConfirmation({ email, cg, date, time: 'morning', type: 'video' });
+}
+
+// ── SUBSCRIBE ──
+function showSubscribe() { showScreen('screen-subscribe'); }
+
+document.querySelectorAll('.plan-card').forEach(card => {
+  card.addEventListener('click', () => {
+    document.querySelectorAll('.plan-card').forEach(c => c.classList.remove('selected'));
+    card.classList.add('selected');
+    selectedPlan = card.dataset.plan;
+  });
+});
+// Default select Family
+document.getElementById('plan-family').classList.add('selected');
+
+document.getElementById('subscribe-back').addEventListener('click', () => showScreen('screen-swiper'));
+
+document.getElementById('btn-subscribe').addEventListener('click', async () => {
+  const email = document.getElementById('subscribe-email').value.trim();
+  if (!email || !email.includes('@')) { toast('⚠️ Please enter a valid email'); return; }
+  setLoading(true, 'Redirecting to secure checkout…');
+  try {
+    const res = await fetch(`${API}/create-subscription-checkout`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, plan: selectedPlan }),
+    });
+    const data = await res.json();
+    if (data.url) {
+      window.location.href = data.url;
+    } else {
+      toast('⚠️ ' + (data.error || 'Something went wrong'));
+    }
+  } catch (e) {
+    toast('⚠️ Connection error. Please try again.');
+  } finally {
+    setLoading(false);
+  }
+});
+
+// ── CHECK SUBSCRIPTION ──
+async function checkSubscription() {
+  const email = localStorage.getItem('gc_email');
+  if (!email) return;
+  try {
+    const res = await fetch(`${API}/check-subscription?email=${encodeURIComponent(email)}`);
+    subscription = await res.json();
+  } catch (e) {}
+}
+
+// ── STARTUP: URL PARAMS ──
+const urlParams = new URLSearchParams(window.location.search);
+
+// Subscription return handling
+if (urlParams.get('subscription') === 'success') {
+  const plan = urlParams.get('plan') || 'family';
+  const email = urlParams.get('email');
+  if (email) localStorage.setItem('gc_email', email);
+  subscription = { subscribed: true, plan };
+  toast(`🎉 You're now on the ${plan.charAt(0).toUpperCase() + plan.slice(1)} plan! Contact info unlocked.`);
+  history.replaceState({ screen: 'screen-dispatch' }, '', window.location.pathname);
+}
+if (urlParams.get('subscription') === 'cancelled') {
+  toast('Payment cancelled. Your shortlist is still saved.');
+  history.replaceState({ screen: 'screen-dispatch' }, '', window.location.pathname);
+}
+
+// Browse/landing-page param handling
+const browseMode = urlParams.get('browse') === 'true';
+const paramCare   = urlParams.get('care');
+const paramLoc    = urlParams.get('location');
+const paramUrg    = urlParams.get('urgency');
+
+if (paramLoc) document.getElementById('location-input').value = paramLoc;
+if (paramCare) {
+  paramCare.split(',').forEach(ct => {
+    ct = ct.trim();
+    const tile = document.querySelector(`.care-tile[data-value="${ct}"]`);
+    if (tile && !tile.classList.contains('selected')) {
+      tile.classList.add('selected');
+      selectedCareTypes.push(ct);
+    }
+  });
+  updateFindBtn();
+}
+if (paramUrg) {
+  document.querySelectorAll('.urgency-pill').forEach(p => p.classList.remove('selected'));
+  const pill = document.querySelector(`.urgency-pill[data-value="${paramUrg}"]`);
+  if (pill) { pill.classList.add('selected'); urgency = paramUrg; }
+}
+
+// Auto-load caregivers for browse mode or when location param is present
+if (browseMode || paramLoc) {
+  (async () => {
+    setLoading(true, 'Finding caregivers near you…');
+    try {
+      const loc = paramLoc || 'Atlanta, GA';
+      const sp = new URLSearchParams({ location: loc, page: 1, limit: 20 });
+      if (paramCare) sp.append('specialty', paramCare.split(',')[0].trim());
+      const res = await fetch(`${API}/search-caregivers?${sp}`);
+      const data = await res.json();
+      caregivers = data.caregivers || data.docs || [];
+      if (!caregivers.length) caregivers = getDemoCaregivers();
+    } catch(e) {
+      caregivers = getDemoCaregivers();
+    } finally {
+      setLoading(false);
+    }
+    currentIndex = 0;
+    renderSwiperCard();
+    showScreen('screen-swiper');
+    checkSubscription();
+  })();
+}
+
+// ── PWA INSTALL ──
+let deferredPrompt = null;
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault(); deferredPrompt = e;
+  setTimeout(() => {
+    if (!sessionStorage.getItem('install-dismissed')) document.getElementById('install-banner').style.display = 'flex';
+  }, 5000);
+});
+document.getElementById('ib-add-btn').addEventListener('click', async () => {
+  if (deferredPrompt) { deferredPrompt.prompt(); const r = await deferredPrompt.userChoice; deferredPrompt = null; }
+  document.getElementById('install-banner').style.display = 'none';
+});
+document.getElementById('ib-close-btn').addEventListener('click', () => {
+  document.getElementById('install-banner').style.display = 'none';
+  sessionStorage.setItem('install-dismissed', '1');
+});
+const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+const isStandalone = ('standalone' in navigator && navigator.standalone) || window.matchMedia('(display-mode: standalone)').matches;
+if (isIOS && !isStandalone && !sessionStorage.getItem('ios-hint-dismissed')) {
+  setTimeout(() => {
+    const hint = document.getElementById('ios-hint');
+    hint.style.display = 'block';
+    hint.addEventListener('click', () => { hint.style.display = 'none'; sessionStorage.setItem('ios-hint-dismissed', '1'); });
+    setTimeout(() => { hint.style.display = 'none'; }, 8000);
+  }, 6000);
+}
+
+// ── SERVICE WORKER ──
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js').catch(() => {}));
+}
+</script>
+</body>
+</html>
