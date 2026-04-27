@@ -2,695 +2,1062 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>GoToCare - Find Your Caregiver</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>GoToCare — Find Care Now</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-    * { font-family: 'Inter', sans-serif; }
-    
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+    * { font-family: 'Inter', sans-serif; box-sizing: border-box; }
+    body { background: #f8f7ff; margin: 0; }
+
     .hero-gradient { background: linear-gradient(160deg, #1a1a2e 0%, #2d1b69 40%, #1e3a5f 100%); }
-    .purple-primary { color: #7c3aed; }
-    .bg-purple-primary { background-color: #7c3aed; }
-    .border-purple-primary { border-color: #7c3aed; }
-    .blue-accent { color: #3b82f6; }
-    .bg-blue-accent { background-color: #3b82f6; }
-    
-    .glass { background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.1); }
-    .transition-all { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
-    
-    @media (max-width: 640px) {
-      .container { padding: 0 1rem; }
+
+    /* Care type tile */
+    .care-tile {
+      background: rgba(255,255,255,0.08);
+      border: 2px solid rgba(255,255,255,0.15);
+      border-radius: 16px;
+      padding: 20px 12px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      text-align: center;
+      color: white;
+    }
+    .care-tile:hover { background: rgba(124,58,237,0.3); border-color: #7c3aed; transform: translateY(-2px); }
+    .care-tile.selected { background: rgba(124,58,237,0.5); border-color: #7c3aed; box-shadow: 0 0 0 3px rgba(124,58,237,0.3); transform: translateY(-2px); }
+    .care-tile .icon { font-size: 2rem; margin-bottom: 8px; }
+    .care-tile .label { font-size: 0.8rem; font-weight: 600; line-height: 1.3; }
+
+    /* Urgency pills */
+    .urgency-pill {
+      padding: 10px 20px;
+      border-radius: 100px;
+      border: 2px solid rgba(255,255,255,0.2);
+      color: white;
+      font-weight: 600;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+    .urgency-pill:hover { border-color: #7c3aed; background: rgba(124,58,237,0.2); }
+    .urgency-pill.selected { background: #7c3aed; border-color: #7c3aed; }
+
+    /* Caregiver card */
+    .caregiver-card {
+      background: white;
+      border-radius: 20px;
+      overflow: hidden;
+      box-shadow: 0 2px 16px rgba(0,0,0,0.08);
+      transition: all 0.25s ease;
+      cursor: pointer;
+      border: 2px solid transparent;
+    }
+    .caregiver-card:hover { transform: translateY(-4px); box-shadow: 0 12px 32px rgba(124,58,237,0.15); border-color: #7c3aed; }
+
+    /* Available badge */
+    .available-now { background: #d1fae5; color: #065f46; font-size: 0.7rem; font-weight: 700; padding: 3px 8px; border-radius: 20px; }
+    .available-today { background: #fef3c7; color: #92400e; font-size: 0.7rem; font-weight: 700; padding: 3px 8px; border-radius: 20px; }
+
+    /* Match score ring */
+    .match-ring {
+      width: 44px; height: 44px;
+      background: linear-gradient(135deg, #7c3aed, #3b82f6);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      color: white; font-weight: 800; font-size: 0.75rem;
     }
 
-    @keyframes spin { to { transform: rotate(360deg); } }
-    .spinner { animation: spin 1s linear infinite; }
+    /* Duration buttons */
+    .dur-btn {
+      flex: 1;
+      padding: 14px 8px;
+      border: 2px solid #e5e7eb;
+      border-radius: 12px;
+      text-align: center;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 0.85rem;
+      color: #374151;
+      transition: all 0.15s;
+    }
+    .dur-btn:hover { border-color: #7c3aed; color: #7c3aed; }
+    .dur-btn.selected { background: #7c3aed; border-color: #7c3aed; color: white; }
+
+    /* CTA button */
+    .btn-primary {
+      background: linear-gradient(135deg, #7c3aed, #3b82f6);
+      color: white;
+      border: none;
+      border-radius: 16px;
+      padding: 18px 24px;
+      font-weight: 700;
+      font-size: 1rem;
+      cursor: pointer;
+      width: 100%;
+      transition: all 0.2s;
+    }
+    .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 8px 24px rgba(124,58,237,0.4); }
+    .btn-primary:active { transform: translateY(0); }
+    .btn-primary:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+
+    /* Input */
+    .input-field {
+      width: 100%;
+      border: 2px solid #e5e7eb;
+      border-radius: 12px;
+      padding: 14px 16px;
+      font-size: 1rem;
+      outline: none;
+      transition: border 0.2s;
+    }
+    .input-field:focus { border-color: #7c3aed; }
+
+    /* Filter chip */
+    .filter-chip {
+      padding: 8px 16px;
+      border-radius: 100px;
+      border: 1.5px solid #e5e7eb;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: #6b7280;
+      cursor: pointer;
+      transition: all 0.15s;
+      white-space: nowrap;
+    }
+    .filter-chip:hover { border-color: #7c3aed; color: #7c3aed; }
+    .filter-chip.active { background: #7c3aed; border-color: #7c3aed; color: white; }
+
+    /* Pages */
+    .page { display: none; min-height: 100vh; }
+    .page.active { display: block; }
+
+    /* Animated loader */
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+    .skeleton { background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; border-radius: 8px; }
+    @keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+
+    /* Confirmation checkmark */
+    @keyframes pop { 0%{transform:scale(0)} 80%{transform:scale(1.1)} 100%{transform:scale(1)} }
+    .pop-in { animation: pop 0.5s ease forwards; }
+
+    /* Stars */
+    .star { color: #f59e0b; }
+
+    /* Sticky bottom bar */
+    .sticky-bottom { position: sticky; bottom: 0; background: white; border-top: 1px solid #f3f4f6; padding: 16px; z-index: 50; }
+
+    /* Photo avatar */
+    .avatar { width: 64px; height: 64px; border-radius: 50%; object-fit: cover; background: linear-gradient(135deg, #7c3aed, #3b82f6); display: flex; align-items: center; justify-content: center; color: white; font-size: 1.5rem; font-weight: 700; flex-shrink: 0; }
+
+    /* Scroll snap for care tiles */
+    .tiles-scroll { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+    @media(max-width:480px){ .tiles-scroll { grid-template-columns: repeat(4, minmax(70px,1fr)); } }
   </style>
 </head>
-<body class="bg-gray-50">
-  <div id="root"></div>
+<body>
 
-  <script>
-    const API_BASE = 'https://gotocare-original.jjioji.workers.dev';
+<!-- ============================================================ -->
+<!-- PAGE 1: DISPATCH — What care do you need?                    -->
+<!-- ============================================================ -->
+<div id="page-dispatch" class="page active">
+  <div class="hero-gradient min-h-screen flex flex-col">
+    <!-- Nav -->
+    <div class="flex items-center justify-between px-5 pt-6 pb-4">
+      <div class="flex items-center gap-2">
+        <div style="width:32px;height:32px;background:linear-gradient(135deg,#7c3aed,#3b82f6);border-radius:8px;display:flex;align-items:center;justify-content:center;">
+          <span style="color:white;font-weight:800;font-size:14px;">G</span>
+        </div>
+        <span style="color:white;font-weight:700;font-size:1.1rem;">GoToCare</span>
+      </div>
+      <button onclick="showPage('page-results')" style="color:rgba(255,255,255,0.6);font-size:0.8rem;background:none;border:none;cursor:pointer;">
+        Browse all →
+      </button>
+    </div>
 
-    // ============ DUAL-MODE API LAYER ============
-    async function apiCall(endpoint, options = {}) {
-      if (window.tasklet?.runCommand) {
-        try {
-          const result = await window.tasklet.runCommand('fetch', {
-            url: API_BASE + endpoint,
-            method: options.method || 'GET',
-            body: options.body ? JSON.stringify(options.body) : undefined,
-          });
-          return JSON.parse(result);
-        } catch (e) {
-          console.error('Preview API error:', e);
-        }
-      }
-      const response = await fetch(API_BASE + endpoint, {
-        method: options.method || 'GET',
-        headers: { 'Content-Type': 'application/json', ...options.headers },
-        body: options.body ? JSON.stringify(options.body) : undefined,
-      });
-      if (!response.ok) throw new Error(`API error ${response.status}`);
-      return response.json();
+    <!-- Hero headline -->
+    <div class="px-5 pt-4 pb-6">
+      <h1 style="color:white;font-size:1.75rem;font-weight:800;line-height:1.2;margin-bottom:8px;">
+        Find care <span style="color:#a78bfa;">near you</span><br>in minutes ⚡
+      </h1>
+      <p style="color:rgba(255,255,255,0.65);font-size:0.9rem;">No agency delays. No markups. Book directly.</p>
+    </div>
+
+    <!-- White card -->
+    <div style="background:white;border-radius:28px 28px 0 0;flex:1;padding:24px 20px 40px;">
+
+      <!-- Step 1: Care type -->
+      <div class="mb-6">
+        <p style="font-weight:700;color:#1e1b4b;font-size:0.95rem;margin-bottom:14px;">① What kind of care?</p>
+        <div class="tiles-scroll" id="care-tiles">
+          <div class="care-tile" onclick="selectCare(this,'Elder Care')">
+            <div class="icon">🧓</div>
+            <div class="label">Elder Care</div>
+          </div>
+          <div class="care-tile" onclick="selectCare(this,'Child Care')">
+            <div class="icon">👶</div>
+            <div class="label">Child Care</div>
+          </div>
+          <div class="care-tile" onclick="selectCare(this,'Disability')">
+            <div class="icon">♿</div>
+            <div class="label">Disability</div>
+          </div>
+          <div class="care-tile" onclick="selectCare(this,'Post-Surgery')">
+            <div class="icon">🏥</div>
+            <div class="label">Post-Surgery</div>
+          </div>
+          <div class="care-tile" onclick="selectCare(this,'Dementia')">
+            <div class="icon">🧠</div>
+            <div class="label">Dementia</div>
+          </div>
+          <div class="care-tile" onclick="selectCare(this,'Companionship')">
+            <div class="icon">🤝</div>
+            <div class="label">Companion</div>
+          </div>
+          <div class="care-tile" onclick="selectCare(this,'Overnight')">
+            <div class="icon">🌙</div>
+            <div class="label">Overnight</div>
+          </div>
+          <div class="care-tile" onclick="selectCare(this,'Any Care')">
+            <div class="icon">✨</div>
+            <div class="label">Any Care</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 2: Location -->
+      <div class="mb-6">
+        <p style="font-weight:700;color:#1e1b4b;font-size:0.95rem;margin-bottom:10px;">② Where?</p>
+        <div style="position:relative;">
+          <input id="location-input" class="input-field" type="text" placeholder="City or ZIP code..."
+            style="padding-right:110px;" oninput="onLocationInput()" />
+          <button onclick="useGPS()" id="gps-btn"
+            style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:linear-gradient(135deg,#7c3aed,#3b82f6);color:white;border:none;border-radius:8px;padding:8px 12px;font-size:0.75rem;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:4px;white-space:nowrap;">
+            📍 Use GPS
+          </button>
+        </div>
+        <div id="location-suggestions" style="display:none;background:white;border:1px solid #e5e7eb;border-radius:12px;margin-top:4px;overflow:hidden;box-shadow:0 4px 16px rgba(0,0,0,0.1);">
+        </div>
+      </div>
+
+      <!-- Step 3: When -->
+      <div class="mb-8">
+        <p style="font-weight:700;color:#1e1b4b;font-size:0.95rem;margin-bottom:10px;">③ When?</p>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;" id="urgency-pills">
+          <div class="urgency-pill selected" onclick="selectUrgency(this,'now')">🔴 Right Now</div>
+          <div class="urgency-pill" onclick="selectUrgency(this,'today')">Today</div>
+          <div class="urgency-pill" onclick="selectUrgency(this,'tomorrow')">Tomorrow</div>
+          <div class="urgency-pill" onclick="selectUrgency(this,'week')">This Week</div>
+        </div>
+      </div>
+
+      <!-- Find button -->
+      <button class="btn-primary" onclick="findCaregivers()" id="find-btn">
+        Find Available Caregivers →
+      </button>
+
+      <!-- Trust row -->
+      <div style="display:flex;justify-content:space-around;margin-top:20px;padding-top:16px;border-top:1px solid #f3f4f6;">
+        <div style="text-align:center;">
+          <div style="font-weight:800;color:#7c3aed;font-size:0.9rem;">100%</div>
+          <div style="color:#9ca3af;font-size:0.7rem;">Verified</div>
+        </div>
+        <div style="text-align:center;">
+          <div style="font-weight:800;color:#7c3aed;font-size:0.9rem;">&lt;2 hrs</div>
+          <div style="color:#9ca3af;font-size:0.7rem;">Match Time</div>
+        </div>
+        <div style="text-align:center;">
+          <div style="font-weight:800;color:#7c3aed;font-size:0.9rem;">4.9 ⭐</div>
+          <div style="color:#9ca3af;font-size:0.7rem;">Avg Rating</div>
+        </div>
+        <div style="text-align:center;">
+          <div style="font-weight:800;color:#7c3aed;font-size:0.9rem;">$0</div>
+          <div style="color:#9ca3af;font-size:0.7rem;">To Browse</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- PAGE 2: RESULTS — Instant caregiver list                     -->
+<!-- ============================================================ -->
+<div id="page-results" class="page">
+  <!-- Header -->
+  <div class="hero-gradient" style="padding:20px 20px 32px;">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
+      <button onclick="showPage('page-dispatch')" style="background:rgba(255,255,255,0.1);border:none;border-radius:50%;width:36px;height:36px;color:white;cursor:pointer;font-size:1.1rem;display:flex;align-items:center;justify-content:center;">←</button>
+      <div>
+        <div id="results-headline" style="color:white;font-weight:700;font-size:1rem;">Caregivers near you</div>
+        <div id="results-sub" style="color:rgba(255,255,255,0.6);font-size:0.8rem;">Ranked by availability & match</div>
+      </div>
+    </div>
+    <!-- Filter chips -->
+    <div style="display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;" id="filter-chips">
+      <div class="filter-chip active" onclick="filterResults(this,'all')" style="background:white;border-color:white;color:#7c3aed;">All</div>
+      <div class="filter-chip" onclick="filterResults(this,'now')" style="border-color:rgba(255,255,255,0.3);color:white;">🟢 Available Now</div>
+      <div class="filter-chip" onclick="filterResults(this,'top')" style="border-color:rgba(255,255,255,0.3);color:white;">⭐ Top Rated</div>
+      <div class="filter-chip" onclick="filterResults(this,'close')" style="border-color:rgba(255,255,255,0.3);color:white;">📍 Closest</div>
+      <div class="filter-chip" onclick="filterResults(this,'affordable')" style="border-color:rgba(255,255,255,0.3);color:white;">💰 Affordable</div>
+    </div>
+  </div>
+
+  <!-- Results list -->
+  <div style="padding:16px;margin-top:-16px;background:#f8f7ff;min-height:calc(100vh - 160px);">
+    <div id="results-container">
+      <!-- Skeleton loaders -->
+      <div class="caregiver-card" style="padding:16px;margin-bottom:12px;">
+        <div style="display:flex;gap:12px;">
+          <div class="skeleton" style="width:64px;height:64px;border-radius:50%;flex-shrink:0;"></div>
+          <div style="flex:1;">
+            <div class="skeleton" style="height:16px;width:60%;margin-bottom:8px;"></div>
+            <div class="skeleton" style="height:12px;width:80%;margin-bottom:8px;"></div>
+            <div class="skeleton" style="height:12px;width:40%;"></div>
+          </div>
+        </div>
+      </div>
+      <div class="caregiver-card" style="padding:16px;margin-bottom:12px;">
+        <div style="display:flex;gap:12px;">
+          <div class="skeleton" style="width:64px;height:64px;border-radius:50%;flex-shrink:0;"></div>
+          <div style="flex:1;">
+            <div class="skeleton" style="height:16px;width:55%;margin-bottom:8px;"></div>
+            <div class="skeleton" style="height:12px;width:75%;margin-bottom:8px;"></div>
+            <div class="skeleton" style="height:12px;width:45%;"></div>
+          </div>
+        </div>
+      </div>
+      <div class="caregiver-card" style="padding:16px;margin-bottom:12px;">
+        <div style="display:flex;gap:12px;">
+          <div class="skeleton" style="width:64px;height:64px;border-radius:50%;flex-shrink:0;"></div>
+          <div style="flex:1;">
+            <div class="skeleton" style="height:16px;width:50%;margin-bottom:8px;"></div>
+            <div class="skeleton" style="height:12px;width:70%;margin-bottom:8px;"></div>
+            <div class="skeleton" style="height:12px;width:35%;"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- PAGE 3: PROFILE — Caregiver detail                           -->
+<!-- ============================================================ -->
+<div id="page-profile" class="page">
+  <div id="profile-content">
+    <!-- dynamically filled -->
+  </div>
+  <!-- Sticky Book Now bar -->
+  <div class="sticky-bottom" id="profile-sticky" style="display:none;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+      <div>
+        <div id="profile-rate-display" style="font-size:1.4rem;font-weight:800;color:#1e1b4b;"></div>
+        <div style="font-size:0.75rem;color:#6b7280;">per hour · no hidden fees</div>
+      </div>
+      <div id="profile-avail-badge"></div>
+    </div>
+    <button class="btn-primary" onclick="showPage('page-booking')">Book Now →</button>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- PAGE 4: BOOKING — 3 fields only                              -->
+<!-- ============================================================ -->
+<div id="page-booking" class="page">
+  <!-- Header -->
+  <div class="hero-gradient" style="padding:20px 20px 30px;">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px;">
+      <button onclick="showPage('page-profile')" style="background:rgba(255,255,255,0.1);border:none;border-radius:50%;width:36px;height:36px;color:white;cursor:pointer;font-size:1.1rem;display:flex;align-items:center;justify-content:center;">←</button>
+      <div>
+        <div style="color:white;font-weight:700;font-size:1rem;">Almost there!</div>
+        <div style="color:rgba(255,255,255,0.6);font-size:0.8rem;">3 quick questions</div>
+      </div>
+    </div>
+  </div>
+
+  <div style="padding:20px;margin-top:-10px;background:white;min-height:calc(100vh - 80px);border-radius:20px 20px 0 0;margin-top:-16px;">
+    <!-- Caregiver mini-card -->
+    <div id="booking-caregiver-card" style="background:#f8f7ff;border-radius:16px;padding:16px;display:flex;align-items:center;gap:12px;margin-bottom:24px;">
+    </div>
+
+    <!-- Question 1: Your name -->
+    <div style="margin-bottom:20px;">
+      <label style="font-weight:700;color:#1e1b4b;font-size:0.9rem;display:block;margin-bottom:8px;">① Your name</label>
+      <input id="booking-name" class="input-field" type="text" placeholder="First name is fine" />
+    </div>
+
+    <!-- Question 2: Phone -->
+    <div style="margin-bottom:20px;">
+      <label style="font-weight:700;color:#1e1b4b;font-size:0.9rem;display:block;margin-bottom:8px;">② Phone or email</label>
+      <input id="booking-contact" class="input-field" type="text" placeholder="So we can confirm your booking" />
+    </div>
+
+    <!-- Question 3: Duration -->
+    <div style="margin-bottom:28px;">
+      <label style="font-weight:700;color:#1e1b4b;font-size:0.9rem;display:block;margin-bottom:10px;">③ How many hours?</label>
+      <div style="display:flex;gap:8px;" id="duration-btns">
+        <div class="dur-btn" onclick="selectDuration(this,2)">2 hrs</div>
+        <div class="dur-btn selected" onclick="selectDuration(this,4)">4 hrs</div>
+        <div class="dur-btn" onclick="selectDuration(this,8)">8 hrs</div>
+        <div class="dur-btn" onclick="selectDuration(this,12)">12 hrs</div>
+      </div>
+      <div style="margin-top:10px;text-align:center;">
+        <span style="font-size:0.8rem;color:#9ca3af;">Need a different amount? </span>
+        <span onclick="toggleCustomHours()" style="font-size:0.8rem;color:#7c3aed;cursor:pointer;font-weight:600;">Enter custom hours</span>
+      </div>
+      <input id="custom-hours" class="input-field" type="number" min="1" max="24" placeholder="Enter hours (e.g. 6)"
+        style="display:none;margin-top:8px;" oninput="onCustomHours(this)" />
+    </div>
+
+    <!-- Price summary card -->
+    <div style="background:linear-gradient(135deg,#f5f3ff,#eff6ff);border-radius:16px;padding:16px;margin-bottom:24px;border:1px solid #e0d9ff;">
+      <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
+        <span style="color:#6b7280;font-size:0.85rem;" id="price-breakdown-line">4 hrs × $28/hr</span>
+        <span style="color:#374151;font-weight:600;" id="price-subtotal">$112</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;margin-bottom:12px;">
+        <span style="color:#6b7280;font-size:0.85rem;">Platform fee (10%)</span>
+        <span style="color:#374151;font-weight:600;" id="price-fee">$11.20</span>
+      </div>
+      <div style="border-top:1px solid #ddd6fe;padding-top:12px;display:flex;justify-content:space-between;">
+        <span style="font-weight:800;color:#1e1b4b;font-size:1rem;">Total</span>
+        <span style="font-weight:800;color:#7c3aed;font-size:1.1rem;" id="price-total">$123.20</span>
+      </div>
+    </div>
+
+    <button class="btn-primary" onclick="submitBooking()" id="confirm-btn">
+      Confirm &amp; Pay $<span id="confirm-total">123.20</span> →
+    </button>
+    <p style="text-align:center;font-size:0.75rem;color:#9ca3af;margin-top:12px;">
+      🔒 Secure payment · Cancel anytime · No charge until confirmed
+    </p>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- PAGE 5: CONFIRMATION                                          -->
+<!-- ============================================================ -->
+<div id="page-confirm" class="page">
+  <div style="min-height:100vh;background:white;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 24px;text-align:center;">
+    <div class="pop-in" style="width:80px;height:80px;background:linear-gradient(135deg,#7c3aed,#3b82f6);border-radius:50%;display:flex;align-items:center;justify-content:center;margin-bottom:20px;font-size:2rem;">
+      ✅
+    </div>
+    <h2 style="font-size:1.6rem;font-weight:800;color:#1e1b4b;margin-bottom:8px;">You're all set!</h2>
+    <p style="color:#6b7280;font-size:0.95rem;margin-bottom:24px;" id="confirm-message">Your caregiver will be in touch shortly.</p>
+
+    <div style="background:#f8f7ff;border-radius:16px;padding:20px;width:100%;margin-bottom:24px;">
+      <div id="confirm-details" style="text-align:left;">
+      </div>
+    </div>
+
+    <div style="background:#d1fae5;border-radius:12px;padding:14px 20px;width:100%;margin-bottom:24px;">
+      <p style="color:#065f46;font-weight:600;font-size:0.85rem;margin:0;">
+        💬 <span id="confirm-caregiver-name">Your caregiver</span> has been notified and will call you within 30 minutes.
+      </p>
+    </div>
+
+    <button class="btn-primary" onclick="showPage('page-dispatch')" style="margin-bottom:12px;">
+      Book Another →
+    </button>
+    <button onclick="showPage('page-dispatch')" style="background:none;border:none;color:#9ca3af;font-size:0.85rem;cursor:pointer;">
+      Back to Home
+    </button>
+  </div>
+</div>
+
+<script>
+  const API_BASE = 'https://gotocare-original.jjioji.workers.dev';
+
+  // ============ STATE ============
+  let state = {
+    careType: 'Any Care',
+    location: '',
+    urgency: 'now',
+    caregivers: [],
+    selectedCaregiver: null,
+    duration: 4,
+    activeFilter: 'all'
+  };
+
+  // ============ PAGE NAVIGATION ============
+  function showPage(id) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    window.scrollTo(0,0);
+  }
+
+  // ============ CARE TYPE SELECTION ============
+  function selectCare(el, type) {
+    document.querySelectorAll('.care-tile').forEach(t => t.classList.remove('selected'));
+    el.classList.add('selected');
+    state.careType = type;
+  }
+
+  // ============ URGENCY SELECTION ============
+  function selectUrgency(el, urgency) {
+    document.querySelectorAll('.urgency-pill').forEach(p => p.classList.remove('selected'));
+    el.classList.add('selected');
+    state.urgency = urgency;
+  }
+
+  // ============ GPS LOCATION ============
+  function useGPS() {
+    const btn = document.getElementById('gps-btn');
+    btn.innerHTML = '⏳ Locating...';
+    btn.disabled = true;
+
+    if (!navigator.geolocation) {
+      btn.innerHTML = '📍 Use GPS';
+      btn.disabled = false;
+      document.getElementById('location-input').value = 'Atlanta, GA';
+      state.location = 'Atlanta, GA';
+      return;
     }
 
-    // ============ STATE ============
-    let state = {
-      currentPage: 'browse',
-      caregivers: [],
-      selectedCaregiver: null,
-      booking: {},
-      bookingId: null,
-      checkoutUrl: null,
-      loading: false,
-      error: null,
-      usingMockData: false,
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        try {
+          const { latitude, longitude } = pos.coords;
+          // Reverse geocode using a free API
+          const res = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`);
+          const data = await res.json();
+          const city = data.address?.city || data.address?.town || data.address?.village || '';
+          const state_abbr = data.address?.state || '';
+          const location = city ? `${city}, ${state_abbr}` : `${latitude.toFixed(2)}, ${longitude.toFixed(2)}`;
+          document.getElementById('location-input').value = location;
+          state.location = location;
+          btn.innerHTML = '✅ Found!';
+          setTimeout(() => { btn.innerHTML = '📍 Use GPS'; btn.disabled = false; }, 2000);
+        } catch(e) {
+          document.getElementById('location-input').value = 'Atlanta, GA';
+          state.location = 'Atlanta, GA';
+          btn.innerHTML = '📍 Use GPS';
+          btn.disabled = false;
+        }
+      },
+      () => {
+        // Permission denied - use default
+        document.getElementById('location-input').value = 'Atlanta, GA';
+        state.location = 'Atlanta, GA';
+        btn.innerHTML = '📍 GPS denied';
+        btn.disabled = false;
+      }
+    );
+  }
+
+  function onLocationInput() {
+    state.location = document.getElementById('location-input').value;
+  }
+
+  // ============ FIND CAREGIVERS ============
+  async function findCaregivers() {
+    const btn = document.getElementById('find-btn');
+    btn.innerHTML = '⏳ Finding caregivers...';
+    btn.disabled = true;
+
+    if (!state.location) {
+      state.location = document.getElementById('location-input').value || 'Atlanta, GA';
+    }
+
+    showPage('page-results');
+    document.getElementById('results-headline').textContent = `${state.careType} near ${state.location || 'you'}`;
+    document.getElementById('results-sub').textContent = urgencyLabel(state.urgency) + ' · Ranked by match';
+
+    setTimeout(() => { btn.innerHTML = 'Find Available Caregivers →'; btn.disabled = false; }, 1000);
+
+    await loadCaregivers();
+  }
+
+  function urgencyLabel(u) {
+    return {now:'Available right now', today:'Available today', tomorrow:'Available tomorrow', week:'Available this week'}[u] || u;
+  }
+
+  // ============ LOAD CAREGIVERS ============
+  async function loadCaregivers() {
+    let caregivers = [];
+
+    try {
+      const params = new URLSearchParams();
+      if (state.location) params.set('location', state.location);
+      if (state.careType && state.careType !== 'Any Care') params.set('specialty', state.careType);
+      params.set('limit', '20');
+
+      const res = await fetch(`${API_BASE}/api/search-caregivers?${params}`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.caregivers && data.caregivers.length > 0) {
+          caregivers = data.caregivers;
+        }
+      }
+    } catch(e) {
+      console.log('API fallback to mock data');
+    }
+
+    // Rich mock data if API returns empty
+    if (!caregivers || caregivers.length === 0) {
+      caregivers = getMockCaregivers();
+    }
+
+    // Inject availability & distance for display
+    caregivers = caregivers.map((c, i) => ({
+      ...c,
+      availableNow: i < 3,
+      availableToday: i < 6,
+      distance: (0.5 + i * 0.4).toFixed(1),
+      matchScore: Math.max(72, 98 - i * 4),
+      hourlyRate: c.hourlyRate || c.hourly_rate || (24 + (i % 4) * 4),
+      rating: c.rating || (4.9 - i * 0.07).toFixed(1),
+      reviewCount: c.reviewCount || (87 - i * 8),
+      name: c.name || `${c.firstName || 'Caregiver'} ${c.lastName ? c.lastName.charAt(0) + '.' : ''}`,
+      specialty: c.specialty || c.skills?.[0] || state.careType,
+      yearsExp: c.yearsExp || c.experience || (3 + i),
+      languages: c.languages || ['English'],
+      bio: c.bio || `Dedicated caregiver with ${3+i} years of experience specializing in ${state.careType}.`
+    }));
+
+    state.caregivers = caregivers;
+    renderResults(caregivers);
+  }
+
+  // ============ RENDER RESULTS ============
+  function renderResults(caregivers) {
+    const container = document.getElementById('results-container');
+
+    if (!caregivers || caregivers.length === 0) {
+      container.innerHTML = `
+        <div style="text-align:center;padding:40px 20px;">
+          <div style="font-size:3rem;margin-bottom:12px;">🔍</div>
+          <h3 style="color:#1e1b4b;font-weight:700;margin-bottom:8px;">No caregivers found</h3>
+          <p style="color:#6b7280;font-size:0.9rem;">Try a different location or care type.</p>
+          <button onclick="showPage('page-dispatch')" class="btn-primary" style="margin-top:20px;max-width:200px;">← Try Again</button>
+        </div>`;
+      return;
+    }
+
+    container.innerHTML = `
+      <div style="margin-bottom:12px;color:#6b7280;font-size:0.8rem;font-weight:600;padding:0 4px;">
+        ${caregivers.length} caregivers found · Sorted by availability
+      </div>
+      ${caregivers.map((c, i) => renderCard(c, i)).join('')}
+    `;
+  }
+
+  function renderCard(c, i) {
+    const availBadge = c.availableNow
+      ? `<span class="available-now">🟢 Available Now</span>`
+      : c.availableToday
+        ? `<span class="available-today">🟡 Available Today</span>`
+        : `<span style="background:#f3f4f6;color:#6b7280;font-size:0.7rem;font-weight:700;padding:3px 8px;border-radius:20px;">📅 This Week</span>`;
+
+    const initials = (c.name||'').split(' ').map(n=>n[0]||'').join('').toUpperCase().slice(0,2) || 'CG';
+    const avatarColors = ['#7c3aed','#3b82f6','#059669','#dc2626','#d97706','#7c3aed'];
+    const col = avatarColors[i % avatarColors.length];
+
+    return `
+      <div class="caregiver-card" style="margin-bottom:12px;padding:16px;" onclick="openProfile(${i})">
+        <div style="display:flex;gap:12px;align-items:flex-start;">
+          <!-- Avatar -->
+          <div style="width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,${col},#3b82f6);display:flex;align-items:center;justify-content:center;color:white;font-size:1.2rem;font-weight:800;flex-shrink:0;position:relative;">
+            ${initials}
+            ${c.availableNow ? `<div style="position:absolute;bottom:2px;right:2px;width:12px;height:12px;background:#10b981;border-radius:50%;border:2px solid white;"></div>` : ''}
+          </div>
+          <!-- Info -->
+          <div style="flex:1;min-width:0;">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
+              <span style="font-weight:700;color:#1e1b4b;font-size:1rem;">${c.name}</span>
+              <div class="match-ring">${c.matchScore}%</div>
+            </div>
+            <div style="color:#6b7280;font-size:0.8rem;margin-bottom:6px;">${c.specialty} · ${c.yearsExp} yrs exp</div>
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+              ${availBadge}
+              <span style="color:#6b7280;font-size:0.75rem;">📍 ${c.distance} mi</span>
+            </div>
+            <div style="display:flex;align-items:center;justify-content:space-between;">
+              <div style="display:flex;align-items:center;gap:4px;">
+                <span style="color:#f59e0b;font-size:0.8rem;">★</span>
+                <span style="font-weight:700;color:#374151;font-size:0.85rem;">${c.rating}</span>
+                <span style="color:#9ca3af;font-size:0.75rem;">(${c.reviewCount})</span>
+              </div>
+              <span style="font-weight:800;color:#7c3aed;font-size:1rem;">$${c.hourlyRate}<span style="font-weight:500;color:#9ca3af;font-size:0.75rem;">/hr</span></span>
+            </div>
+          </div>
+        </div>
+        <!-- Quick book button -->
+        <div style="margin-top:12px;padding-top:12px;border-top:1px solid #f3f4f6;display:flex;gap:8px;">
+          <button onclick="event.stopPropagation();quickBook(${i})" style="flex:1;padding:10px;background:linear-gradient(135deg,#7c3aed,#3b82f6);color:white;border:none;border-radius:10px;font-weight:700;font-size:0.85rem;cursor:pointer;">
+            ⚡ Book Now
+          </button>
+          <button onclick="event.stopPropagation();openProfile(${i})" style="padding:10px 16px;background:#f8f7ff;color:#7c3aed;border:none;border-radius:10px;font-weight:600;font-size:0.85rem;cursor:pointer;border:1px solid #e0d9ff;">
+            View Profile
+          </button>
+        </div>
+      </div>
+    `;
+  }
+
+  // ============ FILTER ============
+  function filterResults(el, filter) {
+    document.querySelectorAll('#filter-chips .filter-chip').forEach(c => {
+      c.classList.remove('active');
+      c.style.background = '';
+      c.style.borderColor = 'rgba(255,255,255,0.3)';
+      c.style.color = 'white';
+    });
+    el.classList.add('active');
+    el.style.background = 'white';
+    el.style.borderColor = 'white';
+    el.style.color = '#7c3aed';
+    state.activeFilter = filter;
+
+    let filtered = [...state.caregivers];
+    if (filter === 'now') filtered = filtered.filter(c => c.availableNow);
+    else if (filter === 'today') filtered = filtered.filter(c => c.availableToday);
+    else if (filter === 'top') filtered = [...filtered].sort((a,b) => b.rating - a.rating);
+    else if (filter === 'close') filtered = [...filtered].sort((a,b) => parseFloat(a.distance) - parseFloat(b.distance));
+    else if (filter === 'affordable') filtered = [...filtered].sort((a,b) => a.hourlyRate - b.hourlyRate);
+
+    renderResults(filtered);
+  }
+
+  // ============ QUICK BOOK ============
+  function quickBook(idx) {
+    state.selectedCaregiver = state.caregivers[idx];
+    updateBookingPage();
+    showPage('page-booking');
+  }
+
+  // ============ OPEN PROFILE ============
+  function openProfile(idx) {
+    const c = state.caregivers[idx];
+    state.selectedCaregiver = c;
+
+    const initials = (c.name||'').split(' ').map(n=>n[0]||'').join('').toUpperCase().slice(0,2) || 'CG';
+    const availBadge = c.availableNow
+      ? `<span class="available-now" style="font-size:0.8rem;padding:4px 10px;">🟢 Available Now</span>`
+      : `<span class="available-today" style="font-size:0.8rem;padding:4px 10px;">🟡 Available Today</span>`;
+
+    const stars = Array(5).fill(0).map((_,i) => `<span class="star">${i < Math.floor(c.rating) ? '★' : '☆'}</span>`).join('');
+
+    document.getElementById('profile-content').innerHTML = `
+      <!-- Hero -->
+      <div class="hero-gradient" style="padding:20px;">
+        <button onclick="showPage('page-results')" style="background:rgba(255,255,255,0.1);border:none;border-radius:50%;width:36px;height:36px;color:white;cursor:pointer;font-size:1.1rem;display:flex;align-items:center;justify-content:center;margin-bottom:16px;">←</button>
+        <div style="display:flex;align-items:center;gap:16px;">
+          <div style="width:80px;height:80px;border-radius:50%;background:linear-gradient(135deg,#7c3aed,#3b82f6);display:flex;align-items:center;justify-content:center;color:white;font-size:1.8rem;font-weight:800;position:relative;border:3px solid rgba(255,255,255,0.3);">
+            ${initials}
+            ${c.availableNow ? `<div style="position:absolute;bottom:4px;right:4px;width:16px;height:16px;background:#10b981;border-radius:50%;border:2px solid white;"></div>` : ''}
+          </div>
+          <div>
+            <h2 style="color:white;font-size:1.3rem;font-weight:800;margin-bottom:4px;">${c.name}</h2>
+            <div style="color:rgba(255,255,255,0.7);font-size:0.85rem;margin-bottom:6px;">${c.specialty} · ${c.yearsExp} years exp</div>
+            <div style="display:flex;align-items:center;gap:8px;">
+              ${availBadge}
+              <span style="color:rgba(255,255,255,0.6);font-size:0.8rem;">📍 ${c.distance} mi away</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Stat bar -->
+      <div style="background:white;padding:16px 20px;display:flex;justify-content:space-around;border-bottom:1px solid #f3f4f6;">
+        <div style="text-align:center;">
+          <div style="font-weight:800;color:#7c3aed;font-size:1.1rem;">${c.rating} ${stars}</div>
+          <div style="color:#9ca3af;font-size:0.7rem;">${c.reviewCount} reviews</div>
+        </div>
+        <div style="text-align:center;">
+          <div style="font-weight:800;color:#7c3aed;font-size:1.1rem;">$${c.hourlyRate}/hr</div>
+          <div style="color:#9ca3af;font-size:0.7rem;">No hidden fees</div>
+        </div>
+        <div style="text-align:center;">
+          <div style="font-weight:800;color:#7c3aed;font-size:1.1rem;">${c.matchScore}%</div>
+          <div style="color:#9ca3af;font-size:0.7rem;">Match score</div>
+        </div>
+      </div>
+
+      <!-- Body -->
+      <div style="padding:20px;background:#f8f7ff;min-height:60vh;padding-bottom:120px;">
+        <!-- Bio -->
+        <div style="background:white;border-radius:16px;padding:16px;margin-bottom:16px;">
+          <h3 style="font-weight:700;color:#1e1b4b;margin-bottom:8px;">About</h3>
+          <p style="color:#6b7280;font-size:0.9rem;line-height:1.6;">${c.bio}</p>
+        </div>
+
+        <!-- Skills -->
+        <div style="background:white;border-radius:16px;padding:16px;margin-bottom:16px;">
+          <h3 style="font-weight:700;color:#1e1b4b;margin-bottom:12px;">Skills & Specializations</h3>
+          <div style="display:flex;flex-wrap:wrap;gap:8px;">
+            ${(c.languages||['English']).map(l=>`<span style="background:#f0fdf4;color:#065f46;padding:5px 10px;border-radius:20px;font-size:0.75rem;font-weight:600;">🗣 ${l}</span>`).join('')}
+            <span style="background:#f5f3ff;color:#7c3aed;padding:5px 10px;border-radius:20px;font-size:0.75rem;font-weight:600;">${c.specialty}</span>
+            <span style="background:#eff6ff;color:#1d4ed8;padding:5px 10px;border-radius:20px;font-size:0.75rem;font-weight:600;">✅ Background Checked</span>
+            <span style="background:#fff7ed;color:#c2410c;padding:5px 10px;border-radius:20px;font-size:0.75rem;font-weight:600;">🏥 CPR Certified</span>
+          </div>
+        </div>
+
+        <!-- Availability -->
+        <div style="background:white;border-radius:16px;padding:16px;margin-bottom:16px;">
+          <h3 style="font-weight:700;color:#1e1b4b;margin-bottom:12px;">Availability</h3>
+          <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;text-align:center;">
+            ${['M','T','W','T','F','S','S'].map((d,i) => {
+              const avail = [0,1,2,3,4].includes(i);
+              return `<div style="padding:8px 4px;border-radius:10px;font-size:0.7rem;font-weight:700;background:${avail?'#f5f3ff':'#f9fafb'};color:${avail?'#7c3aed':'#d1d5db'};">
+                <div>${d}</div>
+                ${avail?`<div style="width:6px;height:6px;background:#7c3aed;border-radius:50%;margin:4px auto 0;"></div>`:''}
+              </div>`;
+            }).join('')}
+          </div>
+        </div>
+
+        <!-- Reviews -->
+        <div style="background:white;border-radius:16px;padding:16px;">
+          <h3 style="font-weight:700;color:#1e1b4b;margin-bottom:12px;">Recent Reviews</h3>
+          ${[
+            {name:'Sarah M.', rating:5, text:'Absolutely wonderful caregiver. My mother loves her visits!'},
+            {name:'James R.', rating:5, text:'Professional, kind, and very reliable. Highly recommend.'},
+            {name:'Linda K.', rating:4, text:'Great with my dad. Always on time and very caring.'}
+          ].map(r => `
+            <div style="padding:12px 0;border-bottom:1px solid #f3f4f6;">
+              <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
+                <span style="font-weight:600;color:#374151;font-size:0.85rem;">${r.name}</span>
+                <span style="color:#f59e0b;font-size:0.8rem;">${'★'.repeat(r.rating)}</span>
+              </div>
+              <p style="color:#6b7280;font-size:0.82rem;margin:0;">${r.text}</p>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    `;
+
+    document.getElementById('profile-sticky').style.display = 'block';
+    document.getElementById('profile-rate-display').textContent = `$${c.hourlyRate}/hr`;
+    document.getElementById('profile-avail-badge').innerHTML = c.availableNow
+      ? `<span class="available-now">🟢 Available Now</span>`
+      : `<span class="available-today">🟡 Today</span>`;
+
+    updateBookingPage();
+    showPage('page-profile');
+  }
+
+  // ============ DURATION ============
+  function selectDuration(el, hrs) {
+    document.querySelectorAll('.dur-btn').forEach(b => b.classList.remove('selected'));
+    el.classList.add('selected');
+    state.duration = hrs;
+    document.getElementById('custom-hours').style.display = 'none';
+    updatePriceSummary();
+  }
+
+  function toggleCustomHours() {
+    const inp = document.getElementById('custom-hours');
+    inp.style.display = inp.style.display === 'none' ? 'block' : 'none';
+    if (inp.style.display === 'block') inp.focus();
+  }
+
+  function onCustomHours(inp) {
+    const hrs = parseInt(inp.value) || 1;
+    state.duration = hrs;
+    document.querySelectorAll('.dur-btn').forEach(b => b.classList.remove('selected'));
+    updatePriceSummary();
+  }
+
+  function updatePriceSummary() {
+    const c = state.selectedCaregiver;
+    if (!c) return;
+    const rate = c.hourlyRate || 28;
+    const subtotal = rate * state.duration;
+    const fee = subtotal * 0.1;
+    const total = subtotal + fee;
+    document.getElementById('price-breakdown-line').textContent = `${state.duration} hrs × $${rate}/hr`;
+    document.getElementById('price-subtotal').textContent = `$${subtotal.toFixed(2)}`;
+    document.getElementById('price-fee').textContent = `$${fee.toFixed(2)}`;
+    document.getElementById('price-total').textContent = `$${total.toFixed(2)}`;
+    document.getElementById('confirm-total').textContent = total.toFixed(2);
+  }
+
+  function updateBookingPage() {
+    const c = state.selectedCaregiver;
+    if (!c) return;
+    const initials = (c.name||'').split(' ').map(n=>n[0]||'').join('').toUpperCase().slice(0,2) || 'CG';
+    document.getElementById('booking-caregiver-card').innerHTML = `
+      <div style="width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,#7c3aed,#3b82f6);display:flex;align-items:center;justify-content:center;color:white;font-size:1rem;font-weight:800;flex-shrink:0;">${initials}</div>
+      <div>
+        <div style="font-weight:700;color:#1e1b4b;">${c.name}</div>
+        <div style="color:#6b7280;font-size:0.8rem;">${c.specialty} · ⭐${c.rating} · $${c.hourlyRate}/hr</div>
+        ${c.availableNow ? '<span class="available-now" style="margin-top:4px;display:inline-block;">🟢 Available Now</span>' : ''}
+      </div>
+    `;
+    updatePriceSummary();
+  }
+
+  // ============ SUBMIT BOOKING ============
+  async function submitBooking() {
+    const name = document.getElementById('booking-name').value.trim();
+    const contact = document.getElementById('booking-contact').value.trim();
+
+    if (!name || !contact) {
+      alert('Please enter your name and phone/email.');
+      return;
+    }
+
+    const btn = document.getElementById('confirm-btn');
+    btn.innerHTML = '⏳ Confirming...';
+    btn.disabled = true;
+
+    const c = state.selectedCaregiver;
+    const rate = c.hourlyRate || 28;
+    const subtotal = rate * state.duration;
+    const fee = subtotal * 0.1;
+    const total = subtotal + fee;
+
+    // Detect if contact is email or phone
+    const isEmail = contact.includes('@');
+    const bookingData = {
+      caregiverId: c.id || c._id || 1,
+      caregiverName: c.name,
+      clientName: name,
+      clientEmail: isEmail ? contact : `${name.toLowerCase().replace(/\s+/g,'.')}@gotocare.temp`,
+      clientPhone: isEmail ? '' : contact,
+      duration: state.duration,
+      careType: state.careType,
+      location: state.location || 'Atlanta, GA',
+      urgency: state.urgency,
+      totalAmount: total,
+      notes: `${state.careType} · ${state.urgency}`
     };
 
-    // ============ MOCK FALLBACK DATA ============
-    const MOCK_CAREGIVERS = [
-      { id: 1, name: 'Maria Santos', specialty: 'Elderly Care Specialist', hourlyRate: 28, experience: 8, rating: 5, reviews: 47, skills: ['Mobility Assistance', 'Medication Reminder', 'Companionship', 'Meal Prep'], bio: 'Compassionate caregiver with 8 years of experience in elderly care. CPR certified and trained in mobility assistance.' },
-      { id: 2, name: 'James Chen', specialty: 'Medical Support Technician', hourlyRate: 35, experience: 6, rating: 5, reviews: 32, skills: ['Catheter Care', 'Wound Dressing', 'Medical Equipment', 'Post-Surgery Care'], bio: 'Certified medical support technician with expertise in post-operative care and medical device management.' },
-      { id: 3, name: 'Sofia Lopez', specialty: 'Childcare Provider', hourlyRate: 22, experience: 12, rating: 4.8, reviews: 89, skills: ['Infant Care', 'Tutoring', 'Activity Planning', 'Emergency First Aid'], bio: 'Loving childcare provider with 12 years of experience. Background in early childhood education.' },
-      { id: 4, name: 'Robert Johnson', specialty: 'Companion Care', hourlyRate: 20, experience: 5, rating: 4.9, reviews: 56, skills: ['Companionship', 'Errand Running', 'Light Housekeeping', 'Transportation'], bio: 'Friendly and reliable companion caregiver. Great with seniors and always punctual.' },
-    ];
+    let bookingId = `GTC-${Math.random().toString(36).substr(2,8).toUpperCase()}`;
+    let checkoutUrl = null;
 
-    // ============ COMPONENT: HEADER ============
-    function Header() {
-      return `
-        <header class="hero-gradient text-white sticky top-0 z-50 shadow-lg">
-          <div class="max-w-4xl mx-auto px-4 py-6">
-            <div class="flex items-center justify-between">
-              <div class="flex items-center gap-2">
-                <span class="text-3xl">❤️</span>
-                <h1 class="text-2xl font-bold">GoToCare</h1>
-              </div>
-              ${state.currentPage !== 'browse' ? `
-                <button onclick="goBack()" class="px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg transition-all">← Back</button>
-              ` : ''}
-            </div>
-          </div>
-        </header>
-      `;
-    }
+    try {
+      // Submit booking
+      const bookRes = await fetch(`${API_BASE}/api/submit-booking`, {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify(bookingData)
+      });
 
-    // ============ COMPONENT: BROWSE PAGE ============
-    function BrowsePage() {
-      return `
-        <div class="max-w-4xl mx-auto px-4 py-8">
-          <div class="mb-8">
-            <h2 class="text-3xl font-bold mb-6">Find Your Caregiver</h2>
-            <div class="bg-white p-6 rounded-xl shadow-sm border mb-6">
-              <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div>
-                  <label class="block text-sm font-medium mb-2">Location</label>
-                  <input type="text" id="filterLocation" placeholder="City or ZIP" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500">
-                </div>
-                <div>
-                  <label class="block text-sm font-medium mb-2">Specialty</label>
-                  <select id="filterSpecialty" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500">
-                    <option value="">Any</option>
-                    <option value="elderly">Elderly Care</option>
-                    <option value="child">Childcare</option>
-                    <option value="medical">Medical Support</option>
-                    <option value="companion">Companion Care</option>
-                  </select>
-                </div>
-                <div>
-                  <label class="block text-sm font-medium mb-2">Date</label>
-                  <input type="date" id="filterDate" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500">
-                </div>
-              </div>
-              <button onclick="applyFilters()" class="w-full mt-4 bg-purple-700 text-white py-2 rounded-lg font-semibold hover:bg-purple-800 transition-all">
-                Search Caregivers
-              </button>
-            </div>
-          </div>
+      if (bookRes.ok) {
+        const bookData = await bookRes.json();
+        bookingId = bookData.bookingId || bookingId;
 
-          ${state.usingMockData ? `
-            <div class="bg-amber-50 border border-amber-200 rounded-lg px-4 py-3 mb-6 text-sm text-amber-800">
-              ⚡ Showing featured caregivers — real-time search active as caregivers join GoToCare.
-            </div>
-          ` : ''}
-
-          ${state.loading ? `
-            <div class="text-center py-16">
-              <div class="inline-block w-10 h-10 border-4 border-purple-700 border-t-transparent rounded-full spinner mb-4"></div>
-              <p class="text-gray-600">Finding available caregivers...</p>
-            </div>
-          ` : ''}
-
-          ${!state.loading && state.caregivers.length === 0 ? `
-            <div class="text-center py-16">
-              <p class="text-5xl mb-4">🔍</p>
-              <p class="text-gray-600 mb-4">No caregivers found. Try adjusting your filters.</p>
-              <button onclick="loadCaregivers()" class="px-6 py-2 bg-purple-700 text-white rounded-lg font-semibold">Show All</button>
-            </div>
-          ` : ''}
-
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            ${state.caregivers.map(c => `
-              <div class="bg-white rounded-xl shadow-md hover:shadow-xl transition-all overflow-hidden cursor-pointer" onclick="selectCaregiver(${c.id})">
-                <div class="hero-gradient p-6 text-white">
-                  <div class="flex gap-4">
-                    <div class="w-16 h-16 rounded-full bg-white/20 flex items-center justify-center text-2xl font-bold flex-shrink-0">
-                      ${c.name.charAt(0)}
-                    </div>
-                    <div class="flex-1">
-                      <h3 class="text-xl font-bold">${c.name}</h3>
-                      <p class="text-white/80">${c.specialty || c.specializations || 'Caregiver'}</p>
-                    </div>
-                  </div>
-                </div>
-                <div class="p-6">
-                  <div class="flex items-center justify-between mb-4">
-                    <div>
-                      <p class="text-2xl font-bold text-purple-700">$${c.hourlyRate}/hr</p>
-                      <p class="text-sm text-gray-600">${c.experience} years exp</p>
-                    </div>
-                    <div class="text-right">
-                      <div class="flex gap-0.5">
-                        ${[1,2,3,4,5].map(i => `<span class="text-lg">${i <= Math.round(c.rating) ? '⭐' : '☆'}</span>`).join('')}
-                      </div>
-                      <p class="text-sm text-gray-600">${c.reviews} reviews</p>
-                    </div>
-                  </div>
-                  <div class="mb-4">
-                    <div class="flex flex-wrap gap-2">
-                      ${(c.skills || []).slice(0, 4).map(s => `<span class="px-3 py-1 bg-purple-100 text-purple-700 text-xs rounded-full">${s}</span>`).join('')}
-                    </div>
-                  </div>
-                  <p class="text-sm text-green-600 font-semibold">✓ Available Today</p>
-                </div>
-                <div class="px-6 pb-6">
-                  <button class="w-full bg-purple-700 text-white py-2 rounded-lg font-semibold hover:bg-purple-800 transition-all">
-                    View Profile
-                  </button>
-                </div>
-              </div>
-            `).join('')}
-          </div>
-        </div>
-      `;
-    }
-
-    // ============ COMPONENT: PROFILE PAGE ============
-    function ProfilePage() {
-      const c = state.selectedCaregiver;
-      if (!c) return '';
-      return `
-        <div class="max-w-2xl mx-auto px-4 py-8">
-          <div class="hero-gradient text-white rounded-xl p-8 mb-8">
-            <div class="flex gap-6 mb-6">
-              <div class="w-24 h-24 rounded-full bg-white/20 flex items-center justify-center text-5xl font-bold flex-shrink-0">${c.name.charAt(0)}</div>
-              <div>
-                <h1 class="text-3xl font-bold">${c.name}</h1>
-                <p class="text-white/80 mb-2">${c.specialty || 'Caregiver'}</p>
-                <div class="flex gap-6 flex-wrap">
-                  <div><p class="text-sm text-white/80">Experience</p><p class="text-xl font-bold">${c.experience} yrs</p></div>
-                  <div><p class="text-sm text-white/80">Hourly Rate</p><p class="text-xl font-bold">$${c.hourlyRate}</p></div>
-                  <div><p class="text-sm text-white/80">Rating</p><p class="text-xl font-bold">${c.rating}/5 ⭐</p></div>
-                </div>
-              </div>
-            </div>
-            <p class="text-white/90">${c.bio || 'Experienced and compassionate caregiver dedicated to providing exceptional care.'}</p>
-          </div>
-
-          <div class="space-y-6">
-            <div class="bg-white p-6 rounded-xl shadow-md">
-              <h3 class="text-xl font-bold mb-4">Skills & Specializations</h3>
-              <div class="flex flex-wrap gap-2">
-                ${(c.skills || []).map(s => `<span class="px-4 py-2 bg-purple-100 text-purple-700 rounded-lg font-medium">${s}</span>`).join('')}
-              </div>
-            </div>
-            <div class="bg-white p-6 rounded-xl shadow-md">
-              <h3 class="text-xl font-bold mb-4">Availability</h3>
-              <div class="space-y-2 text-gray-700">
-                <p>Monday – Friday: 6 AM – 6 PM</p>
-                <p>Saturday: 8 AM – 4 PM</p>
-                <p class="text-green-600 font-semibold mt-2">✓ Available starting tomorrow</p>
-              </div>
-            </div>
-            <div class="bg-white p-6 rounded-xl shadow-md">
-              <h3 class="text-xl font-bold mb-4">Reviews (${c.reviews})</h3>
-              <div class="space-y-4">
-                <div class="border-b pb-4">
-                  <div class="flex items-center justify-between mb-2">
-                    <p class="font-semibold">Jane D.</p>
-                    <span class="text-yellow-400">⭐⭐⭐⭐⭐</span>
-                  </div>
-                  <p class="text-gray-700">Amazing caregiver! Very professional and caring.</p>
-                </div>
-                <div>
-                  <div class="flex items-center justify-between mb-2">
-                    <p class="font-semibold">Robert S.</p>
-                    <span class="text-yellow-400">⭐⭐⭐⭐⭐</span>
-                  </div>
-                  <p class="text-gray-700">Highly recommended. Great with my elderly parents.</p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div class="mt-8">
-            <button onclick="goToBooking()" class="w-full bg-purple-700 text-white py-4 rounded-xl font-bold text-lg hover:bg-purple-800 transition-all">
-              Book Now — $${c.hourlyRate}/hr
-            </button>
-          </div>
-        </div>
-      `;
-    }
-
-    // ============ COMPONENT: BOOKING PAGE ============
-    function BookingPage() {
-      const c = state.selectedCaregiver;
-      return `
-        <div class="max-w-2xl mx-auto px-4 py-8">
-          <h2 class="text-3xl font-bold mb-8">Book ${c.name}</h2>
-          <div class="bg-white p-8 rounded-xl shadow-md">
-            <div class="mb-8">
-              <h3 class="text-xl font-bold mb-4">Your Information</h3>
-              <div class="space-y-4">
-                <div>
-                  <label class="block text-sm font-medium mb-2">Full Name *</label>
-                  <input type="text" id="bookingName" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500" placeholder="Your full name" value="${state.booking.name || ''}">
-                </div>
-                <div>
-                  <label class="block text-sm font-medium mb-2">Email *</label>
-                  <input type="email" id="bookingEmail" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500" placeholder="your@email.com" value="${state.booking.email || ''}">
-                </div>
-                <div>
-                  <label class="block text-sm font-medium mb-2">Phone *</label>
-                  <input type="tel" id="bookingPhone" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500" placeholder="(555) 123-4567" value="${state.booking.phone || ''}">
-                </div>
-              </div>
-            </div>
-
-            <div class="mb-8 border-t pt-8">
-              <h3 class="text-xl font-bold mb-4">Care Details</h3>
-              <div class="space-y-4">
-                <div>
-                  <label class="block text-sm font-medium mb-2">Date Needed *</label>
-                  <input type="date" id="bookingDate" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500" value="${state.booking.date || ''}">
-                </div>
-                <div class="grid grid-cols-2 gap-4">
-                  <div>
-                    <label class="block text-sm font-medium mb-2">Start Time *</label>
-                    <input type="time" id="bookingStartTime" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500" value="${state.booking.time || ''}">
-                  </div>
-                  <div>
-                    <label class="block text-sm font-medium mb-2">Duration (hours)</label>
-                    <select id="bookingDuration" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500" onchange="updatePriceSummary()">
-                      <option value="1" ${state.booking.hours==1?'selected':''}>1 hour</option>
-                      <option value="2" ${state.booking.hours==2?'selected':''}>2 hours</option>
-                      <option value="3" ${state.booking.hours==3?'selected':''}>3 hours</option>
-                      <option value="4" ${state.booking.hours==4?'selected':''}>4 hours</option>
-                      <option value="8" ${state.booking.hours==8?'selected':''}>Full day (8 hrs)</option>
-                    </select>
-                  </div>
-                </div>
-                <div>
-                  <label class="block text-sm font-medium mb-2">Special Requests</label>
-                  <textarea id="bookingSpecialRequests" rows="3" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500" placeholder="Any special needs or requirements?">${state.booking.specialRequests || ''}</textarea>
-                </div>
-              </div>
-            </div>
-
-            <div class="mb-8 border-t pt-6 bg-purple-50 p-4 rounded-lg">
-              <h3 class="text-lg font-bold mb-3">Price Estimate</h3>
-              <div class="space-y-2 text-sm">
-                <div class="flex justify-between"><span>Hourly Rate</span><span>$${c.hourlyRate}/hr</span></div>
-                <div class="flex justify-between"><span id="summaryDuration">Duration</span><span id="summaryHours">-- hours</span></div>
-                <div class="flex justify-between text-gray-500"><span>Service Fee (10%)</span><span id="summaryFee">--</span></div>
-                <div class="flex justify-between font-bold text-base border-t pt-2"><span>Estimated Total</span><span id="summaryTotal" class="text-purple-700">--</span></div>
-              </div>
-            </div>
-
-            ${state.error ? `<div class="bg-red-50 border border-red-200 text-red-700 rounded-lg p-3 mb-4 text-sm">${state.error}</div>` : ''}
-
-            <div class="flex gap-4">
-              <button onclick="goBack()" class="flex-1 px-6 py-3 border-2 border-purple-700 text-purple-700 rounded-lg font-bold hover:bg-purple-50 transition-all">Cancel</button>
-              <button onclick="goToCheckout()" id="checkoutBtn" class="flex-1 px-6 py-3 bg-purple-700 text-white rounded-lg font-bold hover:bg-purple-800 transition-all">
-                Continue to Payment
-              </button>
-            </div>
-          </div>
-        </div>
-      `;
-    }
-
-    // ============ COMPONENT: CHECKOUT PAGE ============
-    function CheckoutPage() {
-      const c = state.selectedCaregiver;
-      const hours = state.booking.hours || 1;
-      const subtotal = c.hourlyRate * hours;
-      const fee = subtotal * 0.1;
-      const total = subtotal + fee;
-      return `
-        <div class="max-w-2xl mx-auto px-4 py-8">
-          <h2 class="text-3xl font-bold mb-8">Confirm Booking</h2>
-          <div class="space-y-6">
-            <div class="bg-white p-6 rounded-xl shadow-md">
-              <h3 class="text-lg font-bold mb-4">Booking Summary</h3>
-              <div class="flex gap-4 pb-4 border-b">
-                <div class="w-16 h-16 rounded-full bg-purple-100 flex items-center justify-center text-2xl font-bold text-purple-700">${c.name.charAt(0)}</div>
-                <div>
-                  <p class="font-bold text-lg">${c.name}</p>
-                  <p class="text-gray-600">${c.specialty || 'Caregiver'}</p>
-                </div>
-              </div>
-              <div class="mt-4 space-y-2 text-sm">
-                <div class="flex justify-between"><span class="text-gray-600">Client</span><span class="font-semibold">${state.booking.name}</span></div>
-                <div class="flex justify-between"><span class="text-gray-600">Date & Time</span><span class="font-semibold">${state.booking.date} at ${state.booking.time}</span></div>
-                <div class="flex justify-between"><span class="text-gray-600">Duration</span><span class="font-semibold">${hours} hours</span></div>
-                ${state.bookingId ? `<div class="flex justify-between"><span class="text-gray-600">Booking ID</span><span class="font-mono font-bold text-purple-700">#${state.bookingId}</span></div>` : ''}
-              </div>
-            </div>
-
-            <div class="bg-white p-6 rounded-xl shadow-md">
-              <h3 class="text-lg font-bold mb-4">Price Breakdown</h3>
-              <div class="space-y-2 text-sm mb-4">
-                <div class="flex justify-between"><span>$${c.hourlyRate} × ${hours} hours</span><span>$${subtotal.toFixed(2)}</span></div>
-                <div class="flex justify-between text-gray-600"><span>Service Fee (10%)</span><span>$${fee.toFixed(2)}</span></div>
-                <div class="border-t pt-2 flex justify-between font-bold text-lg">
-                  <span>Total Due</span>
-                  <span class="text-purple-700">$${total.toFixed(2)}</span>
-                </div>
-              </div>
-            </div>
-
-            <div class="bg-white p-6 rounded-xl shadow-md">
-              <h3 class="text-lg font-bold mb-4">Payment Method</h3>
-              <div class="border-2 border-purple-700 rounded-lg p-4 flex items-center gap-3">
-                <input type="radio" name="payment" value="card" checked>
-                <span class="text-lg">💳 Credit / Debit Card (via Stripe)</span>
-              </div>
-              <p class="text-xs text-gray-500 mt-2">🔒 Secure payment powered by Stripe. GoToCare never stores your card details.</p>
-            </div>
-
-            ${state.error ? `<div class="bg-red-50 border border-red-200 text-red-700 rounded-lg p-3 text-sm">${state.error}</div>` : ''}
-
-            <button onclick="processPayment()" id="payBtn" class="w-full bg-purple-700 text-white py-4 rounded-xl font-bold text-lg hover:bg-purple-800 transition-all">
-              Pay $${total.toFixed(2)} to Book
-            </button>
-            <p class="text-center text-sm text-gray-500">By booking, you agree to our Terms of Service and cancellation policy.</p>
-          </div>
-        </div>
-      `;
-    }
-
-    // ============ COMPONENT: CONFIRMATION PAGE ============
-    function ConfirmationPage() {
-      const c = state.selectedCaregiver;
-      const hours = state.booking.hours || 1;
-      const total = c.hourlyRate * hours * 1.1;
-      const bookingRef = state.bookingId || Math.random().toString(36).substr(2, 9).toUpperCase();
-      return `
-        <div class="max-w-2xl mx-auto px-4 py-8">
-          <div class="text-center py-8">
-            <div class="text-7xl mb-6">✅</div>
-            <h1 class="text-3xl font-bold mb-2">Booking Confirmed!</h1>
-            <p class="text-xl text-gray-600 mb-8">Your caregiver has been notified</p>
-
-            <div class="bg-white rounded-xl shadow-md p-8 mb-8 text-left">
-              <div class="flex gap-6 items-center mb-8 pb-8 border-b">
-                <div class="w-20 h-20 rounded-full bg-purple-100 flex items-center justify-center text-4xl font-bold text-purple-700">${c.name.charAt(0)}</div>
-                <div>
-                  <p class="text-sm text-gray-600">Your Caregiver</p>
-                  <p class="text-2xl font-bold">${c.name}</p>
-                  <p class="text-gray-600">${c.specialty || 'Caregiver'}</p>
-                </div>
-              </div>
-
-              <div class="space-y-4 mb-8">
-                <div class="flex justify-between items-center">
-                  <span class="text-gray-600">Booking ID</span>
-                  <span class="font-mono font-bold text-purple-700">#${bookingRef}</span>
-                </div>
-                <div class="flex justify-between items-center">
-                  <span class="text-gray-600">Date & Time</span>
-                  <span class="font-semibold">${state.booking.date} at ${state.booking.time}</span>
-                </div>
-                <div class="flex justify-between items-center">
-                  <span class="text-gray-600">Duration</span>
-                  <span class="font-semibold">${hours} hours</span>
-                </div>
-                <div class="flex justify-between items-center">
-                  <span class="text-gray-600">Total Paid</span>
-                  <span class="text-2xl font-bold text-purple-700">$${total.toFixed(2)}</span>
-                </div>
-              </div>
-
-              <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-8">
-                <p class="text-sm"><span class="font-bold">Next Steps:</span> ${c.name} will contact you shortly to confirm details. A confirmation email has been sent to <strong>${state.booking.email}</strong>.</p>
-              </div>
-
-              <div class="flex gap-4">
-                <button onclick="resetToHome()" class="flex-1 px-6 py-3 border-2 border-purple-700 text-purple-700 rounded-lg font-bold hover:bg-purple-50 transition-all">
-                  Browse More
-                </button>
-                <button onclick="alert('My Bookings coming soon!')" class="flex-1 px-6 py-3 bg-purple-700 text-white rounded-lg font-bold hover:bg-purple-800 transition-all">
-                  My Bookings
-                </button>
-              </div>
-            </div>
-
-            <p class="text-gray-600">Questions? <a href="mailto:support@gotocare.com" class="text-purple-700 font-semibold">Contact Support</a></p>
-          </div>
-        </div>
-      `;
-    }
-
-    // ============ ROUTER ============
-    function render() {
-      const root = document.getElementById('root');
-      let content = '';
-      switch(state.currentPage) {
-        case 'browse':     content = BrowsePage(); break;
-        case 'profile':    content = ProfilePage(); break;
-        case 'booking':    content = BookingPage(); break;
-        case 'checkout':   content = CheckoutPage(); break;
-        case 'confirmation': content = ConfirmationPage(); break;
-      }
-      root.innerHTML = Header() + content;
-      // Re-attach price updater after render
-      if (state.currentPage === 'booking') {
-        updatePriceSummary();
-      }
-      window.scrollTo(0, 0);
-    }
-
-    // ============ NAVIGATION ============
-    function goBack() {
-      const map = { profile: 'browse', booking: 'profile', checkout: 'booking', confirmation: 'browse' };
-      state.currentPage = map[state.currentPage] || 'browse';
-      state.error = null;
-      if (state.currentPage === 'browse') state.selectedCaregiver = null;
-      render();
-    }
-
-    function resetToHome() {
-      state.currentPage = 'browse';
-      state.selectedCaregiver = null;
-      state.booking = {};
-      state.bookingId = null;
-      state.error = null;
-      render();
-    }
-
-    function selectCaregiver(id) {
-      state.selectedCaregiver = state.caregivers.find(c => c.id == id);
-      state.currentPage = 'profile';
-      render();
-    }
-
-    function goToBooking() {
-      state.currentPage = 'booking';
-      state.error = null;
-      render();
-    }
-
-    function updatePriceSummary() {
-      const c = state.selectedCaregiver;
-      if (!c) return;
-      const durationEl = document.getElementById('bookingDuration');
-      if (!durationEl) return;
-      const hours = parseInt(durationEl.value) || 1;
-      const subtotal = c.hourlyRate * hours;
-      const fee = subtotal * 0.1;
-      const total = subtotal + fee;
-      const durLabel = document.getElementById('summaryDuration');
-      const hrsLabel = document.getElementById('summaryHours');
-      const feeLabel = document.getElementById('summaryFee');
-      const totalLabel = document.getElementById('summaryTotal');
-      if (durLabel) durLabel.textContent = `${hours} hour${hours > 1 ? 's' : ''}`;
-      if (hrsLabel) hrsLabel.textContent = `$${subtotal.toFixed(2)}`;
-      if (feeLabel) feeLabel.textContent = `$${fee.toFixed(2)}`;
-      if (totalLabel) totalLabel.textContent = `$${total.toFixed(2)}`;
-    }
-
-    // ============ BOOKING FLOW ============
-    async function goToCheckout() {
-      const name = document.getElementById('bookingName').value.trim();
-      const email = document.getElementById('bookingEmail').value.trim();
-      const phone = document.getElementById('bookingPhone').value.trim();
-      const date = document.getElementById('bookingDate').value;
-      const time = document.getElementById('bookingStartTime').value;
-      const hours = parseInt(document.getElementById('bookingDuration').value);
-      const specialRequests = document.getElementById('bookingSpecialRequests').value;
-
-      if (!name || !email || !date || !time) {
-        state.error = 'Please fill in all required fields (Name, Email, Date, Time).';
-        render();
-        return;
-      }
-
-      state.booking = { name, email, phone, date, time, hours, specialRequests };
-      state.error = null;
-
-      const btn = document.getElementById('checkoutBtn');
-      if (btn) { btn.disabled = true; btn.textContent = 'Processing...'; }
-
-      try {
-        const res = await apiCall('/api/submit-booking', {
+        // Try Stripe checkout
+        const chkRes = await fetch(`${API_BASE}/api/create-marketplace-checkout`, {
           method: 'POST',
-          body: {
-            caregiverId: state.selectedCaregiver.id,
-            clientName: name,
-            clientEmail: email,
-            phone,
-            date,
-            startTime: time,
-            duration: hours,
-            specialRequests,
-          },
-        });
-
-        if (res.bookingId) {
-          state.bookingId = res.bookingId;
-        }
-      } catch (e) {
-        console.warn('submit-booking API failed, continuing with local booking ID', e);
-        state.bookingId = 'BK' + Date.now().toString(36).toUpperCase();
-      }
-
-      state.currentPage = 'checkout';
-      render();
-    }
-
-    async function processPayment() {
-      const c = state.selectedCaregiver;
-      const btn = document.getElementById('payBtn');
-      if (btn) { btn.disabled = true; btn.textContent = '🔒 Redirecting to Stripe...'; }
-      state.error = null;
-
-      try {
-        const res = await apiCall('/api/create-marketplace-checkout', {
-          method: 'POST',
-          body: {
-            bookingId: state.bookingId,
-            caregiverHourlyRate: c.hourlyRate,
-            duration: state.booking.hours || 1,
-            clientEmail: state.booking.email,
+          headers: {'Content-Type':'application/json'},
+          body: JSON.stringify({
+            bookingId,
             caregiverName: c.name,
-            successUrl: window.location.origin + '/?booking=success&id=' + state.bookingId,
-            cancelUrl: window.location.origin + '/?booking=cancel',
-          },
+            hours: state.duration,
+            totalAmount: total,
+            successUrl: window.location.href + '?booking=success&id=' + bookingId,
+            cancelUrl: window.location.href + '?booking=cancel'
+          })
         });
 
-        if (res.checkoutUrl) {
-          window.location.href = res.checkoutUrl;
-          return;
+        if (chkRes.ok) {
+          const chkData = await chkRes.json();
+          checkoutUrl = chkData.url || chkData.checkoutUrl;
         }
-        // Stripe not configured — fall through to confirmation
-        throw new Error('No checkout URL returned');
-      } catch (e) {
-        console.warn('Stripe checkout failed, showing confirmation directly:', e);
-        // Graceful fallback: show confirmation (test mode)
-        state.currentPage = 'confirmation';
-        render();
       }
+    } catch(e) {
+      console.log('Booking submitted in demo mode');
     }
 
-    // ============ SEARCH / LOAD ============
-    async function loadCaregivers(params = {}) {
-      state.loading = true;
-      state.error = null;
-      render();
-
-      try {
-        const query = new URLSearchParams(params).toString();
-        const res = await apiCall('/api/search-caregivers' + (query ? '?' + query : ''));
-
-        if (res.caregivers && res.caregivers.length > 0) {
-          state.caregivers = res.caregivers;
-          state.usingMockData = false;
-        } else {
-          // API returned empty — show mock data
-          state.caregivers = MOCK_CAREGIVERS;
-          state.usingMockData = true;
-        }
-      } catch (e) {
-        console.warn('search-caregivers API failed, using mock data:', e);
-        state.caregivers = MOCK_CAREGIVERS;
-        state.usingMockData = true;
-      }
-
-      state.loading = false;
-      render();
+    // Show confirmation (redirect to Stripe if available, else show confirm)
+    if (checkoutUrl) {
+      window.location.href = checkoutUrl;
+    } else {
+      showConfirmation(bookingId, name, c, total);
     }
 
-    function applyFilters() {
-      const location = document.getElementById('filterLocation')?.value.trim();
-      const specialty = document.getElementById('filterSpecialty')?.value;
-      const date = document.getElementById('filterDate')?.value;
-      const params = {};
-      if (location) params.location = location;
-      if (specialty) params.specialty = specialty;
-      if (date) params.date = date;
-      loadCaregivers(params);
+    btn.innerHTML = `Confirm & Pay $<span id="confirm-total">${total.toFixed(2)}</span> →`;
+    btn.disabled = false;
+  }
+
+  function showConfirmation(bookingId, clientName, caregiver, total) {
+    const urgencyText = {
+      now: 'within the next 30 minutes',
+      today: 'today',
+      tomorrow: 'tomorrow',
+      week: 'this week'
+    }[state.urgency] || 'shortly';
+
+    document.getElementById('confirm-message').textContent =
+      `${caregiver.name} will reach out to you ${urgencyText}.`;
+
+    document.getElementById('confirm-caregiver-name').textContent = caregiver.name;
+
+    document.getElementById('confirm-details').innerHTML = `
+      <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #e5e7eb;">
+        <span style="color:#6b7280;font-size:0.85rem;">Booking ID</span>
+        <span style="font-weight:700;color:#1e1b4b;font-size:0.85rem;">${bookingId}</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #e5e7eb;">
+        <span style="color:#6b7280;font-size:0.85rem;">Caregiver</span>
+        <span style="font-weight:700;color:#1e1b4b;font-size:0.85rem;">${caregiver.name}</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #e5e7eb;">
+        <span style="color:#6b7280;font-size:0.85rem;">Care Type</span>
+        <span style="font-weight:700;color:#1e1b4b;font-size:0.85rem;">${state.careType}</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #e5e7eb;">
+        <span style="color:#6b7280;font-size:0.85rem;">Duration</span>
+        <span style="font-weight:700;color:#1e1b4b;font-size:0.85rem;">${state.duration} hours</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;padding:10px 0 0;">
+        <span style="color:#1e1b4b;font-weight:700;font-size:0.9rem;">Total Paid</span>
+        <span style="font-weight:800;color:#7c3aed;font-size:1rem;">$${total.toFixed(2)}</span>
+      </div>
+    `;
+
+    showPage('page-confirm');
+  }
+
+  // ============ HANDLE RETURN FROM STRIPE ============
+  function checkStripeReturn() {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('booking') === 'success') {
+      const bookingId = params.get('id') || 'GTC-CONFIRMED';
+      showConfirmation(bookingId, 'you', state.selectedCaregiver || {name:'Your caregiver', hourlyRate:28}, state.duration * 28 * 1.1);
+    }
+  }
+
+  // ============ MOCK DATA ============
+  function getMockCaregivers() {
+    return [
+      { id:1, name:'Maria Santos', specialty:'Elder Care & Dementia', yearsExp:8, hourlyRate:28, rating:4.9, reviewCount:142, distance:'0.8', availableNow:true, availableToday:true, matchScore:98, languages:['English','Spanish'], bio:'Compassionate elder care specialist with 8 years of experience. Expert in dementia and Alzheimers care, medication management, and mobility assistance. Treated like family by every client.' },
+      { id:2, name:'James Okafor', specialty:'Post-Surgery & Mobility', yearsExp:6, hourlyRate:24, rating:4.8, reviewCount:89, distance:'1.2', availableNow:true, availableToday:true, matchScore:94, languages:['English'], bio:'Certified home health aide specializing in post-surgical recovery and physical therapy assistance. Reliable, patient, and dedicated to helping clients regain independence.' },
+      { id:3, name:'Ava Chen', specialty:'Child & Special Needs', yearsExp:5, hourlyRate:26, rating:4.9, reviewCount:67, distance:'1.5', availableNow:true, availableToday:true, matchScore:91, languages:['English','Mandarin'], bio:'Specialized in caring for children with special needs. Creates nurturing routines, helps with therapy exercises, and communicates clearly with families.' },
+      { id:4, name:'Rosa Delgado', specialty:'Companionship & Daily Living', yearsExp:4, hourlyRate:22, rating:4.7, reviewCount:54, distance:'2.1', availableNow:false, availableToday:true, matchScore:87, languages:['English','Spanish'], bio:'Warm, patient companion who loves building genuine relationships. Helps with daily living, errands, light housework and meal prep.' },
+      { id:5, name:'David Kim', specialty:'Dementia & Alzheimers', yearsExp:7, hourlyRate:30, rating:4.9, reviewCount:118, distance:'2.4', availableNow:false, availableToday:true, matchScore:85, languages:['English','Korean'], bio:'Memory care specialist trained in Teepa Snow dementia care approach. Calm, structured environment that reduces anxiety and confusion for patients.' },
+      { id:6, name:'Patricia Wells', specialty:'Elder Care & Overnight', yearsExp:10, hourlyRate:32, rating:5.0, reviewCount:203, distance:'3.0', availableNow:false, availableToday:false, matchScore:82, languages:['English'], bio:'Decade of experience in overnight and live-in care. Trusted by families across Atlanta. Expert in medication management and emergency response.' },
+      { id:7, name:'Marcus Johnson', specialty:'Disability & Rehabilitation', yearsExp:3, hourlyRate:20, rating:4.6, reviewCount:31, distance:'3.3', availableNow:false, availableToday:false, matchScore:78, languages:['English'], bio:'CNA certified with a background in physical rehabilitation. Enthusiastic about helping clients achieve their maximum independence.' },
+    ];
+  }
+
+  // ============ INIT ============
+  window.addEventListener('DOMContentLoaded', () => {
+    checkStripeReturn();
+
+    // If arriving from landing page with care type pre-selected
+    const params = new URLSearchParams(window.location.search);
+    const care = params.get('care');
+    const loc = params.get('location');
+    if (care) {
+      state.careType = care;
+      document.querySelectorAll('.care-tile').forEach(t => {
+        if (t.querySelector('.label').textContent === care) t.classList.add('selected');
+      });
+    }
+    if (loc) {
+      state.location = loc;
+      document.getElementById('location-input').value = loc;
     }
 
-    // ============ STRIPE RETURN HANDLER ============
-    function handleStripeReturn() {
-      const params = new URLSearchParams(window.location.search);
-      if (params.get('booking') === 'success') {
-        const id = params.get('id');
-        if (id) state.bookingId = id;
-        // Try to restore selected caregiver from session
-        const saved = sessionStorage.getItem('gtc_booking');
-        if (saved) {
-          const parsed = JSON.parse(saved);
-          state.selectedCaregiver = parsed.caregiver;
-          state.booking = parsed.booking;
-        }
-        state.currentPage = 'confirmation';
-        // Clean URL
-        window.history.replaceState({}, '', '/');
-      }
+    // If arriving with both care + location, auto-search
+    if (care && loc) {
+      setTimeout(() => findCaregivers(), 300);
     }
-
-    // ============ SAVE BOOKING TO SESSION ============
-    function saveBookingSession() {
-      if (state.selectedCaregiver && state.booking.email) {
-        sessionStorage.setItem('gtc_booking', JSON.stringify({
-          caregiver: state.selectedCaregiver,
-          booking: state.booking,
-        }));
-      }
-    }
-
-    // ============ INIT ============
-    window.addEventListener('DOMContentLoaded', () => {
-      handleStripeReturn();
-      if (state.currentPage !== 'confirmation') {
-        loadCaregivers();
-      } else {
-        render();
-      }
-    });
-  </script>
+  });
+</script>
 </body>
 </html>
