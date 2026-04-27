@@ -302,6 +302,27 @@
     #install-banner .ib-close { background: none; border: none; color: rgba(255,255,255,0.4); font-size: 18px; cursor: pointer; padding: 4px; }
     #ios-hint { position: fixed; bottom: calc(var(--safe-bottom) + 16px); left: 16px; right: 16px; background: rgba(20,20,40,0.97); backdrop-filter: blur(20px); border: 1px solid rgba(124,58,237,0.4); border-radius: 18px; padding: 16px; display: none; z-index: 9000; font-size: 14px; text-align: center; color: rgba(255,255,255,0.8); }
     
+
+    /* ── INTERVIEW BOOKING SCREEN ── */
+    .form-section { margin-bottom: 20px; }
+    .date-scroll { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 8px; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+    .date-scroll::-webkit-scrollbar { display: none; }
+    .date-chip { display: flex; flex-direction: column; align-items: center; min-width: 58px; background: rgba(255,255,255,0.08); border: 2px solid rgba(255,255,255,0.15); border-radius: 14px; padding: 10px 8px; cursor: pointer; flex-shrink: 0; transition: all 0.2s; -webkit-tap-highlight-color: transparent; }
+    .date-chip.selected { background: rgba(124,58,237,0.35); border-color: var(--purple-light); }
+    .date-chip .dc-day { font-size: 10px; color: rgba(255,255,255,0.6); font-weight: 600; text-transform: uppercase; margin-bottom: 4px; }
+    .date-chip .dc-num { font-size: 22px; font-weight: 800; line-height: 1; }
+    .date-chip .dc-mon { font-size: 10px; color: rgba(255,255,255,0.5); margin-top: 3px; }
+    .time-slots { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+    .time-slot { background: rgba(255,255,255,0.08); border: 2px solid rgba(255,255,255,0.15); border-radius: 14px; padding: 14px 8px; text-align: center; cursor: pointer; font-size: 13px; font-weight: 600; color: rgba(255,255,255,0.85); transition: all 0.2s; -webkit-tap-highlight-color: transparent; line-height: 1.4; }
+    .time-slot span { display: block; font-size: 11px; font-weight: 400; color: rgba(255,255,255,0.5); margin-top: 4px; }
+    .time-slot.selected { background: rgba(124,58,237,0.35); border-color: var(--purple-light); color: #fff; }
+    .type-toggle { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .type-btn { background: rgba(255,255,255,0.08); border: 2px solid rgba(255,255,255,0.15); border-radius: 14px; padding: 14px; text-align: center; cursor: pointer; font-size: 14px; font-weight: 600; color: rgba(255,255,255,0.85); transition: all 0.2s; -webkit-tap-highlight-color: transparent; }
+    .type-btn.selected { background: rgba(124,58,237,0.35); border-color: var(--purple-light); }
+    .free-badge { text-align: center; font-size: 13px; color: #6ee7b7; font-weight: 600; background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.25); border-radius: 10px; padding: 10px; margin-bottom: 16px; }
+    .btn-interview { width: 100%; background: linear-gradient(135deg, var(--purple), var(--blue)); border: none; border-radius: 18px; padding: 18px; font-size: 18px; font-weight: 800; color: #fff; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; box-shadow: 0 8px 32px rgba(124,58,237,0.4); -webkit-tap-highlight-color: transparent; }
+    textarea.form-input { min-height: 80px; resize: none; font-family: inherit; }
+
     @media (min-width: 480px) {
       .care-grid { grid-template-columns: repeat(4, 1fr); }
       .cg-card { padding: 0 24px; }
@@ -466,57 +487,60 @@
   </div>
 </div>
 
-<!-- ── BOOKING ── -->
+<!-- ── BOOKING / INTERVIEW SCHEDULING ── -->
 <div id="screen-booking" class="screen">
   <div class="screen-header">
     <button class="back-btn" id="booking-back">←</button>
-    <div class="screen-title">Book Appointment</div>
+    <div class="screen-title">Schedule Interview</div>
   </div>
   <div class="booking-cg-mini" id="booking-cg-mini"></div>
-  <div class="form-group">
-    <label class="form-label">Your full name</label>
-    <input class="form-input" id="book-name" type="text" placeholder="Jane Doe" />
+
+  <!-- Date picker -->
+  <div class="form-section">
+    <label class="form-label">📅 Select a date</label>
+    <div class="date-scroll" id="date-scroll"></div>
   </div>
+
+  <!-- Time slots -->
+  <div class="form-section">
+    <label class="form-label">⏰ Preferred time</label>
+    <div class="time-slots">
+      <button class="time-slot" data-time="morning">🌅 Morning<span>9 – 11 AM</span></button>
+      <button class="time-slot" data-time="afternoon">☀️ Afternoon<span>12 – 3 PM</span></button>
+      <button class="time-slot" data-time="evening">🌆 Evening<span>4 – 7 PM</span></button>
+    </div>
+  </div>
+
+  <!-- Interview type -->
+  <div class="form-section">
+    <label class="form-label">💬 Interview type</label>
+    <div class="type-toggle">
+      <button class="type-btn selected" data-type="video">📹 Video Call</button>
+      <button class="type-btn" data-type="inperson">🏠 In Person</button>
+    </div>
+  </div>
+
+  <!-- Email -->
   <div class="form-group">
-    <label class="form-label">Your email</label>
+    <label class="form-label">Your email (for confirmation)</label>
     <input class="form-input" id="book-email" type="email" placeholder="you@example.com" />
   </div>
+
+  <!-- Notes -->
   <div class="form-group">
-    <label class="form-label">Your phone</label>
-    <input class="form-input" id="book-phone" type="tel" placeholder="+1 (555) 000-0000" />
+    <label class="form-label">Notes for the caregiver (optional)</label>
+    <textarea class="form-input" id="book-notes" placeholder="Any special requirements, questions, or details about care needs…"></textarea>
   </div>
-  <div class="form-group">
-    <label class="form-label">Care needs</label>
-    <input class="form-input" id="book-needs" type="text" readonly />
-  </div>
-  <div class="form-group">
-    <label class="form-label">Start date</label>
-    <input class="form-input" id="book-date" type="date" />
-  </div>
-  <div class="form-group">
-    <label class="form-label">Duration</label>
-    <select class="form-input" id="book-hours">
-      <option value="2">2 hours — intro visit</option>
-      <option value="4" selected>4 hours — half day</option>
-      <option value="8">8 hours — full day</option>
-      <option value="12">12 hours — extended</option>
-      <option value="24">24 hours — overnight</option>
-    </select>
-  </div>
-  <div class="booking-total" id="booking-total">
-    <div class="total-row"><span>Caregiver rate</span><span id="total-rate">$28/hr</span></div>
-    <div class="total-row"><span id="total-hours-label">4 hours</span><span id="total-subtotal">$112</span></div>
-    <div class="total-row"><span>Service fee (10%)</span><span id="total-fee">$11.20</span></div>
-    <div class="total-row grand"><span>Total</span><span id="total-grand">$123.20</span></div>
-  </div>
-  <button class="btn-pay" id="btn-pay">💳 Pay &amp; Confirm Booking</button>
+
+  <div class="free-badge">✨ Requesting an interview is completely free — no payment needed</div>
+  <button class="btn-interview" id="btn-request-interview">📅 Send Interview Request</button>
 </div>
 
 <!-- ── CONFIRMATION ── -->
 <div id="screen-confirm" class="screen">
-  <div class="confirm-icon">🎉</div>
-  <div class="confirm-title">Booking Confirmed!</div>
-  <div class="confirm-sub" id="confirm-sub">Your caregiver has been notified and will reach out to confirm details.</div>
+  <div class="confirm-icon" id="confirm-icon">📅</div>
+  <div class="confirm-title" id="confirm-title">Interview Request Sent!</div>
+  <div class="confirm-sub" id="confirm-sub">Your caregiver has been notified and will confirm within 24 hours. You'll receive a notification by email once they respond.</div>
   <div class="confirm-card" id="confirm-card"></div>
   <button class="btn-home" onclick="showScreen('screen-dispatch')">← Back to Home</button>
 </div>
@@ -853,6 +877,11 @@ document.getElementById('btn-auto-schedule').addEventListener('click', () => {
   startBooking(idx);
 });
 
+// ── BOOKING / INTERVIEW STATE ──
+let selectedDate = null;
+let selectedTime = null;
+let selectedInterviewType = 'video';
+
 // ── BOOKING ──
 function startBooking(shortlistIdx) {
   bookingCaregiver = shortlist[shortlistIdx];
@@ -861,99 +890,119 @@ function startBooking(shortlistIdx) {
   const rate = cg.hourlyRate || cg.hourly_rate || 28;
   const match = cg.matchScore ? Math.round(cg.matchScore) : 90;
   document.getElementById('booking-cg-mini').innerHTML = `
-    <div class="booking-cg-avatar">${cg.avatar || '👩‍⚕️'}</div>
+    <div class="booking-cg-avatar">${cg.avatar || '\u{1F469}\u200d\u2695\uFE0F'}</div>
     <div>
       <div style="font-size:16px;font-weight:700;">${name}</div>
       <div style="font-size:13px;color:rgba(255,255,255,0.6);">$${rate}/hr · 🎯 ${match}% match · ⭐ ${Number(cg.rating || 4.8).toFixed(1)}</div>
     </div>`;
-  document.getElementById('book-needs').value = selectedCareTypes.join(', ') || 'General Care';
-  // Set min date to today
-  const today = new Date().toISOString().split('T')[0];
-  document.getElementById('book-date').min = today;
-  document.getElementById('book-date').value = today;
-  updateBookingTotal();
+
+  // Build 14-day date picker
+  renderDateScroll();
+  // Reset selections
+  selectedDate = null; selectedTime = null; selectedInterviewType = 'video';
+  document.querySelectorAll('.time-slot').forEach(b => b.classList.remove('selected'));
+  document.querySelectorAll('.type-btn').forEach(b => b.classList.remove('selected'));
+  document.querySelector('.type-btn[data-type="video"]').classList.add('selected');
+  document.getElementById('book-email').value = localStorage.getItem('gc_email') || '';
+  document.getElementById('book-notes').value = '';
   showScreen('screen-booking');
 }
 
-function updateBookingTotal() {
-  if (!bookingCaregiver) return;
-  const hours = parseInt(document.getElementById('book-hours').value);
-  const rate = bookingCaregiver.hourlyRate || bookingCaregiver.hourly_rate || 28;
-  const subtotal = hours * rate;
-  const fee = subtotal * 0.1;
-  const grand = subtotal + fee;
-  document.getElementById('total-rate').textContent = `$${rate}/hr`;
-  document.getElementById('total-hours-label').textContent = `${hours} hour${hours > 1 ? 's' : ''}`;
-  document.getElementById('total-subtotal').textContent = `$${subtotal.toFixed(2)}`;
-  document.getElementById('total-fee').textContent = `$${fee.toFixed(2)}`;
-  document.getElementById('total-grand').textContent = `$${grand.toFixed(2)}`;
+function renderDateScroll() {
+  const scroll = document.getElementById('date-scroll');
+  const days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const chips = [];
+  const today = new Date();
+  for (let i = 1; i <= 14; i++) {
+    const d = new Date(today);
+    d.setDate(today.getDate() + i);
+    const iso = d.toISOString().split('T')[0];
+    chips.push(`<div class="date-chip" data-date="${iso}" onclick="selectDate('${iso}', this)">
+      <div class="dc-day">${days[d.getDay()]}</div>
+      <div class="dc-num">${d.getDate()}</div>
+      <div class="dc-mon">${months[d.getMonth()]}</div>
+    </div>`);
+  }
+  scroll.innerHTML = chips.join('');
 }
 
-document.getElementById('book-hours').addEventListener('change', updateBookingTotal);
+function selectDate(iso, el) {
+  selectedDate = iso;
+  document.querySelectorAll('.date-chip').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+}
+
+// Time slot clicks
+document.addEventListener('click', (e) => {
+  const ts = e.target.closest('.time-slot');
+  if (ts) {
+    document.querySelectorAll('.time-slot').forEach(b => b.classList.remove('selected'));
+    ts.classList.add('selected');
+    selectedTime = ts.dataset.time;
+  }
+  const tb = e.target.closest('.type-btn');
+  if (tb) {
+    document.querySelectorAll('.type-btn').forEach(b => b.classList.remove('selected'));
+    tb.classList.add('selected');
+    selectedInterviewType = tb.dataset.type;
+  }
+});
 
 document.getElementById('booking-back').addEventListener('click', () => showScreen('screen-shortlist'));
 
-document.getElementById('btn-pay').addEventListener('click', async () => {
-  const name = document.getElementById('book-name').value.trim();
+document.getElementById('btn-request-interview').addEventListener('click', async () => {
   const email = document.getElementById('book-email').value.trim();
-  const phone = document.getElementById('book-phone').value.trim();
-  const date = document.getElementById('book-date').value;
-  const hours = document.getElementById('book-hours').value;
-  if (!name || !email || !date) { toast('⚠️ Please fill in name, email and date'); return; }
-  
-  setLoading(true, 'Creating your booking…');
+  const notes = document.getElementById('book-notes').value.trim();
+  if (!selectedDate) { toast('⚠️ Please select a date'); return; }
+  if (!selectedTime) { toast('⚠️ Please select a time slot'); return; }
+  if (!email || !email.includes('@')) { toast('⚠️ Please enter your email'); return; }
+
+  setLoading(true, 'Sending interview request…');
   try {
     const cg = bookingCaregiver;
-    const rate = cg.hourlyRate || cg.hourly_rate || 28;
-    const totalHours = parseInt(hours);
-    const subtotal = totalHours * rate;
-    const fee = Math.round(subtotal * 0.1 * 100);
-    const total = Math.round((subtotal + subtotal * 0.1) * 100);
-    
-    // Submit booking
-    await fetch(`${API}/submit-booking`, {
+    await fetch(`${API}/book-interview`, {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ caregiverId: cg.id, clientName: name, clientEmail: email, clientPhone: phone, careNeeds: selectedCareTypes, startDate: date, hours: totalHours }),
+      body: JSON.stringify({
+        caregiverId: cg.id,
+        clientEmail: email,
+        careNeeds: selectedCareTypes.join(', ') || 'General Care',
+        preferredDate: selectedDate,
+        preferredTime: selectedTime,
+        interviewType: selectedInterviewType,
+        notes
+      }),
     }).catch(() => {});
-
-    // Create checkout session
-    const checkoutRes = await fetch(`${API}/create-marketplace-checkout`, {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ caregiverId: cg.id, clientEmail: email, clientName: name, hours: totalHours, careNeeds: selectedCareTypes, startDate: date }),
-    });
-    const checkout = await checkoutRes.json();
-    
-    if (checkout.url) {
-      window.location.href = checkout.url;
-    } else {
-      // Fallback: show confirmation directly (demo mode)
-      showConfirmation({ name, email, cg, date, hours: totalHours, rate, total: (subtotal + subtotal * 0.1).toFixed(2) });
-    }
+    if (email) localStorage.setItem('gc_email', email);
+    showInterviewConfirmation({ email, cg, date: selectedDate, time: selectedTime, type: selectedInterviewType });
   } catch (e) {
     const cg = bookingCaregiver;
-    const name = document.getElementById('book-name').value.trim();
-    const email = document.getElementById('book-email').value.trim();
-    const date = document.getElementById('book-date').value;
-    const hours = parseInt(document.getElementById('book-hours').value);
-    const rate = cg.hourlyRate || 28;
-    showConfirmation({ name, email, cg, date, hours, rate, total: (hours * rate * 1.1).toFixed(2) });
+    showInterviewConfirmation({ email, cg, date: selectedDate, time: selectedTime, type: selectedInterviewType });
   } finally {
     setLoading(false);
   }
 });
 
-function showConfirmation({ name, email, cg, date, hours, rate, total }) {
+function showInterviewConfirmation({ email, cg, date, time, type }) {
   const cgName = `${cg.firstName || cg.first_name} ${cg.lastName || cg.last_name}`;
-  document.getElementById('confirm-sub').textContent = `${cgName} has been notified and will reach out within 30 minutes to confirm details.`;
+  const timeLabels = { morning: '9 – 11 AM', afternoon: '12 – 3 PM', evening: '4 – 7 PM' };
+  const typeLabels = { video: '📹 Video Call', inperson: '🏠 In Person' };
+  const dateFormatted = new Date(date + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+  document.getElementById('confirm-icon').textContent = '📅';
+  document.getElementById('confirm-title').textContent = 'Interview Request Sent!';
+  document.getElementById('confirm-sub').textContent = `${cgName} has been notified and will confirm within 24 hours. Check your email for updates.`;
   document.getElementById('confirm-card').innerHTML = `
     <div class="confirm-row"><span class="confirm-label">Caregiver</span><span class="confirm-value">${cgName}</span></div>
-    <div class="confirm-row"><span class="confirm-label">Client</span><span class="confirm-value">${name}</span></div>
-    <div class="confirm-row"><span class="confirm-label">Date</span><span class="confirm-value">${new Date(date).toLocaleDateString('en-US', {weekday:'long',month:'long',day:'numeric'})}</span></div>
-    <div class="confirm-row"><span class="confirm-label">Duration</span><span class="confirm-value">${hours} hours</span></div>
-    <div class="confirm-row"><span class="confirm-label">Rate</span><span class="confirm-value">$${rate}/hr</span></div>
-    <div class="confirm-row"><span class="confirm-label">Total Paid</span><span class="confirm-value" style="color:#6ee7b7;">$${total}</span></div>
-    <div class="confirm-row"><span class="confirm-label">Email</span><span class="confirm-value">${email}</span></div>`;
+    <div class="confirm-row"><span class="confirm-label">Date</span><span class="confirm-value">${dateFormatted}</span></div>
+    <div class="confirm-row"><span class="confirm-label">Time</span><span class="confirm-value">${timeLabels[time] || time}</span></div>
+    <div class="confirm-row"><span class="confirm-label">Format</span><span class="confirm-value">${typeLabels[type] || type}</span></div>
+    <div class="confirm-row"><span class="confirm-label">Your Email</span><span class="confirm-value">${email}</span></div>
+    <div class="confirm-row"><span class="confirm-label">Cost</span><span class="confirm-value" style="color:#6ee7b7;">FREE ✨</span></div>`;
   showScreen('screen-confirm');
+}
+
+function showConfirmation({ name, email, cg, date, hours, rate, total }) {
+  showInterviewConfirmation({ email, cg, date, time: 'morning', type: 'video' });
 }
 
 // ── SUBSCRIBE ──
