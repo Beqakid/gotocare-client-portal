@@ -2,8 +2,24 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
   <title>GoToCare — Find Care Now</title>
+
+  <!-- PWA -->
+  <link rel="manifest" href="/manifest.json" />
+  <meta name="theme-color" content="#7c3aed" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="GoToCare" />
+  <link rel="apple-touch-icon" href="https://api.dicebear.com/7.x/initials/svg?seed=GC&backgroundColor=7c3aed&textColor=ffffff" />
+
+  <!-- SEO / Social -->
+  <meta name="description" content="Find trusted, verified caregivers near you in minutes. Elder care, dementia, wheelchair assistance and more." />
+  <meta property="og:title" content="GoToCare — Find Care Now" />
+  <meta property="og:description" content="Book a trusted caregiver in minutes. Available today." />
+  <meta property="og:type" content="website" />
+
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
@@ -130,6 +146,90 @@
 
     /* Pages */
     .page { display: none; min-height: 100vh; }
+
+    /* ── Mobile / PWA foundations ── */
+    html { height: -webkit-fill-available; }
+    body {
+      min-height: 100vh;
+      min-height: -webkit-fill-available;
+      -webkit-tap-highlight-color: transparent;
+      -webkit-touch-callout: none;
+      overscroll-behavior-y: none;
+    }
+
+    /* Safe area insets — notch + home indicator */
+    .safe-top    { padding-top:    env(safe-area-inset-top,    0px); }
+    .safe-bottom { padding-bottom: env(safe-area-inset-bottom, 16px); }
+    .safe-x      { padding-left:   env(safe-area-inset-left,  0px);
+                   padding-right:  env(safe-area-inset-right, 0px); }
+
+    /* Prevent iOS zoom on input focus — must be 16px+ */
+    input, select, textarea {
+      font-size: 16px !important;
+      -webkit-appearance: none;
+    }
+
+    /* Touch targets — minimum 44×44px (Apple HIG) */
+    button, a, .care-tile, .filter-chip, .caregiver-card {
+      min-height: 44px;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    /* Smooth native scrolling */
+    .scroll-area {
+      -webkit-overflow-scrolling: touch;
+      overflow-y: auto;
+    }
+
+    /* Install prompt banner */
+    #install-banner {
+      position: fixed; bottom: 0; left: 0; right: 0; z-index: 9999;
+      background: linear-gradient(135deg, #2d1b69, #1e3a5f);
+      color: white; padding: 16px 20px;
+      padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+      display: flex; align-items: center; gap: 12px;
+      box-shadow: 0 -4px 24px rgba(0,0,0,0.3);
+      transform: translateY(100%);
+      transition: transform 0.4s cubic-bezier(0.34,1.56,0.64,1);
+    }
+    #install-banner.show { transform: translateY(0); }
+    #install-banner .install-icon {
+      width: 48px; height: 48px; background: rgba(124,58,237,0.3);
+      border-radius: 12px; display: flex; align-items: center; justify-content: center;
+      font-size: 24px; flex-shrink: 0;
+    }
+    #install-banner .install-text { flex: 1; }
+    #install-banner .install-text strong { display: block; font-size: 0.95rem; }
+    #install-banner .install-text span { font-size: 0.8rem; opacity: 0.7; }
+    #install-banner .install-btn {
+      background: #7c3aed; color: white; border: none;
+      border-radius: 10px; padding: 10px 16px; font-weight: 600;
+      font-size: 0.85rem; white-space: nowrap; flex-shrink: 0;
+    }
+    #install-banner .install-dismiss {
+      background: none; border: none; color: rgba(255,255,255,0.5);
+      font-size: 1.2rem; padding: 8px; flex-shrink: 0;
+    }
+
+    /* Better mobile card layout */
+    @media (max-width: 480px) {
+      .tiles-scroll { grid-template-columns: repeat(3, 1fr) !important; gap: 8px !important; }
+      .care-tile { padding: 14px 8px !important; }
+      .care-tile .tile-icon { font-size: 1.5rem !important; }
+      .care-tile .tile-label { font-size: 0.65rem !important; }
+      .caregiver-card { border-radius: 16px !important; }
+    }
+
+    /* Bottom-safe spacing on last scrollable screen */
+    .page-scroll-content { padding-bottom: calc(24px + env(safe-area-inset-bottom, 0px)); }
+
+    /* Sticky top bar on results/profile/booking */
+    .sticky-header {
+      position: sticky; top: 0; z-index: 100;
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+    }
     .page.active { display: block; }
 
     /* Animated loader */
@@ -156,6 +256,17 @@
   </style>
 </head>
 <body>
+
+<!-- PWA Install Banner -->
+<div id="install-banner">
+  <div class="install-icon">💜</div>
+  <div class="install-text">
+    <strong>Add GoToCare to your home screen</strong>
+    <span>Book care in seconds, anytime</span>
+  </div>
+  <button class="install-btn" id="install-btn-accept">Add</button>
+  <button class="install-dismiss" id="install-btn-dismiss">✕</button>
+</div>
 
 <!-- ============================================================ -->
 <!-- PAGE 1: DISPATCH — What care do you need?                    -->
@@ -1087,6 +1198,76 @@
       setTimeout(() => findCaregivers(), 300);
     }
   });
+
+  // ── PWA: Service Worker Registration ──
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/sw.js').then(reg => {
+        console.log('[GoToCare] SW registered:', reg.scope);
+      }).catch(err => console.warn('[GoToCare] SW failed:', err));
+    });
+  }
+
+  // ── PWA: Install Prompt (Android Chrome) ──
+  let deferredInstallPrompt = null;
+  const installBanner   = document.getElementById('install-banner');
+  const installAccept   = document.getElementById('install-btn-accept');
+  const installDismiss  = document.getElementById('install-btn-dismiss');
+
+  window.addEventListener('beforeinstallprompt', e => {
+    e.preventDefault();
+    deferredInstallPrompt = e;
+    // Show banner after 4 seconds on the dispatch screen
+    setTimeout(() => {
+      if (!localStorage.getItem('gc_install_dismissed')) {
+        installBanner.classList.add('show');
+      }
+    }, 4000);
+  });
+
+  installAccept.addEventListener('click', () => {
+    installBanner.classList.remove('show');
+    if (deferredInstallPrompt) {
+      deferredInstallPrompt.prompt();
+      deferredInstallPrompt.userChoice.then(result => {
+        if (result.outcome === 'accepted') localStorage.setItem('gc_install_dismissed', '1');
+        deferredInstallPrompt = null;
+      });
+    }
+  });
+
+  installDismiss.addEventListener('click', () => {
+    installBanner.classList.remove('show');
+    localStorage.setItem('gc_install_dismissed', '1');
+  });
+
+  // ── iOS: "Add to Home Screen" hint (Safari doesn't fire beforeinstallprompt) ──
+  const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+  const isInStandaloneMode = window.matchMedia('(display-mode: standalone)').matches;
+  if (isIOS && !isInStandaloneMode && !localStorage.getItem('gc_ios_hint_shown')) {
+    setTimeout(() => {
+      const hint = document.createElement('div');
+      hint.style.cssText = `
+        position:fixed;bottom:24px;left:50%;transform:translateX(-50%);
+        background:rgba(30,30,50,0.97);color:white;border-radius:16px;
+        padding:16px 20px;font-size:0.85rem;text-align:center;
+        box-shadow:0 8px 32px rgba(0,0,0,0.4);z-index:9998;
+        max-width:calc(100vw - 32px);backdrop-filter:blur(12px);
+        border:1px solid rgba(124,58,237,0.3);
+      `;
+      hint.innerHTML = `
+        <div style="font-size:1.4rem;margin-bottom:8px;">📲</div>
+        <strong>Add GoToCare to your home screen</strong><br>
+        <span style="opacity:0.7">Tap <strong>Share</strong> then <strong>"Add to Home Screen"</strong></span>
+        <br><button onclick="this.parentNode.remove();localStorage.setItem('gc_ios_hint_shown','1')"
+          style="margin-top:12px;background:#7c3aed;color:white;border:none;border-radius:8px;
+          padding:8px 20px;font-size:0.85rem;font-weight:600;">Got it</button>
+      `;
+      document.body.appendChild(hint);
+      localStorage.setItem('gc_ios_hint_shown', '1');
+    }, 5000);
+  }
+
 </script>
 </body>
 </html>
