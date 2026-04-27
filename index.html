@@ -186,41 +186,54 @@
     <!-- White card -->
     <div style="background:white;border-radius:28px 28px 0 0;flex:1;padding:24px 20px 40px;">
 
-      <!-- Step 1: Care type -->
+      <!-- Step 1: Care needs (multi-select) -->
       <div class="mb-6">
-        <p style="font-weight:700;color:#1e1b4b;font-size:0.95rem;margin-bottom:14px;">① What kind of care?</p>
+        <p style="font-weight:700;color:#1e1b4b;font-size:0.95rem;margin-bottom:4px;">① What care is needed?</p>
+        <p style="font-size:0.75rem;color:#6b7280;margin-bottom:12px;">Tap all that apply</p>
         <div class="tiles-scroll" id="care-tiles">
           <div class="care-tile" onclick="selectCare(this,'Elder Care')">
             <div class="icon">🧓</div>
             <div class="label">Elder Care</div>
           </div>
-          <div class="care-tile" onclick="selectCare(this,'Child Care')">
-            <div class="icon">👶</div>
-            <div class="label">Child Care</div>
+          <div class="care-tile" onclick="selectCare(this,'Dementia')">
+            <div class="icon">🧠</div>
+            <div class="label">Dementia</div>
           </div>
-          <div class="care-tile" onclick="selectCare(this,'Disability')">
+          <div class="care-tile" onclick="selectCare(this,'Wheelchair')">
             <div class="icon">♿</div>
-            <div class="label">Disability</div>
+            <div class="label">Wheelchair</div>
           </div>
           <div class="care-tile" onclick="selectCare(this,'Post-Surgery')">
             <div class="icon">🏥</div>
             <div class="label">Post-Surgery</div>
           </div>
-          <div class="care-tile" onclick="selectCare(this,'Dementia')">
-            <div class="icon">🧠</div>
-            <div class="label">Dementia</div>
+          <div class="care-tile" onclick="selectCare(this,'Medication')">
+            <div class="icon">💊</div>
+            <div class="label">Medication</div>
+          </div>
+          <div class="care-tile" onclick="selectCare(this,'Bathing')">
+            <div class="icon">🛁</div>
+            <div class="label">Bathing</div>
+          </div>
+          <div class="care-tile" onclick="selectCare(this,'Meal Prep')">
+            <div class="icon">🍽️</div>
+            <div class="label">Meal Prep</div>
           </div>
           <div class="care-tile" onclick="selectCare(this,'Companionship')">
             <div class="icon">🤝</div>
             <div class="label">Companion</div>
           </div>
+          <div class="care-tile" onclick="selectCare(this,'Transportation')">
+            <div class="icon">🚗</div>
+            <div class="label">Transport</div>
+          </div>
+          <div class="care-tile" onclick="selectCare(this,'Child Care')">
+            <div class="icon">👶</div>
+            <div class="label">Child Care</div>
+          </div>
           <div class="care-tile" onclick="selectCare(this,'Overnight')">
             <div class="icon">🌙</div>
             <div class="label">Overnight</div>
-          </div>
-          <div class="care-tile" onclick="selectCare(this,'Any Care')">
-            <div class="icon">✨</div>
-            <div class="label">Any Care</div>
           </div>
         </div>
       </div>
@@ -470,7 +483,7 @@
 
   // ============ STATE ============
   let state = {
-    careType: 'Any Care',
+    careTypes: [],
     location: '',
     urgency: 'now',
     caregivers: [],
@@ -486,11 +499,21 @@
     window.scrollTo(0,0);
   }
 
-  // ============ CARE TYPE SELECTION ============
+  // ============ CARE NEEDS SELECTION (multi-select) ============
   function selectCare(el, type) {
-    document.querySelectorAll('.care-tile').forEach(t => t.classList.remove('selected'));
-    el.classList.add('selected');
-    state.careType = type;
+    el.classList.toggle('selected');
+    const idx = state.careTypes.indexOf(type);
+    if (idx > -1) state.careTypes.splice(idx, 1);
+    else state.careTypes.push(type);
+    updateFindBtn();
+  }
+  function updateFindBtn() {
+    const btn = document.getElementById('find-btn');
+    if (!btn) return;
+    const n = state.careTypes.length;
+    btn.textContent = n === 0
+      ? 'Find Available Caregivers →'
+      : `Find Caregivers for ${n} Need${n > 1 ? 's' : ''} →`;
   }
 
   // ============ URGENCY SELECTION ============
@@ -560,7 +583,8 @@
     }
 
     showPage('page-results');
-    document.getElementById('results-headline').textContent = `${state.careType} near ${state.location || 'you'}`;
+    const needsLabel = state.careTypes.length ? state.careTypes.join(' · ') : 'Care';
+    document.getElementById('results-headline').textContent = `${needsLabel} near ${state.location || 'you'}`;
     document.getElementById('results-sub').textContent = urgencyLabel(state.urgency) + ' · Ranked by match';
 
     setTimeout(() => { btn.innerHTML = 'Find Available Caregivers →'; btn.disabled = false; }, 1000);
@@ -579,7 +603,7 @@
     try {
       const params = new URLSearchParams();
       if (state.location) params.set('location', state.location);
-      if (state.careType && state.careType !== 'Any Care') params.set('specialty', state.careType);
+      if (state.careTypes.length) params.set('specialty', state.careTypes.join(','));
       params.set('limit', '20');
 
       const res = await fetch(`${API_BASE}/api/search-caregivers?${params}`);
@@ -609,10 +633,10 @@
       rating: c.rating || (4.9 - i * 0.07).toFixed(1),
       reviewCount: c.reviewCount || (87 - i * 8),
       name: c.name || `${c.firstName || 'Caregiver'} ${c.lastName ? c.lastName.charAt(0) + '.' : ''}`,
-      specialty: c.specialty || c.skills?.[0] || state.careType,
+      specialty: c.specialty || c.skills?.[0] || state.careTypes[0] || 'General Care',
       yearsExp: c.yearsExp || c.experience || (3 + i),
       languages: c.languages || ['English'],
-      bio: c.bio || `Dedicated caregiver with ${3+i} years of experience specializing in ${state.careType}.`
+      bio: c.bio || `Dedicated caregiver with ${3+i} years of experience specializing in ${state.careTypes[0] || 'home care'}.`
     }));
 
     state.caregivers = caregivers;
@@ -917,11 +941,12 @@
       clientEmail: isEmail ? contact : `${name.toLowerCase().replace(/\s+/g,'.')}@gotocare.temp`,
       clientPhone: isEmail ? '' : contact,
       duration: state.duration,
-      careType: state.careType,
+      careTypes: state.careTypes,
+      careType: state.careTypes.join(', ') || 'General Care',
       location: state.location || 'Atlanta, GA',
       urgency: state.urgency,
       totalAmount: total,
-      notes: `${state.careType} · ${state.urgency}`
+      notes: `${state.careTypes.join(', ') || 'General Care'} · ${state.urgency}`
     };
 
     let bookingId = `GTC-${Math.random().toString(36).substr(2,8).toUpperCase()}`;
@@ -997,7 +1022,7 @@
       </div>
       <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #e5e7eb;">
         <span style="color:#6b7280;font-size:0.85rem;">Care Type</span>
-        <span style="font-weight:700;color:#1e1b4b;font-size:0.85rem;">${state.careType}</span>
+        <span style="font-weight:700;color:#1e1b4b;font-size:0.85rem;">${state.careTypes.join(', ') || 'General Care'}</span>
       </div>
       <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #e5e7eb;">
         <span style="color:#6b7280;font-size:0.85rem;">Duration</span>
@@ -1043,7 +1068,11 @@
     const care = params.get('care');
     const loc = params.get('location');
     if (care) {
-      state.careType = care;
+      state.careTypes = care ? care.split(',').map(s => s.trim()) : [];
+      document.querySelectorAll('.care-tile').forEach(t => {
+        const lbl = t.querySelector('.label')?.textContent?.trim();
+        if (lbl && state.careTypes.includes(lbl)) t.classList.add('selected');
+      });
       document.querySelectorAll('.care-tile').forEach(t => {
         if (t.querySelector('.label').textContent === care) t.classList.add('selected');
       });
