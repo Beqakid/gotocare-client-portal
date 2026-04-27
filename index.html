@@ -1095,26 +1095,11 @@ if (paramUrg) {
 
 // Auto-load caregivers for browse mode or when location param is present
 if (browseMode || paramLoc) {
-  (async () => {
-    setLoading(true, 'Finding caregivers near you…');
-    try {
-      const loc = paramLoc || 'Atlanta, GA';
-      const sp = new URLSearchParams({ location: loc, page: 1, limit: 20 });
-      if (paramCare) sp.append('specialty', paramCare.split(',')[0].trim());
-      const res = await fetch(`${API}/search-caregivers?${sp}`);
-      const data = await res.json();
-      caregivers = data.caregivers || data.docs || [];
-      if (!caregivers.length) caregivers = getDemoCaregivers();
-    } catch(e) {
-      caregivers = getDemoCaregivers();
-    } finally {
-      setLoading(false);
-    }
-    currentIndex = 0;
-    renderSwiperCard();
-    showScreen('screen-swiper');
-    checkSubscription();
-  })();
+  // Use setTimeout to ensure all event listeners are bound before simulating click
+  if (paramLoc) document.getElementById('location-input').value = paramLoc;
+  setTimeout(() => {
+    document.getElementById('find-btn').click();
+  }, 200);
 }
 
 // ── PWA INSTALL ──
