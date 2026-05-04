@@ -9,6 +9,8 @@
   <meta name="apple-mobile-web-app-title" content="GoToCare" />
   <link rel="manifest" href="manifest.json" />
   <title>GoToCare — Find Care Now</title>
+  <meta name="google-signin-client_id" content="888877756290-t1chv8b5d5hg0kiosd4qcr34g6rpd33b.apps.googleusercontent.com" />
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
@@ -356,12 +358,126 @@
       #screen-swiper.active { align-items: center; justify-content: center; }
       .card-viewport { max-width: 480px; width: 100%; }
     }
+    /* ── AUTH SCREEN ── */
+    #screen-auth {
+      background: linear-gradient(160deg, #1a1a2e 0%, #2d1b69 40%, #1e3a5f 100%);
+      min-height: 100dvh;
+      padding: calc(var(--safe-top) + 24px) 20px calc(var(--safe-bottom) + 24px);
+      align-items: center; justify-content: center; flex-direction: column;
+    }
+    .auth-logo { text-align: center; margin-bottom: 28px; }
+    .auth-logo .logo-icon {
+      width: 64px; height: 64px;
+      background: linear-gradient(135deg, var(--purple), var(--blue));
+      border-radius: 20px; display: inline-flex; align-items: center; justify-content: center;
+      font-size: 30px; margin-bottom: 10px;
+      box-shadow: 0 0 32px rgba(124,58,237,0.5), 0 0 64px rgba(59,130,246,0.25);
+    }
+    .auth-logo .logo-name {
+      font-size: 28px; font-weight: 900;
+      background: linear-gradient(90deg, #a78bfa, #60a5fa);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .auth-logo .logo-tagline { font-size: 13px; color: rgba(255,255,255,0.55); margin-top: 4px; }
+    .auth-social-proof {
+      display: flex; align-items: center; gap: 8px; justify-content: center;
+      margin-bottom: 24px; font-size: 12px; color: rgba(255,255,255,0.6);
+    }
+    .auth-social-proof .avatars { display: flex; }
+    .auth-social-proof .av { width: 24px; height: 24px; border-radius: 50%; background: linear-gradient(135deg, var(--purple), var(--blue)); border: 2px solid #1a1a2e; margin-left: -6px; font-size: 10px; display: flex; align-items: center; justify-content: center; }
+    .auth-social-proof .av:first-child { margin-left: 0; }
+    .auth-card {
+      background: rgba(255,255,255,0.07);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 24px; padding: 28px 24px; width: 100%; max-width: 420px;
+    }
+    .auth-tabs { display: flex; background: rgba(255,255,255,0.06); border-radius: 12px; padding: 4px; margin-bottom: 24px; }
+    .auth-tab { flex: 1; padding: 10px; text-align: center; font-size: 14px; font-weight: 700; border-radius: 10px; cursor: pointer; transition: all 0.2s; color: rgba(255,255,255,0.5); -webkit-tap-highlight-color: transparent; }
+    .auth-tab.active { background: linear-gradient(135deg, var(--purple), var(--blue)); color: #fff; }
+    .auth-google-btn {
+      width: 100%; background: #fff; border: none; border-radius: 14px; padding: 14px;
+      display: flex; align-items: center; justify-content: center; gap: 10px;
+      font-size: 15px; font-weight: 700; color: #1a1a2e; cursor: pointer;
+      margin-bottom: 16px; -webkit-tap-highlight-color: transparent;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+    }
+    .auth-google-btn img { width: 20px; height: 20px; }
+    .auth-divider { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+    .auth-divider span { font-size: 12px; color: rgba(255,255,255,0.4); white-space: nowrap; }
+    .auth-divider::before, .auth-divider::after { content: ''; flex: 1; height: 1px; background: rgba(255,255,255,0.12); }
+    .auth-input {
+      width: 100%; background: rgba(255,255,255,0.08); border: 2px solid rgba(255,255,255,0.12);
+      border-radius: 14px; padding: 14px 16px; color: #fff; font-size: 16px; outline: none;
+      margin-bottom: 12px; box-sizing: border-box;
+    }
+    .auth-input:focus { border-color: var(--purple-light); }
+    .auth-input::placeholder { color: rgba(255,255,255,0.35); }
+    .auth-submit-btn {
+      width: 100%; background: linear-gradient(135deg, var(--purple), var(--blue));
+      border: none; border-radius: 14px; padding: 16px; font-size: 16px; font-weight: 800;
+      color: #fff; cursor: pointer; margin-top: 4px; -webkit-tap-highlight-color: transparent;
+      box-shadow: 0 6px 24px rgba(124,58,237,0.4);
+    }
+    .auth-error { background: rgba(239,68,68,0.15); border: 1px solid rgba(239,68,68,0.3); border-radius: 12px; padding: 12px; font-size: 13px; color: #fca5a5; margin-bottom: 12px; display: none; }
+    .auth-pills { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-top: 20px; }
+    .auth-pill { background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.12); border-radius: 50px; padding: 6px 14px; font-size: 12px; color: rgba(255,255,255,0.65); }
+    .auth-skip { text-align: center; margin-top: 16px; font-size: 13px; color: rgba(255,255,255,0.45); cursor: pointer; padding: 8px; }
+    .auth-skip span { color: var(--purple-light); font-weight: 600; }
+
   </style>
 </head>
 <body>
 
 <!-- ── DISPATCH ── -->
-<div id="screen-dispatch" class="screen active">
+<!-- ── AUTH / LOGIN ── -->
+<div id="screen-auth" class="screen active">
+  <div class="auth-logo">
+    <div class="logo-icon">🏠</div>
+    <div class="logo-name">GoToCare</div>
+    <div class="logo-tagline">Find trusted care in minutes</div>
+  </div>
+  <div class="auth-social-proof">
+    <div class="avatars">
+      <div class="av">👩</div><div class="av">👨</div><div class="av">👵</div><div class="av">👴</div>
+    </div>
+    <span>Join 5,000+ families finding care</span>
+  </div>
+  <div class="auth-card">
+    <div class="auth-tabs">
+      <div class="auth-tab active" id="tab-signin" onclick="switchAuthTab('signin')">Sign In</div>
+      <div class="auth-tab" id="tab-signup" onclick="switchAuthTab('signup')">Create Account</div>
+    </div>
+
+    <!-- Google button -->
+    <button class="auth-google-btn" id="auth-google-btn" onclick="clientGoogleSignIn()">
+      <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" />
+      Continue with Google
+    </button>
+
+    <div class="auth-divider"><span>or</span></div>
+
+    <div id="auth-error" class="auth-error"></div>
+
+    <!-- Name field (sign up only) -->
+    <input id="auth-name" class="auth-input" type="text" placeholder="Your name" style="display:none;" />
+    <input id="auth-email" class="auth-input" type="email" placeholder="Email address" autocomplete="email" />
+    <input id="auth-password" class="auth-input" type="password" placeholder="Password" autocomplete="current-password" />
+
+    <button class="auth-submit-btn" id="auth-submit-btn" onclick="handleAuthSubmit()">Sign In →</button>
+  </div>
+
+  <div class="auth-pills">
+    <div class="auth-pill">🔒 No credit card</div>
+    <div class="auth-pill">⚡ Find care in 2 min</div>
+    <div class="auth-pill">💜 Free to use</div>
+  </div>
+
+  <div class="auth-skip" onclick="clientSkipAuth()">Browse without account — <span>continue as guest →</span></div>
+</div>
+
+<div id="screen-dispatch" class="screen">
   <div class="dispatch-logo" style="justify-content:space-between;">
     <div style="display:flex;align-items:center;gap:10px;">
       <div class="icon">🏠</div>
@@ -1284,7 +1400,7 @@ async function renderAccountForEmail(email) {
     <div class="section-label">Interview Requests (${bookings.length})</div>
     ${bookingsHTML}
 
-    <button onclick="localStorage.removeItem('gc_email');showAccountScreen();" style="margin-top:24px;width:100%;background:rgba(255,255,255,0.06);border:1.5px solid rgba(255,255,255,0.12);border-radius:12px;padding:12px;color:rgba(255,255,255,0.5);font-size:13px;cursor:pointer;">
+    <button onclick="clientSignOut()" style="margin-top:24px;width:100%;background:rgba(255,255,255,0.06);border:1.5px solid rgba(255,255,255,0.12);border-radius:12px;padding:12px;color:rgba(255,255,255,0.5);font-size:13px;cursor:pointer;">
       Sign out
     </button>`;
 }
@@ -1297,6 +1413,150 @@ async function renderAccountForEmail(email) {
     if (btn) btn.textContent = email.split('@')[0];
   }
 })();
+
+
+// ── CLIENT AUTH ──
+const AUTH_STORAGE_KEY = 'gc_client_session';
+let authMode = 'signin'; // 'signin' | 'signup'
+
+function switchAuthTab(mode) {
+  authMode = mode;
+  document.getElementById('tab-signin').classList.toggle('active', mode === 'signin');
+  document.getElementById('tab-signup').classList.toggle('active', mode === 'signup');
+  const nameField = document.getElementById('auth-name');
+  nameField.style.display = mode === 'signup' ? 'block' : 'none';
+  document.getElementById('auth-submit-btn').textContent = mode === 'signup' ? 'Create Account →' : 'Sign In →';
+  document.getElementById('auth-password').placeholder = mode === 'signup' ? 'Create a password' : 'Password';
+  document.getElementById('auth-error').style.display = 'none';
+}
+
+function showAuthError(msg) {
+  const el = document.getElementById('auth-error');
+  el.textContent = msg;
+  el.style.display = 'block';
+}
+
+async function handleAuthSubmit() {
+  const email = document.getElementById('auth-email').value.trim();
+  const password = document.getElementById('auth-password').value;
+  const name = document.getElementById('auth-name').value.trim();
+  if (!email || !email.includes('@')) { showAuthError('Please enter a valid email address.'); return; }
+  if (!password || password.length < 6) { showAuthError('Password must be at least 6 characters.'); return; }
+  if (authMode === 'signup' && !name) { showAuthError('Please enter your name.'); return; }
+
+  setLoading(true, authMode === 'signup' ? 'Creating your account…' : 'Signing in…');
+  document.getElementById('auth-error').style.display = 'none';
+  try {
+    const endpoint = authMode === 'signup' ? '/client-register' : '/client-auth/login';
+    const body = authMode === 'signup' ? { name, email, password } : { email, password };
+    const res = await fetch(API + endpoint, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    const data = await res.json();
+    if (!res.ok || data.error) { showAuthError(data.error || 'Something went wrong.'); return; }
+    clientAuthSuccess(data.sessionToken, data.email, data.name);
+  } catch (e) {
+    showAuthError('Connection error. Please try again.');
+  } finally {
+    setLoading(false);
+  }
+}
+
+function clientAuthSuccess(token, email, name) {
+  localStorage.setItem(AUTH_STORAGE_KEY, token);
+  localStorage.setItem('gc_email', email);
+  if (name) localStorage.setItem('gc_client_name', name);
+  const label = document.getElementById('account-btn-label');
+  if (label) label.textContent = name ? name.split(' ')[0] : email.split('@')[0];
+  showScreen('screen-dispatch');
+  toast('👋 Welcome' + (name ? ', ' + name.split(' ')[0] : '') + '!');
+}
+
+function clientSkipAuth() {
+  localStorage.removeItem(AUTH_STORAGE_KEY);
+  showScreen('screen-dispatch');
+}
+
+// Google Sign-In for client portal
+function clientGoogleSignIn() {
+  const clientId = document.querySelector('meta[name="google-signin-client_id"]')?.content;
+  if (!clientId || !window.google) { showAuthError('Google Sign-In is loading, please try again in a moment.'); return; }
+  try {
+    google.accounts.id.initialize({
+      client_id: clientId,
+      callback: async (response) => {
+        setLoading(true, 'Signing in with Google…');
+        try {
+          // Decode JWT payload to get name/email
+          const payload = JSON.parse(atob(response.credential.split('.')[1]));
+          const res = await fetch(API + '/client-auth/google', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ idToken: response.credential, name: payload.name, email: payload.email, googleId: payload.sub }),
+          });
+          const data = await res.json();
+          if (!res.ok || data.error) { showAuthError(data.error || 'Google sign-in failed.'); return; }
+          clientAuthSuccess(data.sessionToken, data.email, data.name);
+        } catch (e) {
+          showAuthError('Google sign-in failed. Please try email instead.');
+        } finally {
+          setLoading(false);
+        }
+      },
+      auto_select: false,
+    });
+    google.accounts.id.prompt((notification) => {
+      if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
+        // Fallback: open One Tap
+        google.accounts.id.renderButton(document.getElementById('auth-google-btn'), {
+          type: 'standard', shape: 'rectangular', theme: 'outline', size: 'large'
+        });
+      }
+    });
+  } catch (e) {
+    showAuthError('Google Sign-In not available. Please use email.');
+  }
+}
+
+// Check existing session on startup
+async function checkClientSession() {
+  const token = localStorage.getItem(AUTH_STORAGE_KEY);
+  if (!token) {
+    showScreen('screen-auth', false);
+    return;
+  }
+  try {
+    const res = await fetch(API + '/client-account?token=' + encodeURIComponent(token));
+    const data = await res.json();
+    if (data.valid && data.account) {
+      localStorage.setItem('gc_email', data.account.email);
+      if (data.account.name) localStorage.setItem('gc_client_name', data.account.name);
+      const label = document.getElementById('account-btn-label');
+      const displayName = data.account.name ? data.account.name.split(' ')[0] : data.account.email.split('@')[0];
+      if (label) label.textContent = displayName;
+      // Don't show auth screen — go straight to dispatch (already set active by URL params or show screen-auth if no params)
+      if (!browseMode && !paramLoc) showScreen('screen-dispatch', false);
+    } else {
+      localStorage.removeItem(AUTH_STORAGE_KEY);
+      if (!browseMode && !paramLoc) showScreen('screen-auth', false);
+    }
+  } catch (e) {
+    // Network error - allow skipping to dispatch
+    if (!browseMode && !paramLoc) showScreen('screen-auth', false);
+  }
+}
+
+// Sign out
+function clientSignOut() {
+  localStorage.removeItem(AUTH_STORAGE_KEY);
+  localStorage.removeItem('gc_email');
+  localStorage.removeItem('gc_client_name');
+  showScreen('screen-auth');
+  toast('Signed out successfully');
+}
+
+// Run session check on startup (before URL param handling kicks in)
+checkClientSession();
 
 // ── SERVICE WORKER ──
 if ('serviceWorker' in navigator) {
