@@ -1614,6 +1614,290 @@
     .account-email-form { background: rgba(255,255,255,0.06); border: 1.5px solid rgba(255,255,255,0.12); border-radius: 16px; padding: 20px; }
     .btn-load-account { width: 100%; background: linear-gradient(135deg, var(--purple), var(--blue)); border: none; border-radius: 12px; padding: 14px; font-size: 15px; font-weight: 700; color: #fff; cursor: pointer; }
 
+    /* ════════════════════════════════════════════════════════════════
+       4-TAB BOTTOM NAV OVERRIDE
+       ════════════════════════════════════════════════════════════════ */
+    .bottom-nav { justify-content: space-evenly; }
+    .nav-item { padding: 6px 8px; min-width: 60px; }
+
+    /* ════════════════════════════════════════════════════════════════
+       MY CARE TEAM SCREEN
+       ════════════════════════════════════════════════════════════════ */
+    #screen-team { padding: 24px 16px calc(80px + var(--safe-bottom)); }
+
+    .team-tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 20px;
+    }
+    .team-tab {
+      flex: 1;
+      padding: 10px;
+      border-radius: var(--radius-sm);
+      border: 1.5px solid rgba(255,255,255,0.1);
+      background: rgba(255,255,255,0.05);
+      color: rgba(255,255,255,0.5);
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.2s ease;
+    }
+    .team-tab.active {
+      background: rgba(124,58,237,0.2);
+      border-color: var(--purple);
+      color: var(--purple-light);
+    }
+    .team-card {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: var(--radius);
+      padding: 14px 16px;
+      margin-bottom: 10px;
+      transition: all 0.2s ease;
+    }
+    .team-card:active { transform: scale(0.98); }
+    .team-avatar-wrap { position: relative; flex-shrink: 0; }
+    .team-avatar {
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--purple), var(--blue));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      border: 2px solid rgba(124,58,237,0.4);
+    }
+    .team-status-dot {
+      position: absolute;
+      bottom: 2px;
+      right: 2px;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      border: 2px solid #1a1a2e;
+    }
+    .team-status-dot.active { background: var(--green); }
+    .team-status-dot.saved { background: var(--purple-light); }
+    .team-status-dot.past { background: rgba(255,255,255,0.3); }
+    .team-info { flex: 1; min-width: 0; }
+    .team-name { font-size: 15px; font-weight: 700; margin-bottom: 3px; }
+    .team-meta { font-size: 12px; color: rgba(255,255,255,0.55); margin-bottom: 6px; }
+    .team-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 10px;
+      font-weight: 700;
+      padding: 2px 10px;
+      border-radius: 50px;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+    .team-badge.active { background: rgba(16,185,129,0.2); color: #6ee7b7; border: 1px solid rgba(16,185,129,0.3); }
+    .team-badge.saved { background: rgba(124,58,237,0.2); color: var(--purple-light); border: 1px solid rgba(124,58,237,0.3); }
+    .team-badge.past { background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.5); border: 1px solid rgba(255,255,255,0.12); }
+    .team-actions { display: flex; flex-direction: column; gap: 6px; flex-shrink: 0; }
+    .btn-rebook {
+      background: linear-gradient(135deg, var(--purple), var(--blue));
+      border: none;
+      border-radius: var(--radius-sm);
+      padding: 8px 14px;
+      color: #fff;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      white-space: nowrap;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .btn-unsave {
+      background: rgba(239,68,68,0.1);
+      border: 1px solid rgba(239,68,68,0.25);
+      border-radius: var(--radius-sm);
+      padding: 6px 12px;
+      color: #fca5a5;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .team-empty {
+      text-align: center;
+      padding: 60px 20px;
+      color: rgba(255,255,255,0.4);
+    }
+    .team-empty-icon { font-size: 52px; margin-bottom: 14px; }
+    .team-empty-title { font-size: 15px; font-weight: 600; margin-bottom: 6px; color: rgba(255,255,255,0.6); }
+    .team-empty-sub { font-size: 13px; line-height: 1.5; }
+    .team-section-title {
+      font-size: 11px;
+      font-weight: 700;
+      color: rgba(255,255,255,0.4);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 10px;
+      margin-top: 4px;
+    }
+    .save-cta {
+      background: rgba(124,58,237,0.12);
+      border: 1.5px dashed rgba(124,58,237,0.4);
+      border-radius: var(--radius);
+      padding: 20px;
+      text-align: center;
+      margin-top: 16px;
+    }
+    .save-cta-icon { font-size: 28px; margin-bottom: 8px; }
+    .save-cta p { font-size: 13px; color: rgba(255,255,255,0.6); line-height: 1.5; }
+    .btn-go-find {
+      margin-top: 12px;
+      background: linear-gradient(135deg, var(--purple), var(--blue));
+      border: none;
+      border-radius: var(--radius);
+      padding: 12px 24px;
+      color: #fff;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    /* ════════════════════════════════════════════════════════════════
+       CARE RECIPIENT PROFILE SCREEN
+       ════════════════════════════════════════════════════════════════ */
+    #screen-care-profile { padding: 24px 16px calc(100px + var(--safe-bottom)); }
+
+    .profile-section-header {
+      font-size: 11px;
+      font-weight: 700;
+      color: rgba(255,255,255,0.4);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 12px;
+      margin-top: 24px;
+    }
+    .profile-section-header:first-of-type { margin-top: 0; }
+    .profile-card {
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: var(--radius);
+      padding: 16px;
+      margin-bottom: 8px;
+    }
+    .profile-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+    .profile-field { margin-bottom: 12px; }
+    .profile-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: rgba(255,255,255,0.5);
+      margin-bottom: 6px;
+      display: block;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+    }
+    .profile-input {
+      width: 100%;
+      padding: 12px 14px;
+      border-radius: var(--radius-sm);
+      border: 1.5px solid rgba(255,255,255,0.12);
+      background: rgba(255,255,255,0.06);
+      color: #fff;
+      font-size: 14px;
+      outline: none;
+      font-family: inherit;
+      transition: border-color 0.2s;
+    }
+    .profile-input::placeholder { color: rgba(255,255,255,0.25); }
+    .profile-input:focus { border-color: var(--purple-light); }
+    select.profile-input { appearance: none; cursor: pointer; }
+    textarea.profile-input { min-height: 80px; resize: vertical; }
+    .condition-pills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 4px;
+    }
+    .condition-pill {
+      padding: 7px 14px;
+      border-radius: 50px;
+      border: 1.5px solid rgba(255,255,255,0.15);
+      background: rgba(255,255,255,0.05);
+      color: rgba(255,255,255,0.6);
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .condition-pill.selected {
+      background: rgba(124,58,237,0.25);
+      border-color: var(--purple);
+      color: #fff;
+    }
+    .ec-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    .ec-field label { font-size: 11px; color: rgba(255,255,255,0.45); margin-bottom: 5px; display: block; }
+    .btn-save-profile {
+      width: 100%;
+      padding: 16px;
+      border: none;
+      border-radius: var(--radius);
+      background: linear-gradient(135deg, var(--purple), var(--blue));
+      color: #fff;
+      font-size: 16px;
+      font-weight: 800;
+      cursor: pointer;
+      margin-top: 24px;
+      box-shadow: 0 6px 24px rgba(124,58,237,0.35);
+      -webkit-tap-highlight-color: transparent;
+    }
+    .profile-saved-banner {
+      background: rgba(16,185,129,0.12);
+      border: 1px solid rgba(16,185,129,0.3);
+      border-radius: var(--radius-sm);
+      padding: 14px;
+      text-align: center;
+      font-size: 13px;
+      font-weight: 600;
+      color: #6ee7b7;
+      margin-bottom: 20px;
+      display: none;
+    }
+    .profile-saved-banner.show { display: block; }
+    .account-settings-card {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: var(--radius);
+      overflow: hidden;
+      margin-top: 8px;
+    }
+    .settings-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 16px;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+      font-size: 14px;
+    }
+    .settings-row:last-child { border-bottom: none; }
+    .settings-row-label { color: rgba(255,255,255,0.8); font-weight: 500; }
+    .settings-row-value { color: rgba(255,255,255,0.4); font-size: 12px; }
+    .settings-signout {
+      color: #f87171;
+      font-weight: 600;
+      cursor: pointer;
+      font-size: 14px;
+    }
 </style>
 </head>
 <body>
@@ -1971,6 +2255,158 @@
 </div>
 
 <!-- ══════════════════════════════════════════════════════════════
+     MY CARE TEAM
+     ══════════════════════════════════════════════════════════════ -->
+<div id="screen-team" class="screen">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+    <div style="font-size:20px;font-weight:800;">💜 My Care Team</div>
+    <div id="team-count-badge" style="font-size:11px;font-weight:700;background:rgba(124,58,237,0.2);border:1px solid rgba(124,58,237,0.3);color:var(--purple-light);padding:4px 12px;border-radius:50px;display:none;"></div>
+  </div>
+  <div class="team-tabs">
+    <button class="team-tab active" onclick="switchTeamTab('saved')" id="ttab-saved">💜 Saved</button>
+    <button class="team-tab" onclick="switchTeamTab('active')" id="ttab-active">✅ Active</button>
+    <button class="team-tab" onclick="switchTeamTab('past')" id="ttab-past">📋 Past</button>
+  </div>
+  <div id="team-content"></div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════
+     CARE RECIPIENT PROFILE
+     ══════════════════════════════════════════════════════════════ -->
+<div id="screen-care-profile" class="screen">
+  <div style="font-size:20px;font-weight:800;margin-bottom:4px;">👤 Profile</div>
+  <div style="font-size:13px;color:rgba(255,255,255,0.5);margin-bottom:20px;">Care recipient info is shared with matched caregivers.</div>
+
+  <div class="profile-saved-banner" id="profile-saved-banner">✅ Profile saved successfully!</div>
+
+  <div class="profile-section-header">About the Care Recipient</div>
+  <div class="profile-card">
+    <div class="profile-row">
+      <div class="profile-field">
+        <label class="profile-label">Full Name</label>
+        <input class="profile-input" id="cr-name" type="text" placeholder="e.g. Margaret Smith" />
+      </div>
+      <div class="profile-field">
+        <label class="profile-label">Relationship</label>
+        <select class="profile-input" id="cr-relationship">
+          <option value="">Select…</option>
+          <option value="myself">Myself</option>
+          <option value="parent">My Parent</option>
+          <option value="spouse">My Spouse/Partner</option>
+          <option value="child">My Child</option>
+          <option value="grandparent">My Grandparent</option>
+          <option value="sibling">My Sibling</option>
+          <option value="other">Other</option>
+        </select>
+      </div>
+    </div>
+    <div class="profile-row">
+      <div class="profile-field">
+        <label class="profile-label">Age</label>
+        <input class="profile-input" id="cr-age" type="number" placeholder="e.g. 78" min="1" max="120" />
+      </div>
+      <div class="profile-field">
+        <label class="profile-label">Gender</label>
+        <select class="profile-input" id="cr-gender">
+          <option value="">Select…</option>
+          <option value="female">Female</option>
+          <option value="male">Male</option>
+          <option value="nonbinary">Non-binary</option>
+          <option value="prefer_not">Prefer not to say</option>
+        </select>
+      </div>
+    </div>
+    <div class="profile-field">
+      <label class="profile-label">Primary Languages</label>
+      <input class="profile-input" id="cr-languages" type="text" placeholder="e.g. English, Spanish" />
+    </div>
+  </div>
+
+  <div class="profile-section-header">Medical Conditions</div>
+  <div class="profile-card">
+    <div class="condition-pills" id="condition-pills">
+      <div class="condition-pill" data-val="Dementia">Dementia</div>
+      <div class="condition-pill" data-val="Alzheimer's">Alzheimer's</div>
+      <div class="condition-pill" data-val="Diabetes">Diabetes</div>
+      <div class="condition-pill" data-val="Heart Disease">Heart Disease</div>
+      <div class="condition-pill" data-val="COPD">COPD</div>
+      <div class="condition-pill" data-val="Parkinson's">Parkinson's</div>
+      <div class="condition-pill" data-val="Stroke">Stroke</div>
+      <div class="condition-pill" data-val="Cancer">Cancer</div>
+      <div class="condition-pill" data-val="Mobility Impairment">Mobility Impairment</div>
+      <div class="condition-pill" data-val="Vision Impairment">Vision Impairment</div>
+      <div class="condition-pill" data-val="Hearing Impairment">Hearing Impairment</div>
+      <div class="condition-pill" data-val="Mental Health">Mental Health</div>
+      <div class="condition-pill" data-val="Post-Surgery">Post-Surgery</div>
+      <div class="condition-pill" data-val="Hospice">Hospice</div>
+    </div>
+  </div>
+
+  <div class="profile-section-header">Care Preferences</div>
+  <div class="profile-card">
+    <div class="profile-field">
+      <label class="profile-label">Dietary Restrictions / Food Notes</label>
+      <input class="profile-input" id="cr-diet" type="text" placeholder="e.g. No pork, vegetarian, diabetic-friendly" />
+    </div>
+    <div class="profile-field">
+      <label class="profile-label">Caregiver Gender Preference</label>
+      <select class="profile-input" id="cr-cg-gender">
+        <option value="no_preference">No preference</option>
+        <option value="female">Female preferred</option>
+        <option value="male">Male preferred</option>
+      </select>
+    </div>
+    <div class="profile-field">
+      <label class="profile-label">Pets at Home</label>
+      <select class="profile-input" id="cr-pets">
+        <option value="none">No pets</option>
+        <option value="dog">Dog</option>
+        <option value="cat">Cat</option>
+        <option value="multiple">Multiple pets</option>
+      </select>
+    </div>
+    <div class="profile-field">
+      <label class="profile-label">Additional Notes for Caregivers</label>
+      <textarea class="profile-input" id="cr-notes" placeholder="Any important details caregivers should know before arriving…"></textarea>
+    </div>
+  </div>
+
+  <div class="profile-section-header">Emergency Contacts</div>
+  <div class="profile-card">
+    <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-bottom:12px;">These contacts will be notified in case of emergency.</div>
+    <div class="ec-grid" style="margin-bottom:14px;">
+      <div class="ec-field"><label>Contact 1 — Name</label><input class="profile-input" id="ec1-name" type="text" placeholder="Full name" /></div>
+      <div class="ec-field"><label>Contact 1 — Phone</label><input class="profile-input" id="ec1-phone" type="tel" placeholder="+1 (555)…" /></div>
+    </div>
+    <div class="ec-grid">
+      <div class="ec-field"><label>Contact 2 — Name</label><input class="profile-input" id="ec2-name" type="text" placeholder="Full name" /></div>
+      <div class="ec-field"><label>Contact 2 — Phone</label><input class="profile-input" id="ec2-phone" type="tel" placeholder="+1 (555)…" /></div>
+    </div>
+  </div>
+
+  <div class="profile-section-header">Account Settings</div>
+  <div class="account-settings-card">
+    <div class="settings-row">
+      <span class="settings-row-label">📧 Email</span>
+      <span class="settings-row-value" id="profile-email-display">—</span>
+    </div>
+    <div class="settings-row">
+      <span class="settings-row-label">📋 Subscription</span>
+      <span class="settings-row-value" id="profile-plan-display">Free</span>
+    </div>
+    <div class="settings-row" style="cursor:pointer;" onclick="showScreen('screen-subscribe')">
+      <span class="settings-row-label">🔓 Upgrade Plan</span>
+      <span style="color:var(--purple-light);font-size:13px;">→</span>
+    </div>
+    <div class="settings-row" style="cursor:pointer;" onclick="clientSignOut()">
+      <span class="settings-signout">Sign Out</span>
+    </div>
+  </div>
+
+  <button class="btn-save-profile" onclick="saveCareRecipient()">💾 Save Profile</button>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════
      BOTTOM NAVIGATION
      ══════════════════════════════════════════════════════════════ -->
 <nav id="bottom-nav" class="bottom-nav">
@@ -1978,13 +2414,17 @@
     <span class="nav-icon">🏠</span>
     <span class="nav-label">Find Care</span>
   </button>
-  <button class="nav-item" data-screen="screen-account">
-    <span class="nav-icon">📋</span>
-    <span class="nav-label">My Care</span>
+  <button class="nav-item" data-screen="screen-team">
+    <span class="nav-icon">💜</span>
+    <span class="nav-label">My Team</span>
   </button>
   <button class="nav-item" data-screen="screen-account">
+    <span class="nav-icon">📋</span>
+    <span class="nav-label">Bookings</span>
+  </button>
+  <button class="nav-item" data-screen="screen-care-profile">
     <span class="nav-icon">👤</span>
-    <span class="nav-label">Account</span>
+    <span class="nav-label">Profile</span>
   </button>
 </nav>
 
@@ -2895,6 +3335,296 @@ if ('serviceWorker' in navigator) {
   // Initial state
   updateBottomNav();
 })();
+
+// ── CARE TEAM (saved caregivers, persisted to localStorage) ──
+const CARE_TEAM_KEY = 'gc_care_team';
+const CARE_RECIPIENT_KEY = 'gc_care_recipient';
+
+function getSavedTeam() {
+  try { return JSON.parse(localStorage.getItem(CARE_TEAM_KEY) || '[]'); } catch(e) { return []; }
+}
+function saveTeamToStorage(team) {
+  localStorage.setItem(CARE_TEAM_KEY, JSON.stringify(team));
+}
+
+// Save to team when shortlisting a caregiver
+const _origShortlistBtn = document.getElementById('btn-shortlist');
+_origShortlistBtn.addEventListener('click', () => {
+  // After slight delay, persist the shortlist to care team (saved section)
+  setTimeout(() => {
+    const saved = getSavedTeam();
+    shortlist.forEach(cg => {
+      if (!saved.find(s => s.id === cg.id)) {
+        saved.push({ ...cg, savedAt: Date.now(), teamStatus: 'saved' });
+      }
+    });
+    saveTeamToStorage(saved);
+    updateTeamBadge();
+  }, 100);
+}, { capture: true });
+
+function updateTeamBadge() {
+  const team = getSavedTeam();
+  const badge = document.getElementById('team-count-badge');
+  if (badge) {
+    if (team.length > 0) {
+      badge.textContent = team.length + ' saved';
+      badge.style.display = 'inline-block';
+    } else {
+      badge.style.display = 'none';
+    }
+  }
+}
+
+let currentTeamTab = 'saved';
+
+function switchTeamTab(tab) {
+  currentTeamTab = tab;
+  document.querySelectorAll('.team-tab').forEach(t => t.classList.remove('active'));
+  const el = document.getElementById('ttab-' + tab);
+  if (el) el.classList.add('active');
+  renderTeamContent();
+}
+
+function showTeamScreen() {
+  showScreen('screen-team');
+  updateTeamBadge();
+  renderTeamContent();
+}
+
+function renderTeamContent() {
+  const el = document.getElementById('team-content');
+  if (!el) return;
+
+  const team = getSavedTeam();
+  const email = localStorage.getItem('gc_email');
+
+  if (currentTeamTab === 'saved') {
+    if (team.length === 0) {
+      el.innerHTML = `
+        <div class="team-empty">
+          <div class="team-empty-icon">💜</div>
+          <div class="team-empty-title">No caregivers saved yet</div>
+          <div class="team-empty-sub">When you shortlist a caregiver, they'll appear here so you can easily rebook them.</div>
+        </div>
+        <div class="save-cta">
+          <div class="save-cta-icon">🔍</div>
+          <p>Browse caregivers and tap <strong>♡ Shortlist</strong> to start building your team.</p>
+          <button class="btn-go-find" onclick="showScreen('screen-dispatch')">Find Caregivers →</button>
+        </div>`;
+    } else {
+      el.innerHTML = `
+        <div class="team-section-title">Saved Caregivers (${team.length})</div>
+        ${team.map(cg => renderTeamCard(cg, 'saved')).join('')}`;
+    }
+    return;
+  }
+
+  if (currentTeamTab === 'active') {
+    el.innerHTML = `
+      <div class="team-empty">
+        <div class="team-empty-icon">✅</div>
+        <div class="team-empty-title">No active arrangements</div>
+        <div class="team-empty-sub">Caregivers who accept your interview and start providing ongoing care will appear here.</div>
+      </div>`;
+    return;
+  }
+
+  if (currentTeamTab === 'past') {
+    el.innerHTML = `
+      <div class="team-empty">
+        <div class="team-empty-icon">📋</div>
+        <div class="team-empty-title">No past caregivers yet</div>
+        <div class="team-empty-sub">Your care history will appear here — including caregivers from past confirmed interviews.</div>
+      </div>`;
+  }
+}
+
+function renderTeamCard(cg, status) {
+  const name = `${cg.firstName || cg.first_name || ''} ${cg.lastName || cg.last_name || ''}`.trim();
+  const rate = cg.hourlyRate || cg.hourly_rate || 28;
+  const rating = Number(cg.rating || 4.8).toFixed(1);
+  const avatar = cg.avatar || '👩‍⚕️';
+  const specs = Array.isArray(cg.specializations) ? cg.specializations.slice(0,2).join(', ') : (cg.specializations || 'Home Care');
+  const statusLabels = { saved: '💜 Saved', active: '✅ Active', past: '📋 Past' };
+  const savedDate = cg.savedAt ? new Date(cg.savedAt).toLocaleDateString('en-US', {month:'short', day:'numeric'}) : '';
+
+  return `<div class="team-card">
+    <div class="team-avatar-wrap">
+      <div class="team-avatar">${avatar}</div>
+      <div class="team-status-dot ${status}"></div>
+    </div>
+    <div class="team-info">
+      <div class="team-name">${name}</div>
+      <div class="team-meta">⭐ ${rating} · $${rate}/hr · ${specs}</div>
+      <div class="team-badge ${status}">${statusLabels[status]}${savedDate ? ' · ' + savedDate : ''}</div>
+    </div>
+    <div class="team-actions">
+      <button class="btn-rebook" onclick="rebookTeamCaregiver(${JSON.stringify(cg).replace(/"/g, '&quot;')})">🔄 Rebook</button>
+      ${status === 'saved' ? `<button class="btn-unsave" onclick="unsaveCaregiver(${cg.id})">Remove</button>` : ''}
+    </div>
+  </div>`;
+}
+
+function rebookTeamCaregiver(cg) {
+  // Add back to shortlist if not already there
+  if (!shortlist.find(s => s.id === cg.id)) {
+    shortlist.push(cg);
+    updateShortlistFab();
+  }
+  bookingCaregiver = cg;
+  const name = `${cg.firstName || cg.first_name || ''} ${cg.lastName || cg.last_name || ''}`.trim();
+  const rate = cg.hourlyRate || cg.hourly_rate || 28;
+  const match = cg.matchScore ? Math.round(cg.matchScore) : 90;
+  document.getElementById('booking-cg-mini').innerHTML = `
+    <div class="booking-cg-avatar">${cg.avatar || '👩‍⚕️'}</div>
+    <div>
+      <div style="font-size:16px;font-weight:700;">${name}</div>
+      <div style="font-size:13px;color:rgba(255,255,255,0.6);">$${rate}/hr · 🎯 ${match}% match · ⭐ ${Number(cg.rating || 4.8).toFixed(1)}</div>
+    </div>`;
+  renderDateScroll();
+  selectedDate = null; selectedTime = null; selectedInterviewType = 'video';
+  document.querySelectorAll('.time-slot').forEach(b => b.classList.remove('selected'));
+  document.querySelectorAll('.type-btn').forEach(b => b.classList.remove('selected'));
+  document.querySelector('.type-btn[data-type="video"]').classList.add('selected');
+  document.getElementById('book-email').value = localStorage.getItem('gc_email') || '';
+  document.getElementById('book-notes').value = '';
+  showScreen('screen-booking');
+  toast(`♻️ Rebooking ${name}!`);
+}
+
+function unsaveCaregiver(id) {
+  const team = getSavedTeam().filter(c => c.id !== id);
+  saveTeamToStorage(team);
+  updateTeamBadge();
+  renderTeamContent();
+  toast('Removed from your team');
+}
+
+// ── CARE RECIPIENT PROFILE ──
+function loadCareRecipient() {
+  try {
+    const data = JSON.parse(localStorage.getItem(CARE_RECIPIENT_KEY) || '{}');
+    if (data.name) document.getElementById('cr-name').value = data.name;
+    if (data.relationship) document.getElementById('cr-relationship').value = data.relationship;
+    if (data.age) document.getElementById('cr-age').value = data.age;
+    if (data.gender) document.getElementById('cr-gender').value = data.gender;
+    if (data.languages) document.getElementById('cr-languages').value = data.languages;
+    if (data.diet) document.getElementById('cr-diet').value = data.diet;
+    if (data.cgGender) document.getElementById('cr-cg-gender').value = data.cgGender;
+    if (data.pets) document.getElementById('cr-pets').value = data.pets;
+    if (data.notes) document.getElementById('cr-notes').value = data.notes;
+    if (data.ec1Name) document.getElementById('ec1-name').value = data.ec1Name;
+    if (data.ec1Phone) document.getElementById('ec1-phone').value = data.ec1Phone;
+    if (data.ec2Name) document.getElementById('ec2-name').value = data.ec2Name;
+    if (data.ec2Phone) document.getElementById('ec2-phone').value = data.ec2Phone;
+    // Restore condition pills
+    if (data.conditions && Array.isArray(data.conditions)) {
+      document.querySelectorAll('.condition-pill').forEach(p => {
+        if (data.conditions.includes(p.dataset.val)) p.classList.add('selected');
+      });
+    }
+  } catch(e) {}
+}
+
+function saveCareRecipient() {
+  const conditions = [];
+  document.querySelectorAll('.condition-pill.selected').forEach(p => conditions.push(p.dataset.val));
+  const data = {
+    name: document.getElementById('cr-name').value.trim(),
+    relationship: document.getElementById('cr-relationship').value,
+    age: document.getElementById('cr-age').value,
+    gender: document.getElementById('cr-gender').value,
+    languages: document.getElementById('cr-languages').value.trim(),
+    diet: document.getElementById('cr-diet').value.trim(),
+    cgGender: document.getElementById('cr-cg-gender').value,
+    pets: document.getElementById('cr-pets').value,
+    notes: document.getElementById('cr-notes').value.trim(),
+    ec1Name: document.getElementById('ec1-name').value.trim(),
+    ec1Phone: document.getElementById('ec1-phone').value.trim(),
+    ec2Name: document.getElementById('ec2-name').value.trim(),
+    ec2Phone: document.getElementById('ec2-phone').value.trim(),
+    conditions,
+    savedAt: Date.now(),
+  };
+  localStorage.setItem(CARE_RECIPIENT_KEY, JSON.stringify(data));
+  const banner = document.getElementById('profile-saved-banner');
+  banner.classList.add('show');
+  setTimeout(() => banner.classList.remove('show'), 3000);
+  toast('✅ Profile saved!');
+  // Pre-fill booking notes with recipient info if empty
+  const notesEl = document.getElementById('book-notes');
+  if (notesEl && !notesEl.value && data.name) {
+    notesEl.value = `Care recipient: ${data.name}${data.age ? ', age ' + data.age : ''}${conditions.length ? '. Conditions: ' + conditions.join(', ') : ''}${data.diet ? '. Diet: ' + data.diet : ''}${data.notes ? '. ' + data.notes : ''}`;
+  }
+}
+
+function showCareProfileScreen() {
+  showScreen('screen-care-profile');
+  loadCareRecipient();
+  // Update account info in profile
+  const email = localStorage.getItem('gc_email');
+  const emailEl = document.getElementById('profile-email-display');
+  if (emailEl) emailEl.textContent = email || 'Not signed in';
+  // Update plan info
+  const planEl = document.getElementById('profile-plan-display');
+  if (planEl && subscription && subscription.subscribed) {
+    planEl.textContent = (subscription.plan || 'Free').charAt(0).toUpperCase() + (subscription.plan || 'free').slice(1);
+  }
+}
+
+// Condition pill toggles
+document.querySelectorAll('.condition-pill').forEach(p => {
+  p.addEventListener('click', () => p.classList.toggle('selected'));
+});
+
+// ── UPDATE BOTTOM NAV HANDLER to support new screens ──
+(function() {
+  const origShowScreenForNav = window.showScreen;
+  // Patch nav button clicks to call correct show functions
+  document.querySelectorAll('.nav-item').forEach(item => {
+    const screen = item.getAttribute('data-screen');
+    if (screen === 'screen-team') {
+      item.addEventListener('click', (e) => {
+        e.stopImmediatePropagation();
+        document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+        item.classList.add('active');
+        showTeamScreen();
+      }, true);
+    } else if (screen === 'screen-care-profile') {
+      item.addEventListener('click', (e) => {
+        e.stopImmediatePropagation();
+        document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+        item.classList.add('active');
+        showCareProfileScreen();
+      }, true);
+    }
+  });
+})();
+
+// ── PATCH screensWithNav to include new screens ──
+// The screensWithNav array was set in the bottom nav IIFE — we patch it by
+// overriding the window.showScreen to also show bottom nav for new screens.
+(function() {
+  const _showScreen = window.showScreen;
+  window.showScreen = function(id, pushHistory) {
+    _showScreen(id, pushHistory);
+    const newNavScreens = ['screen-team', 'screen-care-profile'];
+    const bottomNav = document.getElementById('bottom-nav');
+    if (newNavScreens.includes(id)) {
+      bottomNav.classList.add('visible');
+      document.querySelectorAll('.nav-item').forEach(n => {
+        if (n.getAttribute('data-screen') === id) {
+          document.querySelectorAll('.nav-item').forEach(nn => nn.classList.remove('active'));
+          n.classList.add('active');
+        }
+      });
+    }
+  };
+})();
+
+// Init team badge on load
+updateTeamBadge();
 </script>
 </body>
 </html>
