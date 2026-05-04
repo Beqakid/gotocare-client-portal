@@ -265,6 +265,33 @@
     
     /* ── CONFIRMATION SCREEN ── */
     /* NOTE: do NOT set display:flex here — let .screen/.screen.active handle it */
+    /* ── ACCOUNT SCREEN ── */
+    #screen-account {
+      background: linear-gradient(160deg, #1a1a2e 0%, #2d1b69 40%, #1e3a5f 100%);
+      padding: calc(var(--safe-top) + 16px) 20px calc(var(--safe-bottom) + 24px);
+    }
+    .account-header { display:flex;align-items:center;gap:12px;margin-bottom:28px; }
+    .account-avatar { width:52px;height:52px;background:linear-gradient(135deg,var(--purple),var(--blue));border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0; }
+    .account-info h2 { font-size:18px;font-weight:800; }
+    .account-info p { font-size:13px;color:rgba(255,255,255,0.6);margin-top:2px; }
+    .plan-badge { display:inline-flex;align-items:center;gap:6px;background:rgba(124,58,237,0.3);border:1.5px solid rgba(167,139,250,0.5);border-radius:50px;padding:5px 12px;font-size:12px;font-weight:700;color:#a78bfa;margin-top:8px; }
+    .plan-badge.no-plan { background:rgba(255,255,255,0.08);border-color:rgba(255,255,255,0.15);color:rgba(255,255,255,0.5); }
+    .section-label { font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:rgba(255,255,255,0.4);margin-bottom:12px; }
+    .booking-card { background:rgba(255,255,255,0.06);border:1.5px solid rgba(255,255,255,0.1);border-radius:16px;padding:16px;margin-bottom:10px; }
+    .booking-card .bc-top { display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px; }
+    .booking-card .bc-type { font-size:14px;font-weight:700; }
+    .booking-card .bc-status { font-size:11px;font-weight:700;padding:3px 10px;border-radius:50px; }
+    .bc-status.pending { background:rgba(245,158,11,0.2);color:#fbbf24;border:1px solid rgba(245,158,11,0.3); }
+    .bc-status.accepted { background:rgba(16,185,129,0.2);color:#34d399;border:1px solid rgba(16,185,129,0.3); }
+    .bc-status.declined { background:rgba(239,68,68,0.15);color:#f87171;border:1px solid rgba(239,68,68,0.3); }
+    .booking-card .bc-detail { font-size:12px;color:rgba(255,255,255,0.55);margin-top:4px;display:flex;align-items:center;gap:6px; }
+    .no-bookings { text-align:center;padding:40px 20px;color:rgba(255,255,255,0.4); }
+    .no-bookings .nb-icon { font-size:48px;margin-bottom:12px; }
+    .account-email-form { background:rgba(255,255,255,0.06);border:1.5px solid rgba(255,255,255,0.12);border-radius:16px;padding:20px; }
+    #account-email-input { width:100%;background:rgba(255,255,255,0.1);border:2px solid rgba(255,255,255,0.15);border-radius:12px;padding:12px 16px;color:#fff;font-size:15px;outline:none;margin-bottom:12px; }
+    #account-email-input::placeholder { color:rgba(255,255,255,0.4); }
+    .btn-load-account { width:100%;background:linear-gradient(135deg,var(--purple),var(--blue));border:none;border-radius:12px;padding:14px;font-size:15px;font-weight:700;color:#fff;cursor:pointer; }
+
     #screen-confirm {
       background: linear-gradient(160deg, #1a1a2e 0%, #0d2d1a 40%, #0f2040 100%);
       min-height: 100dvh; padding: calc(var(--safe-top) + 40px) 24px calc(var(--safe-bottom) + 40px);
@@ -335,9 +362,14 @@
 
 <!-- ── DISPATCH ── -->
 <div id="screen-dispatch" class="screen active">
-  <div class="dispatch-logo">
-    <div class="icon">🏠</div>
-    <div class="brand">GoToCare</div>
+  <div class="dispatch-logo" style="justify-content:space-between;">
+    <div style="display:flex;align-items:center;gap:10px;">
+      <div class="icon">🏠</div>
+      <div class="brand">GoToCare</div>
+    </div>
+    <button id="account-btn" onclick="showAccountScreen()" style="background:rgba(255,255,255,0.1);border:1.5px solid rgba(255,255,255,0.2);border-radius:12px;padding:8px 14px;color:#fff;font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:6px;" title="My Account">
+      <span>👤</span> <span id="account-btn-label">Account</span>
+    </button>
   </div>
   <div class="dispatch-hero">
     <h1>Find <span>trusted care</span><br/>in minutes</h1>
@@ -354,7 +386,6 @@
     <div class="care-tile" data-value="Meal Preparation">Meal Preparation</div>
     <div class="care-tile" data-value="Companionship">Companionship</div>
     <div class="care-tile" data-value="Transportation">Transportation</div>
-    <div class="care-tile" data-value="Child Care">Child Care</div>
     <div class="care-tile" data-value="Overnight Care">Overnight Care</div>
     <div class="care-tile" data-value="Physical Therapy Aid">Physical Therapy Aid</div>
     <div class="care-tile" data-value="Wound Care">Wound Care</div>
@@ -556,7 +587,19 @@
   <div class="confirm-sub" id="confirm-sub">Your caregiver has been notified and will confirm within 24 hours. You'll receive a notification by email once they respond.</div>
   <div class="confirm-card" id="confirm-card"></div>
   <button class="btn-home" onclick="showScreen('screen-shortlist')">← Back to Shortlist</button>
+  <button class="btn-home" style="margin-top:0; background:rgba(124,58,237,0.15); border:1.5px solid rgba(167,139,250,0.3); font-size:14px;" onclick="showAccountScreen()">📋 View My Bookings</button>
   <button class="btn-home" style="margin-top:0; background:rgba(255,255,255,0.05); font-size:14px; opacity:0.6;" onclick="showScreen('screen-dispatch')">Start Over</button>
+</div>
+
+<!-- ── ACCOUNT / MY BOOKINGS ── -->
+<div id="screen-account" class="screen">
+  <div style="display:flex;align-items:center;gap:12px;margin-bottom:28px;">
+    <button onclick="showScreen('screen-dispatch')" style="background:rgba(255,255,255,0.1);border:1.5px solid rgba(255,255,255,0.15);border-radius:10px;padding:8px 14px;color:#fff;font-size:16px;cursor:pointer;">←</button>
+    <div style="font-size:20px;font-weight:800;">My Account</div>
+  </div>
+  <div id="account-content">
+    <!-- Populated by JS -->
+  </div>
 </div>
 
 <!-- Toast -->
@@ -1161,6 +1204,99 @@ if (isIOS && !isStandalone && !sessionStorage.getItem('ios-hint-dismissed')) {
     setTimeout(() => { hint.style.display = 'none'; }, 8000);
   }, 6000);
 }
+
+// ── ACCOUNT SCREEN ──
+async function showAccountScreen() {
+  showScreen('screen-account');
+  const email = localStorage.getItem('gc_email');
+  const el = document.getElementById('account-content');
+
+  if (!email) {
+    el.innerHTML = `
+      <div class="account-email-form">
+        <p style="font-size:15px;font-weight:600;margin-bottom:4px;">Sign in to view your account</p>
+        <p style="font-size:13px;color:rgba(255,255,255,0.5);margin-bottom:16px;">Enter the email you used to book an interview or subscribe.</p>
+        <input id="account-email-input" type="email" placeholder="your@email.com" />
+        <button class="btn-load-account" onclick="loadAccountByEmail()">View My Account →</button>
+      </div>`;
+    return;
+  }
+  renderAccountForEmail(email);
+}
+
+async function loadAccountByEmail() {
+  const email = document.getElementById('account-email-input').value.trim();
+  if (!email || !email.includes('@')) { toast('⚠️ Enter a valid email'); return; }
+  localStorage.setItem('gc_email', email);
+  document.getElementById('account-btn-label').textContent = email.split('@')[0];
+  renderAccountForEmail(email);
+}
+
+async function renderAccountForEmail(email) {
+  const el = document.getElementById('account-content');
+  el.innerHTML = `<div style="text-align:center;padding:40px 0;color:rgba(255,255,255,0.5);">Loading…</div>`;
+
+  // Fetch subscription + bookings in parallel
+  let sub = null, bookings = [];
+  try {
+    const [subRes, bookRes] = await Promise.all([
+      fetch(`${API}/check-subscription?email=${encodeURIComponent(email)}`),
+      fetch(`${API}/my-bookings?email=${encodeURIComponent(email)}`),
+    ]);
+    sub = await subRes.json().catch(() => null);
+    const bData = await bookRes.json().catch(() => null);
+    if (bData && bData.bookings) bookings = bData.bookings;
+  } catch(e) {}
+
+  const planName = sub && sub.subscribed ? (sub.plan.charAt(0).toUpperCase() + sub.plan.slice(1)) : null;
+  const planEmoji = { essential:'⭐', family:'💜', premium:'👑' }[sub?.plan] || '⭐';
+
+  const statusColors = { pending:'pending', accepted:'accepted', declined:'declined' };
+  const statusLabels = { pending:'⏳ Pending', accepted:'✅ Confirmed', declined:'❌ Passed' };
+
+  const bookingsHTML = bookings.length > 0
+    ? bookings.map(b => {
+        const st = b.status || 'pending';
+        const dateStr = b.preferredDate ? new Date(b.preferredDate + 'T12:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric'}) : 'TBD';
+        const timeStr = b.preferredTime ? {morning:'9–11 AM',afternoon:'12–3 PM',evening:'4–7 PM'}[b.preferredTime] || b.preferredTime : 'TBD';
+        return `<div class="booking-card">
+          <div class="bc-top">
+            <div class="bc-type">${b.careNeeds || 'Care Interview'}</div>
+            <div class="bc-status ${statusColors[st]}">${statusLabels[st] || st}</div>
+          </div>
+          <div class="bc-detail">📅 ${dateStr} · ${timeStr}</div>
+          <div class="bc-detail">🎥 ${b.interviewType === 'video' ? 'Video Call' : 'In Person'}</div>
+        </div>`; }).join('')
+    : `<div class="no-bookings"><div class="nb-icon">📋</div><p>No interview requests yet.<br/><span style="font-size:12px;">Book a caregiver interview from the search screen.</span></p></div>`;
+
+  el.innerHTML = `
+    <div class="account-header">
+      <div class="account-avatar">👤</div>
+      <div class="account-info">
+        <h2>${email.split('@')[0]}</h2>
+        <p>${email}</p>
+        ${planName
+          ? `<div class="plan-badge">${planEmoji} ${planName} Plan</div>`
+          : `<div class="plan-badge no-plan">No subscription — <span onclick="showSubscribe();showScreen('screen-subscribe')" style="cursor:pointer;text-decoration:underline;">Subscribe</span></div>`}
+      </div>
+    </div>
+
+    <div class="section-label">Interview Requests (${bookings.length})</div>
+    ${bookingsHTML}
+
+    <button onclick="localStorage.removeItem('gc_email');showAccountScreen();" style="margin-top:24px;width:100%;background:rgba(255,255,255,0.06);border:1.5px solid rgba(255,255,255,0.12);border-radius:12px;padding:12px;color:rgba(255,255,255,0.5);font-size:13px;cursor:pointer;">
+      Sign out
+    </button>`;
+}
+
+// Update account button label on load
+(function(){
+  const email = localStorage.getItem('gc_email');
+  if (email) {
+    const btn = document.getElementById('account-btn-label');
+    if (btn) btn.textContent = email.split('@')[0];
+  }
+})();
 
 // ── SERVICE WORKER ──
 if ('serviceWorker' in navigator) {
