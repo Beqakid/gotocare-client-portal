@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <meta name="theme-color" content="#7c3aed" />
+  <meta name="theme-color" content="#7C5CFF" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="GoToCare" />
@@ -19,22 +19,35 @@
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --purple: #7c3aed;
-      --purple-light: #a78bfa;
-      --purple-dark: #5b21b6;
-      --blue: #3b82f6;
-      --navy: #1a1a2e;
-      --green: #10b981;
-      --gold: #f59e0b;
-      --bg: linear-gradient(160deg, #1a1a2e 0%, #2d1b69 40%, #1e3a5f 100%);
-      --glass: rgba(255,255,255,0.06);
-      --glass-border: rgba(255,255,255,0.12);
-      --glass-strong: rgba(255,255,255,0.1);
-      --radius: 16px;
-      --radius-sm: 10px;
-      --radius-pill: 50px;
-      --safe-bottom: env(safe-area-inset-bottom, 0px);
-    }
+  /* New Design System Tokens */
+  --color-primary:        #7C5CFF;
+  --color-secondary:      #4A90E2;
+  --color-success:        #22C55E;
+  --color-warning:        #F59E0B;
+  --color-error:          #EF4444;
+  --color-bg:             #F8FAFC;
+  --color-card:           #FFFFFF;
+  --color-text-primary:   #0F172A;
+  --color-text-secondary: #475569;
+  --color-border:         #E2E8F0;
+
+  /* Legacy aliases */
+  --purple:      #7C5CFF;
+  --purple-light:#9b80ff;
+  --purple-dark: #6040e0;
+  --blue:        #4A90E2;
+  --navy:        #1a1a2e;
+  --green:       #22C55E;
+  --gold:        #F59E0B;
+  --bg:          linear-gradient(160deg, #1a1a2e 0%, #2d1b69 40%, #1e3a5f 100%);
+  --glass:       rgba(255,255,255,0.06);
+  --glass-border:rgba(255,255,255,0.12);
+  --glass-strong:rgba(255,255,255,0.1);
+  --radius:      16px;
+  --radius-sm:   10px;
+  --radius-pill: 50px;
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
 
     html {
       scroll-behavior: smooth;
@@ -118,19 +131,19 @@
     }
     .auth-orb-1 {
       width: 300px; height: 300px;
-      background: radial-gradient(circle, #7c3aed, transparent);
+      background: radial-gradient(circle, #7C5CFF, transparent);
       top: -80px; left: -80px;
       animation-delay: 0s;
     }
     .auth-orb-2 {
       width: 250px; height: 250px;
-      background: radial-gradient(circle, #3b82f6, transparent);
+      background: radial-gradient(circle, #4A90E2, transparent);
       bottom: -60px; right: -60px;
       animation-delay: -3s;
     }
     .auth-orb-3 {
       width: 200px; height: 200px;
-      background: radial-gradient(circle, #a78bfa, transparent);
+      background: radial-gradient(circle, rgba(124, 92, 255, 0.5), transparent);
       top: 40%; right: -40px;
       animation-delay: -5s;
     }
@@ -162,7 +175,7 @@
       font-size: 28px;
       font-weight: 800;
       letter-spacing: -0.5px;
-      background: linear-gradient(135deg, #fff 0%, #a78bfa 100%);
+      background: linear-gradient(135deg, #fff 0%, rgba(124, 92, 255, 0.5) 100%);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
@@ -264,7 +277,7 @@
       background: rgba(239,68,68,0.15);
       border: 1px solid rgba(239,68,68,0.3);
       border-radius: var(--radius-sm);
-      color: #fca5a5;
+      color: rgba(239, 68, 68, 0.4);
       padding: 10px 14px;
       font-size: 12px;
       margin-bottom: 14px;
@@ -292,7 +305,7 @@
       padding: 15px;
       border-radius: var(--radius-sm);
       border: none;
-      background: linear-gradient(135deg, var(--purple) 0%, #6d28d9 50%, var(--blue) 100%);
+      background: linear-gradient(135deg, var(--purple) 0%, #7C5CFF 50%, var(--blue) 100%);
       color: #fff;
       font-size: 15px;
       font-weight: 700;
@@ -364,7 +377,7 @@
       font-weight: 800;
       letter-spacing: -0.5px;
       margin-bottom: 8px;
-      background: linear-gradient(135deg, #fff 0%, #a78bfa 100%);
+      background: linear-gradient(135deg, #fff 0%, rgba(124, 92, 255, 0.5) 100%);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
@@ -530,19 +543,19 @@
       background: rgba(239,68,68,0.2);
       border-color: rgba(239,68,68,0.5);
       box-shadow: 0 0 16px rgba(239,68,68,0.25);
-      color: #fca5a5;
+      color: rgba(239, 68, 68, 0.4);
     }
     .urgency-pill[data-value="week"].selected {
       background: rgba(245,158,11,0.2);
       border-color: rgba(245,158,11,0.5);
       box-shadow: 0 0 16px rgba(245,158,11,0.2);
-      color: #fcd34d;
+      color: #F59E0B;
     }
     .urgency-pill[data-value="month"].selected {
       background: rgba(59,130,246,0.2);
       border-color: rgba(59,130,246,0.5);
       box-shadow: 0 0 16px rgba(59,130,246,0.2);
-      color: #93c5fd;
+      color: rgba(74, 144, 226, 0.5);
     }
     .urgency-pill[data-value="flexible"].selected {
       background: rgba(255,255,255,0.12);
@@ -556,7 +569,7 @@
       padding: 18px;
       border: none;
       border-radius: var(--radius);
-      background: linear-gradient(135deg, var(--purple) 0%, #6d28d9 50%, var(--blue) 100%);
+      background: linear-gradient(135deg, var(--purple) 0%, #7C5CFF 50%, var(--blue) 100%);
       color: #fff;
       font-size: 16px;
       font-weight: 700;
@@ -674,7 +687,7 @@
     .progress-dots .dot.done { background: var(--purple-light); }
 
     .shortlist-fab {
-      background: linear-gradient(135deg, var(--purple), #6d28d9);
+      background: linear-gradient(135deg, var(--purple), #7C5CFF);
       border: none;
       border-radius: var(--radius-pill);
       color: #fff;
@@ -1250,7 +1263,7 @@
       padding: 16px;
       border: none;
       border-radius: var(--radius);
-      background: linear-gradient(135deg, var(--green), #059669);
+      background: linear-gradient(135deg, var(--green), #22C55E);
       color: #fff;
       font-size: 15px;
       font-weight: 700;
@@ -1557,7 +1570,7 @@
     .cg-title { font-size: 14px; color: var(--purple-light); font-weight: 600; margin-bottom: 12px; }
     .cg-rating-row { display: flex; align-items: center; justify-content: center; gap: 16px; margin-bottom: 16px; }
     .cg-rating { display: flex; align-items: center; gap: 4px; font-size: 15px; font-weight: 700; }
-    .cg-match { background: rgba(16,185,129,0.2); border: 1px solid rgba(16,185,129,0.4); border-radius: 50px; padding: 4px 12px; font-size: 13px; font-weight: 700; color: #6ee7b7; }
+    .cg-match { background: rgba(16,185,129,0.2); border: 1px solid rgba(16,185,129,0.4); border-radius: 50px; padding: 4px 12px; font-size: 13px; font-weight: 700; color: rgba(34, 197, 94, 0.4); }
     .cg-badges { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin-bottom: 12px; }
     .badge { background: rgba(255,255,255,0.1); border-radius: 50px; padding: 5px 12px; font-size: 12px; font-weight: 600; }
     .cg-rate { font-size: 28px; font-weight: 900; color: var(--purple-light); }
@@ -1571,7 +1584,7 @@
     .avail-day { text-align: center; }
     .avail-day-label { font-size: 10px; color: rgba(255,255,255,0.5); margin-bottom: 4px; font-weight: 600; }
     .avail-dot { width: 28px; height: 28px; border-radius: 50%; margin: 0 auto; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; }
-    .avail-dot.on { background: rgba(16,185,129,0.25); color: #6ee7b7; border: 1px solid rgba(16,185,129,0.4); }
+    .avail-dot.on { background: rgba(16,185,129,0.25); color: rgba(34, 197, 94, 0.4); border: 1px solid rgba(16,185,129,0.4); }
     .avail-dot.off { background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.3); }
     .contact-locked { background: rgba(124,58,237,0.15); border: 1px solid rgba(124,58,237,0.3); border-radius: 12px; padding: 14px; display: flex; align-items: center; justify-content: space-between; }
     .contact-locked-text { font-size: 13px; color: rgba(255,255,255,0.7); }
@@ -1584,16 +1597,16 @@
 
     /* ── SHORTLIST extras ── */
     .sl-meta { font-size: 13px; color: rgba(255,255,255,0.6); }
-    .sl-match { font-size: 13px; font-weight: 700; color: #6ee7b7; }
+    .sl-match { font-size: 13px; font-weight: 700; color: rgba(34, 197, 94, 0.4); }
     .sl-book-btn { background: linear-gradient(135deg, var(--purple), var(--blue)); border: none; border-radius: 10px; padding: 8px 16px; color: #fff; font-size: 13px; font-weight: 700; cursor: pointer; -webkit-tap-highlight-color: transparent; }
-    .sl-remove-btn { background: rgba(239,68,68,0.2); border: 1px solid rgba(239,68,68,0.3); border-radius: 10px; padding: 6px 12px; color: #fca5a5; font-size: 12px; font-weight: 600; cursor: pointer; margin-top: 8px; -webkit-tap-highlight-color: transparent; }
+    .sl-remove-btn { background: rgba(239,68,68,0.2); border: 1px solid rgba(239,68,68,0.3); border-radius: 10px; padding: 6px 12px; color: rgba(239, 68, 68, 0.4); font-size: 12px; font-weight: 600; cursor: pointer; margin-top: 8px; -webkit-tap-highlight-color: transparent; }
 
     /* ── BOOKING extras ── */
     .booking-cg-avatar { width: 52px; height: 52px; border-radius: 50%; background: linear-gradient(135deg, var(--purple), var(--blue)); display: flex; align-items: center; justify-content: center; font-size: 22px; flex-shrink: 0; }
     .booking-total { background: rgba(124,58,237,0.2); border: 1px solid rgba(124,58,237,0.4); border-radius: 14px; padding: 16px; margin-bottom: 20px; }
     .total-row { display: flex; justify-content: space-between; font-size: 14px; color: rgba(255,255,255,0.7); padding: 4px 0; }
     .total-row.grand { color: #fff; font-weight: 800; font-size: 17px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.15); margin-top: 6px; }
-    .btn-pay { width: 100%; background: linear-gradient(135deg, #059669, #10b981); border: none; border-radius: 18px; padding: 18px; font-size: 18px; font-weight: 800; color: #fff; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; box-shadow: 0 8px 32px rgba(16,185,129,0.4); -webkit-tap-highlight-color: transparent; }
+    .btn-pay { width: 100%; background: linear-gradient(135deg, #22C55E, #22C55E); border: none; border-radius: 18px; padding: 18px; font-size: 18px; font-weight: 800; color: #fff; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; box-shadow: 0 8px 32px rgba(16,185,129,0.4); -webkit-tap-highlight-color: transparent; }
 
     /* ── CONFIRM extras ── */
     .confirm-row { display: flex; justify-content: space-between; padding: 8px 0; font-size: 14px; border-bottom: 1px solid rgba(255,255,255,0.08); }
@@ -1607,9 +1620,9 @@
     .bc-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
     .bc-type { font-size: 14px; font-weight: 700; }
     .bc-status { font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 50px; }
-    .bc-status.pending { background: rgba(245,158,11,0.2); color: #fbbf24; border: 1px solid rgba(245,158,11,0.3); }
-    .bc-status.accepted { background: rgba(16,185,129,0.2); color: #34d399; border: 1px solid rgba(16,185,129,0.3); }
-    .bc-status.declined { background: rgba(239,68,68,0.15); color: #f87171; border: 1px solid rgba(239,68,68,0.3); }
+    .bc-status.pending { background: rgba(245,158,11,0.2); color: #F59E0B; border: 1px solid rgba(245,158,11,0.3); }
+    .bc-status.accepted { background: rgba(16,185,129,0.2); color: #22C55E; border: 1px solid rgba(16,185,129,0.3); }
+    .bc-status.declined { background: rgba(239,68,68,0.15); color: rgba(239, 68, 68, 0.6); border: 1px solid rgba(239,68,68,0.3); }
     .no-bookings { text-align: center; padding: 40px 20px; color: rgba(255,255,255,0.4); }
     .no-bookings .nb-icon { font-size: 48px; margin-bottom: 12px; }
     .account-email-form { background: rgba(255,255,255,0.06); border: 1.5px solid rgba(255,255,255,0.12); border-radius: 16px; padding: 20px; }
@@ -1699,7 +1712,7 @@
       text-transform: uppercase;
       letter-spacing: 0.3px;
     }
-    .team-badge.active { background: rgba(16,185,129,0.2); color: #6ee7b7; border: 1px solid rgba(16,185,129,0.3); }
+    .team-badge.active { background: rgba(16,185,129,0.2); color: rgba(34, 197, 94, 0.4); border: 1px solid rgba(16,185,129,0.3); }
     .team-badge.saved { background: rgba(124,58,237,0.2); color: var(--purple-light); border: 1px solid rgba(124,58,237,0.3); }
     .team-badge.past { background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.5); border: 1px solid rgba(255,255,255,0.12); }
     .team-actions { display: flex; flex-direction: column; gap: 6px; flex-shrink: 0; }
@@ -1720,7 +1733,7 @@
       border: 1px solid rgba(239,68,68,0.25);
       border-radius: var(--radius-sm);
       padding: 6px 12px;
-      color: #fca5a5;
+      color: rgba(239, 68, 68, 0.4);
       font-size: 11px;
       font-weight: 600;
       cursor: pointer;
@@ -1870,7 +1883,7 @@
       text-align: center;
       font-size: 13px;
       font-weight: 600;
-      color: #6ee7b7;
+      color: rgba(34, 197, 94, 0.4);
       margin-bottom: 20px;
       display: none;
     }
@@ -1894,7 +1907,7 @@
     .settings-row-label { color: rgba(255,255,255,0.8); font-weight: 500; }
     .settings-row-value { color: rgba(255,255,255,0.4); font-size: 12px; }
     .settings-signout {
-      color: #f87171;
+      color: rgba(239, 68, 68, 0.6);
       font-weight: 600;
       cursor: pointer;
       font-size: 14px;
@@ -2658,7 +2671,7 @@ function renderSwiperCard() {
       </div>
 
       <div class="cert-row" style="padding: 0 16px 12px; display: flex; align-items: center; gap: 8px;">
-        <div class="cert-badge" id="cert-badge-${cg.email ? cg.email.replace('@','_').replace('.','_') : cg.id}" style="display:flex;align-items:center;gap:6px;background:rgba(124,58,237,0.08);border:1px solid rgba(124,58,237,0.15);border-radius:50px;padding:5px 12px;cursor:pointer;font-size:12px;color:#7c3aed;font-weight:600;" onclick="loadCaregiverCerts('${cg.email || ''}', this)">
+        <div class="cert-badge" id="cert-badge-${cg.email ? cg.email.replace('@','_').replace('.','_') : cg.id}" style="display:flex;align-items:center;gap:6px;background:rgba(124,58,237,0.08);border:1px solid rgba(124,58,237,0.15);border-radius:50px;padding:5px 12px;cursor:pointer;font-size:12px;color:#7C5CFF;font-weight:600;" onclick="loadCaregiverCerts('${cg.email || ''}', this)">
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
           View Certifications
         </div>
@@ -2892,7 +2905,7 @@ function showInterviewConfirmation({ email, cg, date, time, type }) {
     <div class="confirm-row"><span class="confirm-label">Time</span><span class="confirm-value">${timeLabels[time] || time}</span></div>
     <div class="confirm-row"><span class="confirm-label">Format</span><span class="confirm-value">${typeLabels[type] || type}</span></div>
     <div class="confirm-row"><span class="confirm-label">Your Email</span><span class="confirm-value">${email}</span></div>
-    <div class="confirm-row"><span class="confirm-label">Cost</span><span class="confirm-value" style="color:#6ee7b7;">FREE ✨</span></div>`;
+    <div class="confirm-row"><span class="confirm-label">Cost</span><span class="confirm-value" style="color:rgba(34, 197, 94, 0.4);">FREE ✨</span></div>`;
   showScreen('screen-confirm');
 }
 
@@ -2928,15 +2941,15 @@ async function loadCaregiverCerts(email, el) {
         el.style.pointerEvents = 'none';
       } else {
         const typeLabels = { certification: 'Certification', license: 'License', training: 'Training', background_check: 'Background Check', health: 'Health Record', insurance: 'Insurance', other: 'Document' };
-        const docList = data.documents.map(d => `<span style="background:rgba(34,197,94,0.1);color:#16a34a;padding:2px 8px;border-radius:50px;font-size:11px;font-weight:600;border:1px solid rgba(34,197,94,0.2)">${d.name}</span>`).join(' ');
-        el.outerHTML = `<div style="padding:0 16px 4px;display:flex;flex-wrap:wrap;gap:4px;align-items:center"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2" style="flex-shrink:0"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>${docList}</div>`;
+        const docList = data.documents.map(d => `<span style="background:rgba(34,197,94,0.1);color:#22C55E;padding:2px 8px;border-radius:50px;font-size:11px;font-weight:600;border:1px solid rgba(34,197,94,0.2)">${d.name}</span>`).join(' ');
+        el.outerHTML = `<div style="padding:0 16px 4px;display:flex;flex-wrap:wrap;gap:4px;align-items:center"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#22C55E" stroke-width="2" style="flex-shrink:0"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>${docList}</div>`;
       }
     }
   } catch (e) {
     el.innerHTML = '⚠️ Could not load';
     el.style.color = '#ef4444';
     el.style.pointerEvents = 'auto';
-    setTimeout(() => { el.innerHTML = 'View Certifications'; el.style.color = '#7c3aed'; el.style.pointerEvents = 'auto'; }, 2000);
+    setTimeout(() => { el.innerHTML = 'View Certifications'; el.style.color = '#7C5CFF'; el.style.pointerEvents = 'auto'; }, 2000);
   }
 }
 
@@ -3537,7 +3550,7 @@ function renderApiTeamCard(cg, status) {
 
   return `<div class="team-card">
     <div class="team-avatar-wrap">
-      <div class="team-avatar" style="background:linear-gradient(135deg,#7c3aed,#3b82f6);color:#fff;font-size:18px;font-weight:700;display:flex;align-items:center;justify-content:center;">${initials}</div>
+      <div class="team-avatar" style="background:linear-gradient(135deg,#7C5CFF,#4A90E2);color:#fff;font-size:18px;font-weight:700;display:flex;align-items:center;justify-content:center;">${initials}</div>
       <div class="team-status-dot ${badgeClass}"></div>
     </div>
     <div class="team-info">
