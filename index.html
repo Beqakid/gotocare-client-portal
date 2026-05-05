@@ -2474,6 +2474,114 @@
         background: transparent !important;
     }
 
+
+    /* ════════════════════════════════════════════════════════════════
+       PROFILE / ACCOUNT / CARE RECIPIENT — LIGHT THEME OVERRIDES
+       ════════════════════════════════════════════════════════════════ */
+
+    /* Profile form labels */
+    .profile-label {
+        color: #475569 !important;
+    }
+
+    /* Profile inputs */
+    .profile-input {
+        background: #FFFFFF !important;
+        border: 1.5px solid #E2E8F0 !important;
+        color: #0F172A !important;
+    }
+    .profile-input::placeholder { color: #94A3B8 !important; }
+    .profile-input:focus { border-color: #7C5CFF !important; box-shadow: 0 0 0 3px rgba(124,92,255,0.12) !important; }
+
+    /* Condition pills — unselected */
+    .condition-pill {
+        background: #F1F5F9 !important;
+        border: 1.5px solid #E2E8F0 !important;
+        color: #475569 !important;
+    }
+    .condition-pill.selected {
+        background: rgba(124,92,255,0.1) !important;
+        border-color: #7C5CFF !important;
+        color: #7C5CFF !important;
+    }
+
+    /* Account settings card */
+    .account-settings-card {
+        background: #FFFFFF !important;
+        border: 1px solid #E2E8F0 !important;
+    }
+    .settings-row {
+        border-bottom: 1px solid #F1F5F9 !important;
+    }
+    .settings-row:last-child { border-bottom: none !important; }
+    .settings-row-label { color: #0F172A !important; font-weight: 600 !important; }
+    .settings-row-value { color: #475569 !important; }
+    .settings-signout { color: #EF4444 !important; }
+
+    /* EC field labels */
+    .ec-field label { color: #475569 !important; font-weight: 600 !important; }
+
+    /* Team tabs */
+    .team-tab {
+        background: #F1F5F9 !important;
+        border: 1.5px solid #E2E8F0 !important;
+        color: #475569 !important;
+    }
+    .team-tab.active {
+        background: rgba(124,92,255,0.08) !important;
+        border-color: #7C5CFF !important;
+        color: #7C5CFF !important;
+    }
+
+    /* Account header back button */
+    .account-header button,
+    #screen-account .account-header button,
+    #screen-care-profile .account-header button {
+        background: #F1F5F9 !important;
+        border: 1px solid #E2E8F0 !important;
+        color: #0F172A !important;
+    }
+
+    /* Profile section header */
+    .profile-section-header {
+        color: #7C5CFF !important;
+        font-weight: 700 !important;
+    }
+
+    /* Profile card */
+    .profile-card {
+        background: #FFFFFF !important;
+        border: 1px solid #E2E8F0 !important;
+        border-radius: 16px !important;
+    }
+
+    /* My Team / Care Team screen */
+    #screen-team > div:first-child { color: #0F172A !important; }
+    .team-count-badge { 
+        background: rgba(124,92,255,0.1) !important; 
+        border-color: rgba(124,92,255,0.3) !important;
+        color: #7C5CFF !important;
+    }
+
+    /* Account/Profile screen headers */
+    #screen-account .account-header div,
+    #screen-care-profile > div:first-child { color: #0F172A !important; }
+
+    /* Care profile subtitle */
+    #screen-care-profile > div:nth-child(2) { color: #475569 !important; }
+
+    /* Empty state in team/bookings */
+    .empty-state-icon { opacity: 0.4 !important; }
+    .empty-state-title, .empty-state h3 { color: #0F172A !important; }
+    .empty-state-desc, .empty-state p { color: #475569 !important; }
+
+    /* Profile saved banner */
+    .profile-saved-banner {
+        background: rgba(34,197,94,0.1) !important;
+        border-color: #22C55E !important;
+        color: #16A34A !important;
+    }
+
     </style>
 </head>
 <body>
@@ -2822,7 +2930,7 @@
      ══════════════════════════════════════════════════════════════ -->
 <div id="screen-account" class="screen">
   <div class="account-header">
-    <button onclick="showScreen('screen-dispatch')" style="background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.12);border-radius:10px;padding:8px 14px;color:#fff;font-size:16px;cursor:pointer;">←</button>
+    <button onclick="showScreen('screen-dispatch')" style="background:#F1F5F9;border:1px solid #E2E8F0;border-radius:10px;padding:8px 14px;color:#0F172A;font-size:16px;cursor:pointer;">←</button>
     <div style="font-size:20px;font-weight:800;">My Account</div>
   </div>
   <div id="account-content">
@@ -2835,8 +2943,8 @@
      ══════════════════════════════════════════════════════════════ -->
 <div id="screen-team" class="screen">
   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
-    <div style="font-size:20px;font-weight:800;">💜 My Care Team</div>
-    <div id="team-count-badge" style="font-size:11px;font-weight:700;background:rgba(124,92,255,0.2);border:1px solid rgba(124,92,255,0.3);color:var(--purple-light);padding:4px 12px;border-radius:50px;display:none;"></div>
+    <div style="font-size:20px;font-weight:800;color:#0F172A;">💜 My Care Team</div>
+    <div id="team-count-badge" style="font-size:11px;font-weight:700;background:rgba(124,92,255,0.1);border:1px solid rgba(124,92,255,0.3);color:#7C5CFF;padding:4px 12px;border-radius:50px;display:none;"></div>
   </div>
   <div class="team-tabs">
     <button class="team-tab active" onclick="switchTeamTab('saved')" id="ttab-saved">💜 Saved</button>
@@ -2851,7 +2959,7 @@
      ══════════════════════════════════════════════════════════════ -->
 <div id="screen-care-profile" class="screen">
   <div style="font-size:20px;font-weight:800;margin-bottom:4px;">👤 Profile</div>
-  <div style="font-size:13px;color:rgba(255,255,255,0.5);margin-bottom:20px;">Care recipient info is shared with matched caregivers.</div>
+  <div style="font-size:13px;color:#475569;margin-bottom:20px;">Care recipient info is shared with matched caregivers.</div>
 
   <div class="profile-saved-banner" id="profile-saved-banner">✅ Profile saved successfully!</div>
 
@@ -2949,7 +3057,7 @@
 
   <div class="profile-section-header">Emergency Contacts</div>
   <div class="profile-card">
-    <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-bottom:12px;">These contacts will be notified in case of emergency.</div>
+    <div style="font-size:12px;color:#64748B;margin-bottom:12px;">These contacts will be notified in case of emergency.</div>
     <div class="ec-grid" style="margin-bottom:14px;">
       <div class="ec-field"><label>Contact 1 — Name</label><input class="profile-input" id="ec1-name" type="text" placeholder="Full name" /></div>
       <div class="ec-field"><label>Contact 1 — Phone</label><input class="profile-input" id="ec1-phone" type="tel" placeholder="+1 (555)…" /></div>
