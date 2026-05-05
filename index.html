@@ -1455,6 +1455,7 @@
     @keyframes spinGradient {
       to { transform: rotate(360deg); }
     }
+    @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
     .loading-text {
       font-size: 14px;
       font-weight: 600;
@@ -2656,6 +2657,13 @@ function renderSwiperCard() {
         <div class="review-item"><div class="review-author">⭐⭐⭐⭐⭐ Robert T.</div><div class="review-text">"Reliable, compassionate, and goes above and beyond. I feel completely at ease knowing my father is in good hands."</div></div>
       </div>
 
+      <div class="cert-row" style="padding: 0 16px 12px; display: flex; align-items: center; gap: 8px;">
+        <div class="cert-badge" id="cert-badge-${cg.email ? cg.email.replace('@','_').replace('.','_') : cg.id}" style="display:flex;align-items:center;gap:6px;background:rgba(124,58,237,0.08);border:1px solid rgba(124,58,237,0.15);border-radius:50px;padding:5px 12px;cursor:pointer;font-size:12px;color:#7c3aed;font-weight:600;" onclick="loadCaregiverCerts('${cg.email || ''}', this)">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          View Certifications
+        </div>
+      </div>
+
       <div style="height:8px;"></div>
     </div>`;
 
@@ -2894,6 +2902,43 @@ function showConfirmation({ name, email, cg, date, hours, rate, total }) {
 
 // ── SUBSCRIBE ──
 function showSubscribe() { showScreen('screen-subscribe'); }
+
+async function loadCaregiverCerts(email, el) {
+  if (!email) return;
+  const clientToken = localStorage.getItem('client_token') || '';
+  el.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="animation:spin 1s linear infinite"><circle cx="12" cy="12" r="10"/></svg> Loading...';
+  el.style.pointerEvents = 'none';
+  try {
+    const res = await fetch(`${API}/caregiver-profile-docs?email=${encodeURIComponent(email)}&clientToken=${clientToken}`);
+    const data = await res.json();
+    if (!data.success) throw new Error('Failed');
+    if (!data.subscribed) {
+      // Show paywall
+      el.innerHTML = '🔒 ' + data.count + ' cert' + (data.count !== 1 ? 's' : '') + ' on file — Subscribe to view';
+      el.style.background = 'rgba(239,68,68,0.08)';
+      el.style.borderColor = 'rgba(239,68,68,0.2)';
+      el.style.color = '#ef4444';
+      el.style.pointerEvents = 'auto';
+      el.onclick = () => { showSubscribe(); };
+    } else {
+      // Show docs
+      if (data.documents.length === 0) {
+        el.innerHTML = 'No certifications uploaded yet';
+        el.style.color = 'rgba(0,0,0,0.4)';
+        el.style.pointerEvents = 'none';
+      } else {
+        const typeLabels = { certification: 'Certification', license: 'License', training: 'Training', background_check: 'Background Check', health: 'Health Record', insurance: 'Insurance', other: 'Document' };
+        const docList = data.documents.map(d => `<span style="background:rgba(34,197,94,0.1);color:#16a34a;padding:2px 8px;border-radius:50px;font-size:11px;font-weight:600;border:1px solid rgba(34,197,94,0.2)">${d.name}</span>`).join(' ');
+        el.outerHTML = `<div style="padding:0 16px 4px;display:flex;flex-wrap:wrap;gap:4px;align-items:center"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2" style="flex-shrink:0"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>${docList}</div>`;
+      }
+    }
+  } catch (e) {
+    el.innerHTML = '⚠️ Could not load';
+    el.style.color = '#ef4444';
+    el.style.pointerEvents = 'auto';
+    setTimeout(() => { el.innerHTML = 'View Certifications'; el.style.color = '#7c3aed'; el.style.pointerEvents = 'auto'; }, 2000);
+  }
+}
 
 document.querySelectorAll('.plan-card').forEach(card => {
   card.addEventListener('click', () => {
