@@ -1913,6 +1913,353 @@
       font-size: 14px;
     }
 
+
+    /* ════════════════════════════════════════════════════════════════
+       LIGHT THEME — Full Application Override
+       Auth screen (#screen-auth) stays dark — all other screens light
+       ════════════════════════════════════════════════════════════════ */
+
+    /* BASE */
+    body {
+      background: var(--color-bg) !important;
+      background-attachment: fixed !important;
+      color: var(--color-text-primary) !important;
+    }
+    .text-muted { color: var(--color-text-secondary) !important; }
+    .section-label { color: var(--color-text-primary) !important; }
+    .screen-title { color: var(--color-text-primary) !important; }
+    .form-label { color: var(--color-text-primary) !important; }
+
+    /* GLASS CARDS → WHITE CARDS */
+    .glass-card {
+      background: var(--color-card) !important;
+      backdrop-filter: none !important;
+      -webkit-backdrop-filter: none !important;
+      border: 1px solid var(--color-border) !important;
+      box-shadow: 0 1px 4px rgba(15,23,42,0.06), 0 4px 16px rgba(15,23,42,0.04) !important;
+    }
+
+    /* BOTTOM NAV */
+    .bottom-nav {
+      background: rgba(255,255,255,0.97) !important;
+      border-top: 1px solid var(--color-border) !important;
+      backdrop-filter: blur(24px) !important;
+    }
+    .nav-item { color: var(--color-text-secondary) !important; }
+    .nav-item.active { color: var(--color-primary) !important; }
+
+    /* DISPATCH SCREEN */
+    .dispatch-hero-title {
+      background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-secondary) 100%) !important;
+      -webkit-background-clip: text !important;
+      -webkit-text-fill-color: transparent !important;
+      background-clip: text !important;
+    }
+    .dispatch-hero-sub { color: var(--color-text-secondary) !important; }
+    .care-category-label { color: var(--color-text-secondary) !important; }
+
+    #account-btn {
+      background: var(--color-card) !important;
+      border: 1.5px solid var(--color-border) !important;
+      color: var(--color-text-primary) !important;
+      backdrop-filter: none !important;
+    }
+
+    /* CARE PILLS */
+    .care-tile {
+      background: var(--color-card) !important;
+      border: 1.5px solid var(--color-border) !important;
+      color: var(--color-text-primary) !important;
+    }
+    .care-tile:hover {
+      background: #F1F5F9 !important;
+      border-color: var(--color-primary) !important;
+    }
+    .care-tile.selected {
+      background: var(--color-primary) !important;
+      color: #fff !important;
+      border-color: var(--color-primary) !important;
+      box-shadow: 0 2px 12px rgba(124,92,255,0.25) !important;
+    }
+    .care-tile.selected::before { color: #fff !important; }
+
+    /* INPUTS */
+    .location-input {
+      background: var(--color-card) !important;
+      border: 1.5px solid var(--color-border) !important;
+      color: var(--color-text-primary) !important;
+      backdrop-filter: none !important;
+    }
+    .location-input::placeholder { color: var(--color-text-secondary) !important; }
+    .location-input:focus { border-color: var(--color-primary) !important; background: #fff !important; }
+
+    .gps-btn {
+      background: var(--color-card) !important;
+      border: 1.5px solid var(--color-border) !important;
+      color: var(--color-text-primary) !important;
+    }
+    .gps-btn:hover { background: #F1F5F9 !important; }
+
+    /* URGENCY PILLS */
+    .urgency-pill {
+      background: var(--color-card) !important;
+      border: 1.5px solid var(--color-border) !important;
+      color: var(--color-text-secondary) !important;
+    }
+    .urgency-pill:hover { background: #F1F5F9 !important; }
+    .urgency-pill.selected { font-weight: 700 !important; }
+    .urgency-pill[data-value="today"].selected {
+      background: rgba(239,68,68,0.08) !important;
+      border-color: rgba(239,68,68,0.4) !important;
+      color: var(--color-error) !important;
+    }
+    .urgency-pill[data-value="week"].selected {
+      background: rgba(245,158,11,0.08) !important;
+      border-color: rgba(245,158,11,0.4) !important;
+      color: var(--color-warning) !important;
+    }
+    .urgency-pill[data-value="month"].selected {
+      background: rgba(74,144,226,0.08) !important;
+      border-color: rgba(74,144,226,0.4) !important;
+      color: var(--color-secondary) !important;
+    }
+    .urgency-pill[data-value="flexible"].selected {
+      background: rgba(124,92,255,0.08) !important;
+      border-color: rgba(124,92,255,0.4) !important;
+      color: var(--color-primary) !important;
+    }
+
+    /* SWIPER / CAREGIVER CARD */
+    .swiper-back {
+      background: var(--color-card) !important;
+      border: 1px solid var(--color-border) !important;
+      color: var(--color-text-primary) !important;
+    }
+    .swiper-counter { color: var(--color-text-secondary) !important; }
+    .progress-dots .dot { background: var(--color-border) !important; }
+    .progress-dots .dot.done { background: #9b80ff !important; }
+
+    .cg-card {
+      background: var(--color-card) !important;
+      backdrop-filter: none !important;
+      -webkit-backdrop-filter: none !important;
+      border: 1px solid var(--color-border) !important;
+      box-shadow: 0 4px 24px rgba(15,23,42,0.08) !important;
+    }
+    .cg-card-hero {
+      background: linear-gradient(135deg, rgba(124,92,255,0.07), rgba(74,144,226,0.05)) !important;
+      border-bottom: 1px solid var(--color-border) !important;
+    }
+    .cg-name { color: var(--color-text-primary) !important; }
+    .cg-tagline { color: var(--color-text-secondary) !important; }
+    .cg-rating-count { color: var(--color-text-secondary) !important; }
+    .cg-badges { background: transparent !important; }
+    .cg-badge {
+      background: #F1F5F9 !important;
+      border: 1px solid var(--color-border) !important;
+      color: var(--color-text-secondary) !important;
+    }
+    .cg-stat {
+      background: #F8FAFC !important;
+      border: 1px solid var(--color-border) !important;
+    }
+    .cg-stat-label { color: var(--color-text-secondary) !important; }
+    .cg-about { color: var(--color-text-secondary) !important; }
+
+    /* ACTION BAR */
+    .action-bar {
+      background: rgba(255,255,255,0.97) !important;
+      border-top: 1px solid var(--color-border) !important;
+      backdrop-filter: blur(20px) !important;
+    }
+    .btn-shortlist {
+      background: #F1F5F9 !important;
+      border: 1.5px solid var(--color-border) !important;
+      color: var(--color-text-primary) !important;
+    }
+    .btn-shortlist.shortlisted {
+      background: rgba(124,92,255,0.08) !important;
+      border-color: var(--color-primary) !important;
+      color: var(--color-primary) !important;
+    }
+
+    /* BACK BUTTON */
+    .back-btn {
+      background: #F1F5F9 !important;
+      border: 1px solid var(--color-border) !important;
+      color: var(--color-text-primary) !important;
+    }
+
+    /* SHORTLIST SCREEN */
+    .shortlist-card {
+      background: var(--color-card) !important;
+      border: 1px solid var(--color-border) !important;
+      box-shadow: 0 1px 4px rgba(15,23,42,0.04) !important;
+    }
+    .shortlist-card:hover { background: #F8FAFC !important; }
+    .sl-name { color: var(--color-text-primary) !important; }
+    .sl-detail { color: var(--color-text-secondary) !important; }
+    .sl-btn-remove {
+      background: #F1F5F9 !important;
+      border: 1px solid var(--color-border) !important;
+      color: var(--color-text-secondary) !important;
+    }
+    #shortlist-empty { color: var(--color-text-secondary) !important; }
+
+    /* AUTO-SCHEDULE BANNER */
+    .auto-schedule-banner {
+      background: linear-gradient(135deg, rgba(124,92,255,0.06), rgba(74,144,226,0.04)) !important;
+      border: 1px solid rgba(124,92,255,0.18) !important;
+    }
+    .auto-schedule-banner p { color: var(--color-text-secondary) !important; }
+
+    /* SUBSCRIBE / PLAN CARDS */
+    .subscribe-hero h2 { color: var(--color-text-primary) !important; }
+    .subscribe-hero p { color: var(--color-text-secondary) !important; }
+    .plan-card {
+      background: var(--color-card) !important;
+      border: 1.5px solid var(--color-border) !important;
+      box-shadow: 0 2px 8px rgba(15,23,42,0.06) !important;
+    }
+    .plan-card:hover { background: #F8FAFC !important; }
+    .plan-card.selected {
+      border-color: var(--color-primary) !important;
+      background: rgba(124,92,255,0.04) !important;
+    }
+    .plan-name { color: var(--color-text-primary) !important; }
+    .plan-price span { color: var(--color-text-secondary) !important; }
+    .plan-desc { color: var(--color-text-secondary) !important; }
+    .plan-features li { color: var(--color-text-primary) !important; }
+
+    /* VS TABLE */
+    .vs-table {
+      background: var(--color-card) !important;
+      border: 1px solid var(--color-border) !important;
+    }
+    .vs-row:not(:last-child) { border-bottom: 1px solid var(--color-border) !important; }
+    .vs-header {
+      background: #F8FAFC !important;
+      color: var(--color-text-primary) !important;
+    }
+    .feature { color: var(--color-text-secondary) !important; }
+    .them { color: #94A3B8 !important; }
+
+    /* EMAIL / FORM FIELDS */
+    .email-label { color: var(--color-text-secondary) !important; }
+    .email-field {
+      background: var(--color-card) !important;
+      border: 1.5px solid var(--color-border) !important;
+      color: var(--color-text-primary) !important;
+    }
+    .email-field::placeholder { color: var(--color-text-secondary) !important; }
+    .email-field:focus { border-color: var(--color-primary) !important; }
+    .trust-item { color: var(--color-text-secondary) !important; }
+
+    /* BOOKING SCREEN */
+    .booking-cg-mini {
+      background: var(--color-card) !important;
+      border: 1px solid var(--color-border) !important;
+    }
+    .date-chip {
+      background: var(--color-card) !important;
+      border: 1.5px solid var(--color-border) !important;
+    }
+    .date-chip:hover { background: #F1F5F9 !important; }
+    .date-chip.selected {
+      background: rgba(124,92,255,0.08) !important;
+      border-color: var(--color-primary) !important;
+    }
+    .date-chip-day { color: var(--color-text-secondary) !important; }
+    .date-chip-num { color: var(--color-text-primary) !important; }
+    .date-chip-month { color: var(--color-text-secondary) !important; }
+
+    .time-slot {
+      background: var(--color-card) !important;
+      border: 1.5px solid var(--color-border) !important;
+      color: var(--color-text-primary) !important;
+    }
+    .time-slot span { color: var(--color-text-secondary) !important; }
+    .time-slot:hover { background: #F1F5F9 !important; }
+    .time-slot.selected {
+      background: rgba(124,92,255,0.08) !important;
+      border-color: var(--color-primary) !important;
+    }
+
+    .type-btn {
+      background: var(--color-card) !important;
+      border: 1.5px solid var(--color-border) !important;
+      color: var(--color-text-secondary) !important;
+    }
+    .type-btn.selected {
+      background: rgba(124,92,255,0.08) !important;
+      border-color: var(--color-primary) !important;
+      color: var(--color-primary) !important;
+    }
+
+    .form-input {
+      background: var(--color-card) !important;
+      border: 1.5px solid var(--color-border) !important;
+      color: var(--color-text-primary) !important;
+    }
+    .form-input::placeholder { color: var(--color-text-secondary) !important; }
+    .form-input:focus { border-color: var(--color-primary) !important; }
+    textarea.form-input { color: var(--color-text-primary) !important; }
+
+    /* CONFIRMATION SCREEN */
+    .confirm-title { color: var(--color-text-primary) !important; }
+    .confirm-sub { color: var(--color-text-secondary) !important; }
+    .confirm-card {
+      background: var(--color-card) !important;
+      border: 1px solid var(--color-border) !important;
+    }
+
+    /* ACCOUNT SCREEN */
+    .account-name { color: var(--color-text-primary) !important; }
+    .account-email { color: var(--color-text-secondary) !important; }
+    .account-section-title { color: var(--color-text-secondary) !important; }
+    .booking-card {
+      background: var(--color-card) !important;
+      border: 1px solid var(--color-border) !important;
+    }
+    .btn-signout {
+      background: #F8FAFC !important;
+      border: 1px solid var(--color-border) !important;
+      color: var(--color-text-secondary) !important;
+    }
+
+    /* MY CARE TEAM (team tabs) */
+    .team-tab { color: var(--color-text-secondary) !important; }
+    .team-tab.active { color: var(--color-primary) !important; }
+
+    /* INSTALL BANNER */
+    #install-banner {
+      background: rgba(255,255,255,0.97) !important;
+      border-top: 1px solid var(--color-border) !important;
+    }
+    .ib-title { color: var(--color-text-primary) !important; }
+    .ib-sub { color: var(--color-text-secondary) !important; }
+    .ib-close { color: var(--color-text-secondary) !important; }
+
+    /* iOS HINT */
+    #ios-hint {
+      background: rgba(255,255,255,0.97) !important;
+      border: 1px solid var(--color-border) !important;
+      color: var(--color-text-secondary) !important;
+    }
+
+    /* RESPONSIVE: desktop shadow */
+    @media (min-width: 500px) {
+      body {
+        box-shadow: 0 0 60px rgba(15,23,42,0.12) !important;
+      }
+    }
+
+    /* AUTH SCREEN — STAYS DARK */
+    #screen-auth {
+      background: linear-gradient(160deg, #1a1a2e 0%, #2d1b69 40%, #1e3a5f 100%) !important;
+      color: #fff !important;
+    }
+
   </style>
 </head>
 <body>
