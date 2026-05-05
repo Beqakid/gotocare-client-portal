@@ -2261,50 +2261,218 @@
     }
 
   
-    /* ── CONTRAST FIXES: dark-text overrides for light app shell ── */
+    /* ═══════════════════════════════════════════════════════════
+       LIGHT THEME — Full App Shell Override
+       Applied to all screens EXCEPT auth/login (which stays dark)
+    ═══════════════════════════════════════════════════════════ */
+
+    /* Global text utilities */
+    .text-muted { color: #94A3B8 !important; }
+
+    /* Section headers and labels */
     .section-title { color: #0F172A !important; }
-    .section-subtitle { color: #475569 !important; }
-    .care-section-label { color: #0F172A !important; }
+    .section-subtitle, .dispatch-subtitle { color: #475569 !important; }
+    .care-section-label { color: #64748B !important; font-weight: 700; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; }
     .dispatch-header h1 { color: #0F172A !important; }
     .dispatch-header p { color: #475569 !important; }
-    .dispatch-subtitle { color: #475569 !important; }
-    .location-label { color: #0F172A !important; }
-    .urgency-label { color: #0F172A !important; }
-    .shortlist-empty p { color: #475569 !important; }
-    .shortlist-section-label { color: #0F172A !important; }
-    .booking-label { color: #0F172A !important; }
-    .booking-sublabel { color: #475569 !important; }
-    .time-slot-label { color: #0F172A !important; }
+    .location-label, .urgency-label { color: #0F172A !important; font-weight: 600; }
     .cg-section-label { color: #7C5CFF !important; font-weight: 700; }
-    .cg-about-text { color: #475569 !important; }
-    .review-author { color: #0F172A !important; }
-    .review-text { color: #475569 !important; }
-    .cert-badge { background: rgba(124,92,255,0.08) !important; border-color: rgba(124,92,255,0.2) !important; color: #7C5CFF !important; }
-    /* Bottom nav - light theme */
-    .bottom-nav { background: rgba(255,255,255,0.97) !important; border-top: 1px solid #E2E8F0 !important; }
-    .nav-item span { color: #94A3B8 !important; }
-    .nav-item.active span { color: #7C5CFF !important; }
-    /* Profile/account tab text */
+
+    /* Form inputs — app shell (not auth) */
+    .location-input {
+        border: 1.5px solid #E2E8F0 !important;
+        background: #FFFFFF !important;
+        color: #0F172A !important;
+    }
+    .location-input::placeholder { color: #94A3B8 !important; }
+    .location-input:focus { border-color: #7C5CFF !important; background: #FAFBFF !important; }
+    .gps-btn { background: #F1F5F9 !important; border: 1.5px solid #E2E8F0 !important; color: #475569 !important; }
+    .gps-btn:hover { background: #E2E8F0 !important; }
+
+    /* Care type pills — dispatch screen */
+    .urgency-pill {
+        background: #F8FAFC !important;
+        border: 1.5px solid #E2E8F0 !important;
+        color: #0F172A !important;
+    }
+    .urgency-pill.selected, .urgency-pill:has(input:checked) {
+        background: #7C5CFF !important;
+        border-color: #7C5CFF !important;
+        color: #FFFFFF !important;
+    }
+
+    /* Profile screen */
+    .profile-section-header {
+        color: #64748B !important;
+    }
+    .profile-card {
+        background: #FFFFFF !important;
+        border: 1px solid #E2E8F0 !important;
+    }
+    .profile-card * { color: #0F172A; }
+    .profile-row-label { color: #475569 !important; }
+    .profile-row-value { color: #0F172A !important; }
     .profile-name { color: #0F172A !important; }
     .profile-email { color: #475569 !important; }
-    .plan-card { background: #FFFFFF !important; border: 1px solid #E2E8F0 !important; }
-    .plan-name { color: #0F172A !important; }
-    .plan-price { color: #7C5CFF !important; }
-    .plan-feature { color: #475569 !important; }
-    .bookings-empty p { color: #475569 !important; }
-    .booking-card { background: #FFFFFF !important; border: 1px solid #E2E8F0 !important; }
+    .profile-badge { background: rgba(124,92,255,0.1) !important; color: #7C5CFF !important; }
+
+    /* Care recipient form */
+    .care-recipient-form label,
+    .form-group label,
+    .field-label { color: #0F172A !important; font-weight: 600; }
+    .form-input, .care-form-input, select.form-input {
+        background: #FFFFFF !important;
+        border: 1.5px solid #E2E8F0 !important;
+        color: #0F172A !important;
+    }
+    .form-input::placeholder { color: #94A3B8 !important; }
+    .form-input:focus { border-color: #7C5CFF !important; background: #FAFBFF !important; }
+    select.form-input option { color: #0F172A; background: #FFFFFF; }
+    textarea.form-input { color: #0F172A !important; background: #FFFFFF !important; }
+
+    /* Condition pills (care recipient medical conditions) */
+    .condition-pill {
+        background: #F1F5F9 !important;
+        border: 1.5px solid #E2E8F0 !important;
+        color: #475569 !important;
+    }
+    .condition-pill.selected {
+        background: rgba(124,92,255,0.12) !important;
+        border-color: #7C5CFF !important;
+        color: #7C5CFF !important;
+    }
+
+    /* Shortlist screen */
+    .shortlist-card {
+        background: #FFFFFF !important;
+        border: 1px solid #E2E8F0 !important;
+    }
+    .shortlist-card * { color: #0F172A; }
+    .shortlist-name { color: #0F172A !important; }
+    .sl-detail { color: #64748B !important; }
+    .shortlist-empty p { color: #475569 !important; }
+    .shortlist-section-label { color: #64748B !important; font-weight: 700; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; }
+    .shortlist-empty-sub { color: #94A3B8 !important; }
+
+    /* Bookings screen */
+    .booking-card, .booking-item {
+        background: #FFFFFF !important;
+        border: 1px solid #E2E8F0 !important;
+    }
     .booking-caregiver-name { color: #0F172A !important; }
-    .booking-meta { color: #475569 !important; }
+    .booking-meta, .booking-date, .booking-status-text { color: #475569 !important; }
+    .bookings-empty p, .bookings-empty h3 { color: #475569 !important; }
+    .booking-label { color: #0F172A !important; font-weight: 600; }
+    .booking-sublabel { color: #475569 !important; }
+    .time-slot-label { color: #0F172A !important; }
+    .time-slot-btn {
+        background: #F8FAFC !important;
+        border: 1.5px solid #E2E8F0 !important;
+        color: #475569 !important;
+    }
+    .time-slot-btn.selected {
+        background: rgba(124,92,255,0.12) !important;
+        border-color: #7C5CFF !important;
+        color: #7C5CFF !important;
+    }
+
+    /* My Team screen */
+    .team-card {
+        background: #FFFFFF !important;
+        border: 1px solid #E2E8F0 !important;
+    }
     .team-name { color: #0F172A !important; }
     .team-role { color: #475569 !important; }
-    .empty-state p { color: #475569 !important; }
+    .team-tab { color: #64748B !important; }
+    .team-tab.active { color: #7C5CFF !important; border-color: #7C5CFF !important; }
     .empty-state h3 { color: #0F172A !important; }
-    .cg-name { color: #FFFFFF !important; } /* keep caregiver name white inside dark card */
-    /* Fix availability day labels */
-    .avail-day { color: #475569 !important; }
-    /* Contact locked box */
-    .contact-locked-box { background: rgba(124,92,255,0.06) !important; border: 1px solid rgba(124,92,255,0.15) !important; }
-    .contact-locked-text { color: #475569 !important; }
+    .empty-state p { color: #475569 !important; }
+
+    /* Plans/subscriptions screen */
+    .plan-card {
+        background: #FFFFFF !important;
+        border: 1.5px solid #E2E8F0 !important;
+    }
+    .plan-card.featured {
+        border-color: #7C5CFF !important;
+        background: linear-gradient(135deg, rgba(124,92,255,0.04), #FFFFFF) !important;
+    }
+    .plan-name { color: #0F172A !important; }
+    .plan-price { color: #7C5CFF !important; }
+    .plan-price span { color: #94A3B8 !important; font-size: 14px; font-weight: 500; }
+    .plan-desc { color: #475569 !important; font-size: 13px; }
+    .plan-feature { color: #475569 !important; }
+    .plan-header-row, .vs-header { 
+        background: #F8FAFC !important; 
+        color: #0F172A !important; 
+        font-weight: 700; 
+    }
+    .plan-section-title { color: #0F172A !important; }
+
+    /* Bottom nav */
+    .bottom-nav {
+        background: rgba(255,255,255,0.97) !important;
+        backdrop-filter: blur(20px) !important;
+        border-top: 1px solid #E2E8F0 !important;
+        box-shadow: 0 -4px 20px rgba(0,0,0,0.06) !important;
+    }
+    .nav-item span { color: #94A3B8 !important; }
+    .nav-item.active span { color: #7C5CFF !important; }
+
+    /* Review items */
+    .review-item { border-bottom: 1px solid #F1F5F9 !important; }
+    .review-text { color: #475569 !important; }
+    .review-author { color: #0F172A !important; }
+    .review-date { color: #94A3B8 !important; }
+    .cg-rating-count { color: #94A3B8 !important; }
+
+    /* Cert badges (light) */
+    .cert-badge {
+        background: rgba(124,92,255,0.08) !important;
+        border: 1px solid rgba(124,92,255,0.2) !important;
+        color: #7C5CFF !important;
+    }
+    .cert-locked {
+        background: #F1F5F9 !important;
+        border-color: #E2E8F0 !important;
+        color: #94A3B8 !important;
+    }
+
+    /* Contact locked section (on caregiver card — inside dark card so keep contrast) */
+    .cg-contact-locked { background: rgba(0,0,0,0.2) !important; }
+
+    /* About text on caregiver card (stays dark bg) */
+    .cg-about-text { color: rgba(255,255,255,0.75) !important; }
+
+    /* Availability days (on caregiver card — dark bg) */
+    .avail-day { color: rgba(255,255,255,0.5) !important; }
+
+    /* Page headers */
+    .page-header h2 { color: #0F172A !important; }
+    .page-header p { color: #475569 !important; }
+    .screen-header h2 { color: #0F172A !important; }
+    .screen-header p { color: #475569 !important; }
+    .tab-header h2 { color: #0F172A !important; }
+
+    /* Back button */
+    .back-btn { color: #7C5CFF !important; }
+
+    /* Screen backgrounds — all non-auth screens should be #F8FAFC */
+    #screen-dispatch,
+    #screen-shortlist, 
+    #screen-booking,
+    #screen-profile,
+    #screen-team,
+    #screen-my-care,
+    #screen-plans,
+    #screen-caregiver { 
+        background: #F8FAFC !important; 
+    }
+
+    /* Content containers */
+    .screen-content, .tab-content, .scroll-content {
+        background: transparent !important;
+    }
 
     </style>
 </head>
