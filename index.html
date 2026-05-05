@@ -1912,7 +1912,157 @@
       cursor: pointer;
       font-size: 14px;
     }
-</style>
+
+    /* ═══════════════════════════════════════════════════════════════
+       LIGHT THEME — Main App
+       ═══════════════════════════════════════════════════════════════ */
+
+    /* Body: light background, dark text */
+    body {
+      background: #F8FAFC !important;
+      color: #0F172A !important;
+    }
+
+    /* Auth screen stays dark — preserve all its child text */
+    #screen-auth {
+      background: linear-gradient(160deg, #1a1a2e 0%, #2d1b69 40%, #1e3a5f 100%) !important;
+      color: #fff !important;
+    }
+    #screen-auth * { color: inherit; }
+    #screen-auth .text-muted { color: rgba(255,255,255,0.5) !important; }
+    #screen-auth input { color: #fff !important; }
+
+    /* Glass cards → clean white cards in main app */
+    .glass-card {
+      background: #FFFFFF !important;
+      backdrop-filter: none !important;
+      -webkit-backdrop-filter: none !important;
+      border: 1px solid #E2E8F0 !important;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.07) !important;
+    }
+
+    /* Muted text in main app */
+    .text-muted { color: #475569 !important; }
+
+    /* Bottom nav: white */
+    .bottom-nav {
+      background: #FFFFFF !important;
+      border-top: 1px solid #E2E8F0 !important;
+      backdrop-filter: none !important;
+      -webkit-backdrop-filter: none !important;
+    }
+    .nav-item .nav-icon, .nav-item .nav-label { color: #94A3B8 !important; }
+    .nav-item.active .nav-icon, .nav-item.active .nav-label { color: #7C5CFF !important; }
+    .nav-item.active { background: rgba(124,92,255,0.08) !important; }
+
+    /* Main screen backgrounds */
+    #screen-find, #screen-caregivers, #screen-shortlist,
+    #screen-payment, #screen-book, #screen-booked,
+    #screen-account, #screen-bookings {
+      background: #F8FAFC !important;
+      color: #0F172A !important;
+    }
+    #screen-find *, #screen-caregivers *, #screen-shortlist *,
+    #screen-payment *, #screen-book *, #screen-booked *,
+    #screen-account *, #screen-bookings * {
+      color: inherit;
+    }
+
+    /* Care pill chips: light mode */
+    .care-section { background: #FFFFFF !important; border: 1px solid #E2E8F0 !important; box-shadow: 0 1px 4px rgba(0,0,0,0.05) !important; }
+    .section-title { color: #0F172A !important; }
+    .care-pill { background: #F1F5F9 !important; border: 1.5px solid #E2E8F0 !important; color: #475569 !important; }
+    .care-pill.selected { background: rgba(124,92,255,0.1) !important; border-color: #7C5CFF !important; color: #7C5CFF !important; font-weight: 600; }
+
+    /* Inputs: light mode */
+    .location-input, input[type=email], input[type=text], input[type=time], input[type=date], textarea, select {
+      background: #FFFFFF !important;
+      border: 1.5px solid #E2E8F0 !important;
+      color: #0F172A !important;
+    }
+    .location-input::placeholder, input::placeholder, textarea::placeholder { color: #94A3B8 !important; }
+    .location-input:focus, input:focus, textarea:focus, select:focus {
+      border-color: #7C5CFF !important;
+      background: #FFFFFF !important;
+      outline: none;
+    }
+
+    /* Urgency pills */
+    .urgency-pill { background: #F1F5F9 !important; border: 1.5px solid #E2E8F0 !important; color: #475569 !important; }
+    .urgency-pill.selected { background: rgba(124,92,255,0.1) !important; border-color: #7C5CFF !important; color: #7C5CFF !important; }
+
+    /* GPS button */
+    .gps-btn { background: #F1F5F9 !important; border: 1.5px solid #E2E8F0 !important; color: #475569 !important; }
+    .gps-btn:hover { background: #E2E8F0 !important; }
+
+    /* Caregiver card */
+    .caregiver-card { background: #FFFFFF !important; border: 1px solid #E2E8F0 !important; box-shadow: 0 4px 16px rgba(0,0,0,0.07) !important; color: #0F172A !important; }
+    .caregiver-name { color: #0F172A !important; }
+    .caregiver-title { color: #475569 !important; }
+    .caregiver-bio { color: #475569 !important; }
+    .skill-pill { background: rgba(124,92,255,0.08) !important; color: #7C5CFF !important; border: 1px solid rgba(124,92,255,0.2) !important; }
+    .avail-label { color: #475569 !important; }
+    .avail-day { background: #F1F5F9 !important; color: #475569 !important; border: 1px solid #E2E8F0 !important; }
+    .avail-day.avail { background: rgba(34,197,94,0.1) !important; color: #22C55E !important; border-color: rgba(34,197,94,0.3) !important; }
+
+    /* Urgency section top */
+    .urgency-section { background: #FFFFFF !important; border: 1px solid #E2E8F0 !important; }
+    .urgency-title { color: #0F172A !important; }
+    .find-btn-wrapper { background: transparent !important; }
+
+    /* Back buttons and headers */
+    .back-btn { color: #475569 !important; background: #F1F5F9 !important; border: 1px solid #E2E8F0 !important; }
+    .screen-title { color: #0F172A !important; }
+    .screen-subtitle { color: #475569 !important; }
+    .section-label { color: #475569 !important; }
+
+    /* Shortlist & match */
+    .shortlist-empty { color: #475569 !important; }
+    .shortlist-card { background: #FFFFFF !important; border: 1px solid #E2E8F0 !important; box-shadow: 0 2px 8px rgba(0,0,0,0.06) !important; color: #0F172A !important; }
+    .match-score { color: #7C5CFF !important; }
+
+    /* Subscription cards */
+    .plan-card { background: #FFFFFF !important; border: 1px solid #E2E8F0 !important; box-shadow: 0 2px 8px rgba(0,0,0,0.06) !important; }
+    .plan-card.featured { border-color: #7C5CFF !important; box-shadow: 0 4px 16px rgba(124,92,255,0.15) !important; }
+    .plan-name { color: #0F172A !important; }
+    .plan-price { color: #0F172A !important; }
+    .plan-desc { color: #475569 !important; }
+    .plan-feature { color: #475569 !important; }
+
+    /* Compare table */
+    .compare-table { background: #FFFFFF !important; border: 1px solid #E2E8F0 !important; }
+    .compare-table th { background: #F8FAFC !important; color: #0F172A !important; }
+    .compare-table td { color: #475569 !important; border-color: #E2E8F0 !important; }
+
+    /* Account / profile cards */
+    .account-card, .profile-card { background: #FFFFFF !important; border: 1px solid #E2E8F0 !important; box-shadow: 0 1px 4px rgba(0,0,0,0.05) !important; }
+    .account-label { color: #475569 !important; }
+    .account-value { color: #0F172A !important; }
+
+    /* Booking screen */
+    .booking-card { background: #FFFFFF !important; border: 1px solid #E2E8F0 !important; }
+    .time-slot { background: #F1F5F9 !important; border: 1.5px solid #E2E8F0 !important; color: #475569 !important; }
+    .time-slot.selected { background: rgba(124,92,255,0.1) !important; border-color: #7C5CFF !important; color: #7C5CFF !important; }
+    .interview-type-btn { background: #F1F5F9 !important; border: 1.5px solid #E2E8F0 !important; color: #475569 !important; }
+    .interview-type-btn.selected { background: rgba(124,92,255,0.1) !important; border-color: #7C5CFF !important; color: #7C5CFF !important; }
+
+    /* Progress dots */
+    .dot { background: #E2E8F0 !important; }
+    .dot.active { background: #7C5CFF !important; }
+    .dot.done { background: #22C55E !important; }
+
+    /* Loading overlay */
+    .loading-overlay { background: rgba(248,250,252,0.85) !important; color: #0F172A !important; }
+
+    /* Sub-tabs */
+    .sub-tab { background: #F1F5F9 !important; color: #475569 !important; border: 1.5px solid transparent !important; }
+    .sub-tab.active { background: rgba(124,92,255,0.1) !important; color: #7C5CFF !important; border-color: #7C5CFF !important; }
+
+    /* Condition/med pills */
+    .condition-pill { background: #F1F5F9 !important; border: 1.5px solid #E2E8F0 !important; color: #475569 !important; }
+    .condition-pill.selected { background: rgba(124,92,255,0.1) !important; border-color: #7C5CFF !important; color: #7C5CFF !important; }
+
+  </style>
 </head>
 <body>
 
