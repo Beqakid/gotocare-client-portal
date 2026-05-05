@@ -3261,6 +3261,7 @@ function clientSignOut() {
   localStorage.removeItem(AUTH_STORAGE_KEY);
   localStorage.removeItem('gc_email');
   localStorage.removeItem('gc_client_name');
+  teamApiLoaded = false; teamApiData = { active: [], past: [] };
   showScreen('screen-auth');
   toast('Signed out successfully');
 }
@@ -3390,6 +3391,26 @@ function showTeamScreen() {
   showScreen('screen-team');
   updateTeamBadge();
   renderTeamContent();
+  loadTeamFromAPI();
+}
+
+let teamApiData = { active: [], past: [] };
+let teamApiLoaded = false;
+
+function loadTeamFromAPI() {
+  const token = localStorage.getItem('gc_client_token');
+  if (!token || teamApiLoaded) return;
+  const API = 'https://gotocare-original.jjioji.workers.dev/api';
+  fetch(`${API}/client-team?token=${encodeURIComponent(token)}`)
+    .then(r => r.json())
+    .then(data => {
+      if (data.success) {
+        teamApiData = { active: data.active || [], past: data.past || [] };
+        teamApiLoaded = true;
+        renderTeamContent();
+      }
+    })
+    .catch(() => {});
 }
 
 function renderTeamContent() {
@@ -3421,23 +3442,69 @@ function renderTeamContent() {
   }
 
   if (currentTeamTab === 'active') {
-    el.innerHTML = `
-      <div class="team-empty">
-        <div class="team-empty-icon">✅</div>
-        <div class="team-empty-title">No active arrangements</div>
-        <div class="team-empty-sub">Caregivers who accept your interview and start providing ongoing care will appear here.</div>
-      </div>`;
+    const activeList = teamApiData.active || [];
+    if (activeList.length === 0) {
+      el.innerHTML = `
+        <div class="team-empty">
+          <div class="team-empty-icon">✅</div>
+          <div class="team-empty-title">No active arrangements yet</div>
+          <div class="team-empty-sub">When a caregiver accepts your interview request and you have an upcoming session, they'll appear here.</div>
+        </div>
+        <div class="save-cta">
+          <div class="save-cta-icon">🔍</div>
+          <p>Browse caregivers and book an interview to get started.</p>
+          <button class="btn-go-find" onclick="showScreen('screen-dispatch')">Find Caregivers →</button>
+        </div>`;
+    } else {
+      el.innerHTML = `
+        <div class="team-section-title">Upcoming Sessions (${activeList.length})</div>
+        ${activeList.map(cg => renderApiTeamCard(cg, 'active')).join('')}`;
+    }
     return;
   }
 
   if (currentTeamTab === 'past') {
-    el.innerHTML = `
-      <div class="team-empty">
-        <div class="team-empty-icon">📋</div>
-        <div class="team-empty-title">No past caregivers yet</div>
-        <div class="team-empty-sub">Your care history will appear here — including caregivers from past confirmed interviews.</div>
-      </div>`;
+    const pastList = teamApiData.past || [];
+    if (pastList.length === 0) {
+      el.innerHTML = `
+        <div class="team-empty">
+          <div class="team-empty-icon">📋</div>
+          <div class="team-empty-title">No past caregivers yet</div>
+          <div class="team-empty-sub">Your care history will appear here after your first session is completed.</div>
+        </div>`;
+    } else {
+      el.innerHTML = `
+        <div class="team-section-title">Past Caregivers (${pastList.length})</div>
+        ${pastList.map(cg => renderApiTeamCard(cg, 'past')).join('')}`;
+    }
   }
+}
+
+function renderApiTeamCard(cg, status) {
+  const name = cg.name || 'Caregiver';
+  const specialty = cg.specialty || 'Home Care';
+  const initials = name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+  const dateLabel = cg.preferredDate ? new Date(cg.preferredDate + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '';
+  const timeLabel = cg.preferredTime ? ` at ${cg.preferredTime}` : '';
+  const statusLabels = { active: '✅ Upcoming', past: '📋 Completed' };
+  const badgeClass = status === 'active' ? 'active' : 'past';
+  const interviewType = cg.interviewType === 'video' ? '📹 Video' : cg.interviewType === 'phone' ? '📞 Phone' : '🏠 In-person';
+
+  return `<div class="team-card">
+    <div class="team-avatar-wrap">
+      <div class="team-avatar" style="background:linear-gradient(135deg,#7c3aed,#3b82f6);color:#fff;font-size:18px;font-weight:700;display:flex;align-items:center;justify-content:center;">${initials}</div>
+      <div class="team-status-dot ${badgeClass}"></div>
+    </div>
+    <div class="team-info">
+      <div class="team-name">${name}</div>
+      <div class="team-meta">${specialty}${dateLabel ? ' · ' + dateLabel + timeLabel : ''}</div>
+      <div class="team-meta" style="margin-top:2px;opacity:0.7;font-size:12px;">${interviewType} interview</div>
+      <div class="team-badge ${badgeClass}">${statusLabels[status]}</div>
+    </div>
+    <div class="team-actions">
+      ${status === 'active' ? `<button class="btn-rebook" onclick="alert('Interview confirmed for ${dateLabel}${timeLabel}. Check your email for details.')">📅 Details</button>` : `<button class="btn-rebook" onclick="showScreen('screen-dispatch')">🔄 Rebook</button>`}
+    </div>
+  </div>`;
 }
 
 function renderTeamCard(cg, status) {
