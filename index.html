@@ -2582,7 +2582,221 @@
         color: #16A34A !important;
     }
 
-    </style>
+    
+    /* ════════════════════════════════════════════════════════════
+       ONSITE BADGE + LIVE TIMER
+       ════════════════════════════════════════════════════════════ */
+    .onsite-banner {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(34,197,94,0.12);
+      border: 1px solid rgba(34,197,94,0.3);
+      border-radius: 10px;
+      padding: 8px 12px;
+      margin-bottom: 10px;
+      font-size: 12px;
+      font-weight: 700;
+      color: #16a34a;
+    }
+    .onsite-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #22C55E;
+      animation: onsitePulse 1.5s ease-in-out infinite;
+      flex-shrink: 0;
+    }
+    @keyframes onsitePulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(0.8); }
+    }
+    .onsite-timer {
+      margin-left: auto;
+      font-size: 13px;
+      font-weight: 800;
+      color: #16a34a;
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* ════════════════════════════════════════════════════════════
+       CARE SCHEDULE MODAL
+       ════════════════════════════════════════════════════════════ */
+    #schedule-modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      background: rgba(0,0,0,0.55);
+      align-items: flex-end;
+      justify-content: center;
+    }
+    #schedule-modal.active { display: flex; }
+    .schedule-sheet {
+      background: #fff;
+      border-radius: 24px 24px 0 0;
+      padding: 24px 20px 40px;
+      width: 100%;
+      max-width: 480px;
+      max-height: 90vh;
+      overflow-y: auto;
+      animation: slideUp 0.3s ease;
+    }
+    @keyframes slideUp {
+      from { transform: translateY(100%); }
+      to { transform: translateY(0); }
+    }
+    .schedule-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+    }
+    .schedule-title {
+      font-size: 17px;
+      font-weight: 800;
+      color: #0F172A;
+    }
+    .schedule-close {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: #F1F5F9;
+      border: none;
+      font-size: 18px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #475569;
+    }
+    .schedule-label {
+      font-size: 12px;
+      font-weight: 700;
+      color: #475569;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 8px;
+    }
+    .days-grid {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin-bottom: 18px;
+    }
+    .day-pill {
+      padding: 8px 12px;
+      border-radius: 50px;
+      border: 2px solid #E2E8F0;
+      background: #F8FAFC;
+      color: #475569;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      user-select: none;
+    }
+    .day-pill.selected {
+      background: #7C5CFF;
+      border-color: #7C5CFF;
+      color: #fff;
+    }
+    .time-row {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+    .time-field {
+      flex: 1;
+    }
+    .time-field label {
+      display: block;
+      font-size: 12px;
+      font-weight: 700;
+      color: #475569;
+      margin-bottom: 6px;
+    }
+    .time-field input, .schedule-select, .schedule-textarea {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 10px 12px;
+      border: 1.5px solid #E2E8F0;
+      border-radius: 10px;
+      font-size: 14px;
+      color: #0F172A;
+      background: #fff;
+      outline: none;
+    }
+    .time-field input:focus, .schedule-select:focus, .schedule-textarea:focus {
+      border-color: #7C5CFF;
+    }
+    .schedule-select { margin-bottom: 18px; }
+    .schedule-textarea { resize: vertical; min-height: 72px; margin-bottom: 18px; }
+    .recurring-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 0;
+      border-top: 1px solid #E2E8F0;
+      border-bottom: 1px solid #E2E8F0;
+      margin-bottom: 20px;
+    }
+    .recurring-label { font-size: 14px; font-weight: 600; color: #0F172A; }
+    .recurring-sub { font-size: 12px; color: #94A3B8; }
+    .toggle-wrap { position: relative; }
+    .toggle-input { position: absolute; opacity: 0; width: 0; height: 0; }
+    .toggle-track {
+      display: block;
+      width: 44px;
+      height: 24px;
+      border-radius: 50px;
+      background: #E2E8F0;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .toggle-input:checked + .toggle-track { background: #7C5CFF; }
+    .toggle-track::after {
+      content: '';
+      position: absolute;
+      top: 3px;
+      left: 3px;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: #fff;
+      transition: transform 0.2s;
+    }
+    .toggle-input:checked + .toggle-track::after { transform: translateX(20px); }
+    .btn-save-schedule {
+      width: 100%;
+      padding: 15px;
+      border-radius: 14px;
+      border: none;
+      background: linear-gradient(135deg, #7C5CFF, #4A90E2);
+      color: #fff;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 4px 20px rgba(124,92,255,0.3);
+    }
+    .btn-schedule {
+      background: #F1F5F9;
+      border: 1.5px solid #E2E8F0;
+      border-radius: 8px;
+      padding: 7px 12px;
+      font-size: 11px;
+      font-weight: 700;
+      color: #475569;
+      cursor: pointer;
+      white-space: nowrap;
+      margin-top: 4px;
+    }
+    .btn-schedule.has-schedule {
+      background: rgba(124,92,255,0.1);
+      border-color: #7C5CFF;
+      color: #7C5CFF;
+    }
+</style>
 </head>
 <body>
 
@@ -2921,6 +3135,7 @@
   <div class="confirm-sub" id="confirm-sub">Your caregiver has been notified and will confirm within 24 hours. You'll receive a notification by email once they respond.</div>
   <div class="confirm-card" id="confirm-card"></div>
   <button class="btn-home" onclick="showScreen('screen-shortlist')">← Back to Shortlist</button>
+  <button class="btn-home" style="margin-top:0; background:linear-gradient(135deg,#7C5CFF,#4A90E2); border:none; font-size:14px;" onclick="showTeamScreen()">👥 View My Care Team</button>
   <button class="btn-home" style="margin-top:0; background:rgba(124,92,255,0.15); border:1.5px solid rgba(167,139,250,0.3); font-size:14px;" onclick="showAccountScreen()">📋 View My Bookings</button>
   <button class="btn-home" style="margin-top:0; background:rgba(255,255,255,0.05); font-size:14px; opacity:0.6;" onclick="showScreen('screen-dispatch')">Start Over</button>
 </div>
@@ -4120,6 +4335,7 @@ function showTeamScreen() {
   updateTeamBadge();
   renderTeamContent();
   loadTeamFromAPI();
+  startLiveStatusPolling();
 }
 
 let teamApiData = { active: [], past: [] };
@@ -4218,22 +4434,48 @@ function renderApiTeamCard(cg, status) {
   const badgeClass = status === 'active' ? 'active' : 'past';
   const interviewType = cg.interviewType === 'video' ? '📹 Video' : cg.interviewType === 'phone' ? '📞 Phone' : '🏠 In-person';
 
-  return `<div class="team-card">
-    <div class="team-avatar-wrap">
-      <div class="team-avatar" style="background:linear-gradient(135deg,#7C5CFF,#4A90E2);color:#fff;font-size:18px;font-weight:700;display:flex;align-items:center;justify-content:center;">${initials}</div>
-      <div class="team-status-dot ${badgeClass}"></div>
+  // Live onsite status
+  const liveInfo = liveStatusData[cg.caregiverEmail] || liveStatusData[cg.email] || null;
+  const isOnsite = liveInfo && liveInfo.isOnsite;
+  const startTs = isOnsite && liveInfo.startTime ? new Date(liveInfo.startTime).getTime() : null;
+
+  let onsiteBanner = '';
+  if (status === 'active' && isOnsite) {
+    onsiteBanner = `<div class="onsite-banner">
+      <div class="onsite-dot"></div>
+      <span>🟢 ONSITE NOW</span>
+      <span class="onsite-timer" data-start="${startTs}">--:--</span>
+    </div>`;
+  }
+
+  const hasSchedule = !!careScheduleCache[cg.caregiverEmail || cg.email];
+  const scheduleBtnClass = hasSchedule ? 'btn-schedule has-schedule' : 'btn-schedule';
+  const scheduleBtnLabel = hasSchedule ? '📅 Schedule ✓' : '📅 Set Schedule';
+  const cgEmail = cg.caregiverEmail || cg.email || '';
+
+  return `<div class="team-card" style="flex-direction:column;align-items:stretch;gap:10px;">
+    ${onsiteBanner}
+    <div style="display:flex;align-items:center;gap:14px;">
+      <div class="team-avatar-wrap">
+        <div class="team-avatar" style="background:linear-gradient(135deg,#7C5CFF,#4A90E2);color:#fff;font-size:18px;font-weight:700;display:flex;align-items:center;justify-content:center;">${initials}</div>
+        <div class="team-status-dot ${isOnsite ? 'active' : badgeClass}"></div>
+      </div>
+      <div class="team-info" style="flex:1;min-width:0;">
+        <div class="team-name">${name}</div>
+        <div class="team-meta">${specialty}${dateLabel ? ' · ' + dateLabel + timeLabel : ''}</div>
+        <div class="team-badge ${badgeClass}">${statusLabels[status]} · ${interviewType}</div>
+      </div>
+      <div class="team-actions">
+        ${status === 'active' ? `<button class="btn-rebook" onclick="rebookApiCaregiver(${JSON.stringify({name, email: cgEmail, specialty})})">🔄 Rebook</button>` : ''}
+        ${status === 'past' ? `<button class="btn-rebook" onclick="showScreen('screen-dispatch')">Find Again</button>` : ''}
+      </div>
     </div>
-    <div class="team-info">
-      <div class="team-name">${name}</div>
-      <div class="team-meta">${specialty}${dateLabel ? ' · ' + dateLabel + timeLabel : ''}</div>
-      <div class="team-meta" style="margin-top:2px;opacity:0.7;font-size:12px;">${interviewType} interview</div>
-      <div class="team-badge ${badgeClass}">${statusLabels[status]}</div>
-    </div>
-    <div class="team-actions">
-      ${status === 'active' ? `<button class="btn-rebook" onclick="alert('Interview confirmed for ${dateLabel}${timeLabel}. Check your email for details.')">📅 Details</button>` : `<button class="btn-rebook" onclick="showScreen('screen-dispatch')">🔄 Rebook</button>`}
-    </div>
+    ${status === 'active' ? `<button class="${scheduleBtnClass}" onclick="openScheduleModal('${cgEmail}', '${name.replace(/'/g,"\'")}')">
+      ${scheduleBtnLabel}
+    </button>` : ''}
   </div>`;
 }
+
 
 function renderTeamCard(cg, status) {
   const name = `${cg.firstName || cg.first_name || ''} ${cg.lastName || cg.last_name || ''}`.trim();
@@ -4420,6 +4662,237 @@ document.querySelectorAll('.condition-pill').forEach(p => {
 
 // Init team badge on load
 updateTeamBadge();
+
+// ════════════════════════════════════════════════════════════
+// LIVE ONSITE STATUS POLLING
+// ════════════════════════════════════════════════════════════
+let liveStatusData = {};  // caregiverEmail -> { isOnsite, startTime }
+let liveStatusInterval = null;
+let onsiteTimerInterval = null;
+
+function startLiveStatusPolling() {
+  if (liveStatusInterval) clearInterval(liveStatusInterval);
+  pollLiveStatus();
+  liveStatusInterval = setInterval(pollLiveStatus, 30000);
+  // Update elapsed timers every second
+  if (onsiteTimerInterval) clearInterval(onsiteTimerInterval);
+  onsiteTimerInterval = setInterval(updateOnsiteTimers, 1000);
+}
+
+function stopLiveStatusPolling() {
+  clearInterval(liveStatusInterval);
+  clearInterval(onsiteTimerInterval);
+}
+
+async function pollLiveStatus() {
+  const token = localStorage.getItem('gc_client_token');
+  if (!token) return;
+  try {
+    const r = await fetch(`${API}/team-live-status?clientToken=${encodeURIComponent(token)}`);
+    const data = await r.json();
+    if (data.success && data.statuses) {
+      const changed = JSON.stringify(data.statuses) !== JSON.stringify(Object.values(liveStatusData));
+      liveStatusData = {};
+      for (const s of data.statuses) {
+        liveStatusData[s.caregiverEmail] = s;
+      }
+      if (changed && currentTeamTab === 'active') renderTeamContent();
+    }
+  } catch(e) {}
+}
+
+function updateOnsiteTimers() {
+  const now = Date.now();
+  document.querySelectorAll('.onsite-timer[data-start]').forEach(el => {
+    const start = parseInt(el.getAttribute('data-start'));
+    const elapsed = Math.floor((now - start) / 1000);
+    const h = Math.floor(elapsed / 3600);
+    const m = Math.floor((elapsed % 3600) / 60);
+    const s = elapsed % 60;
+    el.textContent = h > 0
+      ? `${h}h ${String(m).padStart(2,'0')}m`
+      : `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+  });
+}
+
+// ════════════════════════════════════════════════════════════
+// CARE SCHEDULE MODAL
+// ════════════════════════════════════════════════════════════
+let currentScheduleEmail = '';
+let currentScheduleName = '';
+let careScheduleCache = {};  // caregiverEmail -> schedule obj
+
+function openScheduleModal(caregiverEmail, caregiverName) {
+  currentScheduleEmail = caregiverEmail;
+  currentScheduleName = caregiverName;
+  document.getElementById('schedule-modal-title').textContent = `📅 Schedule — ${caregiverName}`;
+  // Reset form
+  document.querySelectorAll('.day-pill').forEach(p => p.classList.remove('selected'));
+  document.getElementById('schedule-start').value = '08:00';
+  document.getElementById('schedule-end').value = '17:00';
+  document.getElementById('schedule-care-type').value = '';
+  document.getElementById('schedule-notes').value = '';
+  document.getElementById('schedule-recurring').checked = true;
+  // Load existing schedule
+  const cached = careScheduleCache[caregiverEmail];
+  if (cached) populateScheduleForm(cached);
+  else loadScheduleFromAPI(caregiverEmail);
+  document.getElementById('schedule-modal').classList.add('active');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeScheduleModal() {
+  document.getElementById('schedule-modal').classList.remove('active');
+  document.body.style.overflow = '';
+}
+
+function toggleScheduleDay(el) {
+  el.classList.toggle('selected');
+}
+
+async function loadScheduleFromAPI(caregiverEmail) {
+  const token = localStorage.getItem('gc_client_token');
+  if (!token) return;
+  try {
+    const r = await fetch(`${API}/care-schedule?clientToken=${encodeURIComponent(token)}&caregiverEmail=${encodeURIComponent(caregiverEmail)}`);
+    const data = await r.json();
+    if (data.success && data.schedule) {
+      careScheduleCache[caregiverEmail] = data.schedule;
+      populateScheduleForm(data.schedule);
+    }
+  } catch(e) {}
+}
+
+function populateScheduleForm(schedule) {
+  const days = (schedule.days || '').split(',').map(d => d.trim());
+  document.querySelectorAll('.day-pill').forEach(p => {
+    if (days.includes(p.getAttribute('data-day'))) p.classList.add('selected');
+  });
+  if (schedule.start_time) document.getElementById('schedule-start').value = schedule.start_time;
+  if (schedule.end_time) document.getElementById('schedule-end').value = schedule.end_time;
+  if (schedule.care_type) document.getElementById('schedule-care-type').value = schedule.care_type;
+  if (schedule.notes) document.getElementById('schedule-notes').value = schedule.notes;
+  document.getElementById('schedule-recurring').checked = !!schedule.is_recurring;
+}
+
+async function saveSchedule() {
+  const days = [];
+  document.querySelectorAll('.day-pill.selected').forEach(p => days.push(p.getAttribute('data-day')));
+  if (days.length === 0) { alert('Please select at least one day'); return; }
+  const startTime = document.getElementById('schedule-start').value;
+  const endTime = document.getElementById('schedule-end').value;
+  const careType = document.getElementById('schedule-care-type').value;
+  const notes = document.getElementById('schedule-notes').value;
+  const isRecurring = document.getElementById('schedule-recurring').checked;
+  const token = localStorage.getItem('gc_client_token');
+  const btn = document.querySelector('.btn-save-schedule');
+  btn.textContent = 'Saving…';
+  btn.disabled = true;
+  try {
+    const r = await fetch(`${API}/care-schedule`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ clientToken: token, caregiverEmail: currentScheduleEmail, days, startTime, endTime, careType, notes, isRecurring })
+    });
+    const data = await r.json();
+    if (data.success) {
+      careScheduleCache[currentScheduleEmail] = { days: days.join(','), start_time: startTime, end_time: endTime, care_type: careType, notes, is_recurring: isRecurring };
+      btn.textContent = '✅ Saved!';
+      setTimeout(() => {
+        closeScheduleModal();
+        btn.textContent = '💾 Save Care Schedule';
+        btn.disabled = false;
+        renderTeamContent(); // refresh to show "has-schedule" state on button
+      }, 800);
+    } else {
+      btn.textContent = '❌ Error — Try again';
+      btn.disabled = false;
+    }
+  } catch(e) {
+    btn.textContent = '❌ Error — Try again';
+    btn.disabled = false;
+  }
+}
+
 </script>
+
+  <!-- ══════════════════════════════════════════════════════════
+       CARE SCHEDULE MODAL
+       ══════════════════════════════════════════════════════════ -->
+  <div id="schedule-modal" onclick="if(event.target===this)closeScheduleModal()">
+    <div class="schedule-sheet">
+      <div class="schedule-header">
+        <div class="schedule-title" id="schedule-modal-title">Care Schedule</div>
+        <button class="schedule-close" onclick="closeScheduleModal()">✕</button>
+      </div>
+
+      <div class="schedule-label">Days of the week</div>
+      <div class="days-grid" id="schedule-days-grid">
+        <div class="day-pill" data-day="Mon" onclick="toggleScheduleDay(this)">Mon</div>
+        <div class="day-pill" data-day="Tue" onclick="toggleScheduleDay(this)">Tue</div>
+        <div class="day-pill" data-day="Wed" onclick="toggleScheduleDay(this)">Wed</div>
+        <div class="day-pill" data-day="Thu" onclick="toggleScheduleDay(this)">Thu</div>
+        <div class="day-pill" data-day="Fri" onclick="toggleScheduleDay(this)">Fri</div>
+        <div class="day-pill" data-day="Sat" onclick="toggleScheduleDay(this)">Sat</div>
+        <div class="day-pill" data-day="Sun" onclick="toggleScheduleDay(this)">Sun</div>
+      </div>
+
+      <div class="time-row">
+        <div class="time-field">
+          <label>Start Time</label>
+          <input type="time" id="schedule-start" value="08:00">
+        </div>
+        <div class="time-field">
+          <label>End Time</label>
+          <input type="time" id="schedule-end" value="17:00">
+        </div>
+      </div>
+
+      <div class="schedule-label">Type of Care</div>
+      <select class="schedule-select" id="schedule-care-type">
+        <option value="">Select care type…</option>
+        <option>Elder Care</option>
+        <option>Dementia Care</option>
+        <option>Alzheimer's Support</option>
+        <option>Wheelchair Assistance</option>
+        <option>Post-Surgery Recovery</option>
+        <option>Medication Management</option>
+        <option>Bathing & Grooming</option>
+        <option>Meal Preparation</option>
+        <option>Companionship</option>
+        <option>Transportation</option>
+        <option>Overnight Care</option>
+        <option>Physical Therapy Aid</option>
+        <option>Wound Care</option>
+        <option>Hospice Support</option>
+        <option>Mental Health Support</option>
+        <option>Feeding Assistance</option>
+        <option>Incontinence Care</option>
+        <option>Fall Prevention</option>
+        <option>Light Housekeeping</option>
+        <option>Errands & Shopping</option>
+        <option>Respiratory Care</option>
+        <option>Stroke Recovery</option>
+        <option>Disability Support</option>
+      </select>
+
+      <div class="schedule-label">Notes (optional)</div>
+      <textarea class="schedule-textarea" id="schedule-notes" placeholder="Any specific instructions, preferences, or routines…"></textarea>
+
+      <div class="recurring-row">
+        <div>
+          <div class="recurring-label">Recurring weekly</div>
+          <div class="recurring-sub">Repeat this schedule every week</div>
+        </div>
+        <label class="toggle-wrap">
+          <input type="checkbox" class="toggle-input" id="schedule-recurring" checked>
+          <span class="toggle-track"></span>
+        </label>
+      </div>
+
+      <button class="btn-save-schedule" onclick="saveSchedule()">💾 Save Care Schedule</button>
+    </div>
+  </div>
+
 </body>
 </html>
