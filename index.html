@@ -2796,6 +2796,107 @@
       border-color: #7C5CFF;
       color: #7C5CFF;
     }
+
+    /* ── Request This Caregiver Button ── */
+    .btn-request-direct {
+      width: 100%;
+      padding: 15px;
+      background: linear-gradient(135deg, #7C5CFF, #4A90E2);
+      color: #fff;
+      border: none;
+      border-radius: 14px;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      letter-spacing: 0.02em;
+      box-shadow: 0 4px 20px rgba(124,92,255,0.35);
+      transition: all 0.2s ease;
+    }
+    .btn-request-direct:active { transform: scale(0.98); opacity:0.92; }
+
+    /* ── Hire Status Tracker ── */
+    .hire-step {
+      display: flex;
+      align-items: flex-start;
+      gap: 16px;
+      padding: 16px 0;
+      position: relative;
+    }
+    .hire-step:not(:last-child)::after {
+      content: '';
+      position: absolute;
+      left: 19px;
+      top: 48px;
+      bottom: 0;
+      width: 2px;
+      background: #E2E8F0;
+    }
+    .hire-step.done::after { background: #7C5CFF; }
+    .hire-step-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      flex-shrink: 0;
+      border: 2px solid #E2E8F0;
+      background: #F8FAFC;
+      position: relative;
+      z-index: 1;
+    }
+    .hire-step.done .hire-step-icon {
+      background: linear-gradient(135deg,#7C5CFF,#4A90E2);
+      border-color: transparent;
+      color: #fff;
+    }
+    .hire-step.current .hire-step-icon {
+      background: #fff;
+      border-color: #7C5CFF;
+      color: #7C5CFF;
+      box-shadow: 0 0 0 4px rgba(124,92,255,0.12);
+    }
+    .hire-step.future .hire-step-icon { opacity: 0.4; }
+    .hire-step-content { flex: 1; }
+    .hire-step-title { font-size: 15px; font-weight: 700; color: #0F172A; margin-bottom: 2px; }
+    .hire-step.future .hire-step-title { color: #94A3B8; }
+    .hire-step-sub { font-size: 12px; color: #64748B; }
+    .hire-step.current .hire-step-title { color: #7C5CFF; }
+
+    /* ── Saved tab Send Request btn ── */
+    .btn-send-request {
+      padding: 9px 14px;
+      background: linear-gradient(135deg, #7C5CFF, #4A90E2);
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .status-pill-requested {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 50px;
+      font-size: 11px;
+      font-weight: 700;
+      background: rgba(245,158,11,0.12);
+      color: #D97706;
+      border: 1px solid rgba(245,158,11,0.25);
+    }
+    .status-pill-active {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 50px;
+      font-size: 11px;
+      font-weight: 700;
+      background: rgba(34,197,94,0.12);
+      color: #16A34A;
+      border: 1px solid rgba(34,197,94,0.25);
+    }
+
 </style>
 </head>
 <body>
@@ -2970,9 +3071,12 @@
   <div class="card-viewport" id="card-viewport">
     <!-- Cards rendered by JS -->
   </div>
-  <div class="action-bar">
-    <button class="btn-shortlist" id="btn-shortlist">♡ Shortlist</button>
-    <button class="btn-next" id="btn-next">Next →</button>
+  <div class="action-bar" style="flex-direction:column;gap:8px;padding:10px 16px;">
+    <button class="btn-request-direct" id="btn-request-direct">📋 Request This Caregiver</button>
+    <div style="display:flex;gap:10px;">
+      <button class="btn-shortlist" id="btn-shortlist" style="flex:1;">♡ Save</button>
+      <button class="btn-next" id="btn-next" style="flex:1;">Next →</button>
+    </div>
   </div>
 </div>
 
@@ -2995,6 +3099,25 @@
     <div style="font-size:56px;margin-bottom:16px;">💜</div>
     <p style="font-size:15px;font-weight:600;margin-bottom:6px;">No caregivers shortlisted yet</p>
     <p style="font-size:13px;opacity:0.7;">Swipe through profiles to save your favorites</p>
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════════════════════════════
+     HIRE STATUS TRACKER
+     ══════════════════════════════════════════════════════════════ -->
+<div id="screen-hire-status" class="screen" style="background:#F8FAFC!important;">
+  <div class="screen-header" style="background:#fff;border-bottom:1px solid #E2E8F0;">
+    <button class="back-btn" id="hire-status-back" style="color:#0F172A;">←</button>
+    <div class="screen-title" style="color:#0F172A;">Hire Status</div>
+  </div>
+  <div style="padding:20px 16px;">
+    <div id="hire-status-cg-card" style="background:#fff;border-radius:16px;padding:18px;display:flex;align-items:center;gap:14px;margin-bottom:24px;box-shadow:0 2px 12px rgba(0,0,0,0.06);border:1px solid #E2E8F0;">
+    </div>
+    <div style="font-size:13px;font-weight:700;color:#94A3B8;letter-spacing:0.08em;text-transform:uppercase;margin-bottom:16px;">Your Hiring Progress</div>
+    <div id="hire-steps-list" style="display:flex;flex-direction:column;gap:0;"></div>
+    <div id="hire-status-tip" style="margin-top:24px;background:linear-gradient(135deg,rgba(124,92,255,0.08),rgba(74,144,226,0.08));border:1px solid rgba(124,92,255,0.2);border-radius:14px;padding:16px;font-size:13px;color:#475569;line-height:1.5;"></div>
+    <button id="hire-status-action-btn" onclick="showScreen('screen-team')" style="margin-top:20px;width:100%;padding:16px;background:linear-gradient(135deg,#7C5CFF,#4A90E2);color:#fff;border:none;border-radius:14px;font-size:15px;font-weight:700;cursor:pointer;">👥 Go to My Team</button>
   </div>
 </div>
 
@@ -3134,9 +3257,9 @@
   <div class="confirm-title" id="confirm-title">Interview Request Sent!</div>
   <div class="confirm-sub" id="confirm-sub">Your caregiver has been notified and will confirm within 24 hours. You'll receive a notification by email once they respond.</div>
   <div class="confirm-card" id="confirm-card"></div>
-  <button class="btn-home" onclick="showScreen('screen-shortlist')">← Back to Shortlist</button>
-  <button class="btn-home" style="margin-top:0; background:linear-gradient(135deg,#7C5CFF,#4A90E2); border:none; font-size:14px;" onclick="showTeamScreen()">👥 View My Care Team</button>
-  <button class="btn-home" style="margin-top:0; background:rgba(124,92,255,0.15); border:1.5px solid rgba(167,139,250,0.3); font-size:14px;" onclick="showAccountScreen()">📋 View My Bookings</button>
+  <button class="btn-home" style="background:linear-gradient(135deg,#7C5CFF,#4A90E2);border:none;font-size:15px;font-weight:700;" id="btn-track-hire-status">📊 Track Hire Status</button>
+  <button class="btn-home" style="margin-top:0; background:rgba(124,92,255,0.15); border:1.5px solid rgba(167,139,250,0.3); font-size:14px;" onclick="showTeamScreen()">👥 View My Care Team</button>
+  <button class="btn-home" style="margin-top:0; background:rgba(124,92,255,0.08); border:1px solid rgba(124,92,255,0.15); font-size:14px;" onclick="showAccountScreen()">📋 View My Bookings</button>
   <button class="btn-home" style="margin-top:0; background:rgba(255,255,255,0.05); font-size:14px; opacity:0.6;" onclick="showScreen('screen-dispatch')">Start Over</button>
 </div>
 
@@ -3781,6 +3904,21 @@ function showInterviewConfirmation({ email, cg, date, time, type }) {
   shortlist = shortlist.filter(s => s.id !== cg.id);
   renderShortlist();
 
+  // Save booking status to localStorage for hire tracker
+  const bookingKey = `gc_booked_${cg.id}`;
+  const existingBooking = JSON.parse(localStorage.getItem(bookingKey) || 'null');
+  if (!existingBooking) {
+    localStorage.setItem(bookingKey, JSON.stringify({
+      status: 'pending',
+      caregiverName: `${cg.firstName || cg.first_name} ${cg.lastName || cg.last_name}`,
+      caregiverEmail: cg.email || '',
+      date: date,
+      time: time,
+      interviewType: type,
+      bookedAt: new Date().toISOString()
+    }));
+  }
+
   document.getElementById('confirm-icon').textContent = '📅';
   document.getElementById('confirm-title').textContent = 'Interview Request Sent!';
   document.getElementById('confirm-sub').textContent = `${cgName} has been notified and will confirm within 24 hours. Check your email for updates.`;
@@ -3791,7 +3929,14 @@ function showInterviewConfirmation({ email, cg, date, time, type }) {
     <div class="confirm-row"><span class="confirm-label">Format</span><span class="confirm-value">${typeLabels[type] || type}</span></div>
     <div class="confirm-row"><span class="confirm-label">Your Email</span><span class="confirm-value">${email}</span></div>
     <div class="confirm-row"><span class="confirm-label">Cost</span><span class="confirm-value" style="color:rgba(34, 197, 94, 0.4);">FREE ✨</span></div>`;
-  showScreen('screen-confirm');
+    showScreen('screen-confirm');
+  // Wire Track Hire Status button
+  setTimeout(() => {
+    const trackBtn = document.getElementById('btn-track-hire-status');
+    if (trackBtn && cg) {
+      trackBtn.onclick = () => showHireStatus(cg);
+    }
+  }, 50);
 }
 
 function showConfirmation({ name, email, cg, date, hours, rate, total }) {
@@ -4483,22 +4628,49 @@ function renderTeamCard(cg, status) {
   const rating = Number(cg.rating || 4.8).toFixed(1);
   const avatar = cg.avatar || '👩‍⚕️';
   const specs = Array.isArray(cg.specializations) ? cg.specializations.slice(0,2).join(', ') : (cg.specializations || 'Home Care');
-  const statusLabels = { saved: '💜 Saved', active: '✅ Active', past: '📋 Past' };
   const savedDate = cg.savedAt ? new Date(cg.savedAt).toLocaleDateString('en-US', {month:'short', day:'numeric'}) : '';
 
-  return `<div class="team-card">
-    <div class="team-avatar-wrap">
-      <div class="team-avatar">${avatar}</div>
-      <div class="team-status-dot ${status}"></div>
-    </div>
-    <div class="team-info">
-      <div class="team-name">${name}</div>
-      <div class="team-meta">⭐ ${rating} · $${rate}/hr · ${specs}</div>
-      <div class="team-badge ${status}">${statusLabels[status]}${savedDate ? ' · ' + savedDate : ''}</div>
-    </div>
-    <div class="team-actions">
-      <button class="btn-rebook" onclick="rebookTeamCaregiver(${JSON.stringify(cg).replace(/"/g, '&quot;')})">🔄 Rebook</button>
-      ${status === 'saved' ? `<button class="btn-unsave" onclick="unsaveCaregiver(${cg.id})">Remove</button>` : ''}
+  // Check booking status for this caregiver from localStorage
+  const bookingKey = `gc_booked_${cg.id}`;
+  const existingBooking = JSON.parse(localStorage.getItem(bookingKey) || 'null');
+  const bookingStatus = existingBooking ? existingBooking.status : null; // 'pending' | 'accepted' | null
+
+  let statusPill = '';
+  let actionBtn = '';
+  let dotClass = 'saved';
+
+  if (status === 'saved') {
+    if (bookingStatus === 'pending') {
+      statusPill = '<span class="status-pill-requested">⏳ Request Sent</span>';
+      actionBtn = `<button class="btn-rebook" style="font-size:11px;" onclick="showHireStatus(${JSON.stringify(cg).replace(/"/g, '&quot;')})">📊 Track Status</button>`;
+      dotClass = 'pending';
+    } else if (bookingStatus === 'accepted') {
+      statusPill = '<span class="status-pill-active">✅ Accepted</span>';
+      actionBtn = `<button class="btn-rebook" style="font-size:11px;" onclick="showHireStatus(${JSON.stringify(cg).replace(/"/g, '&quot;')})">📊 View Progress</button>`;
+      dotClass = 'active';
+    } else {
+      statusPill = `<div class="team-badge saved">💜 Saved${savedDate ? ' · ' + savedDate : ''}</div>`;
+      actionBtn = `<button class="btn-send-request" onclick="startBookingFromTeam(${JSON.stringify(cg).replace(/"/g, '&quot;')})">Send Request →</button>`;
+    }
+  } else {
+    actionBtn = `<button class="btn-rebook" onclick="rebookTeamCaregiver(${JSON.stringify(cg).replace(/"/g, '&quot;')})">🔄 Rebook</button>`;
+  }
+
+  return `<div class="team-card" style="flex-direction:column;align-items:stretch;gap:10px;">
+    <div style="display:flex;align-items:center;gap:14px;">
+      <div class="team-avatar-wrap">
+        <div class="team-avatar">${avatar}</div>
+        <div class="team-status-dot ${dotClass}"></div>
+      </div>
+      <div class="team-info" style="flex:1;min-width:0;">
+        <div class="team-name">${name}</div>
+        <div class="team-meta">⭐ ${rating} · $${rate}/hr · ${specs}</div>
+        ${statusPill}
+      </div>
+      <div class="team-actions" style="flex-direction:column;gap:6px;">
+        ${actionBtn}
+        ${status === 'saved' ? `<button class="btn-unsave" onclick="unsaveCaregiver(${cg.id})" style="font-size:11px;">Remove</button>` : ''}
+      </div>
     </div>
   </div>`;
 }
@@ -4813,6 +4985,129 @@ async function saveSchedule() {
     btn.disabled = false;
   }
 }
+
+
+// ── DIRECT BOOKING FROM SWIPER CARD ──
+function startBookingDirect(cg) {
+  if (!cg) {
+    cg = caregivers[currentIndex];
+  }
+  bookingCaregiver = cg;
+  const name = `${cg.firstName || cg.first_name} ${cg.lastName || cg.last_name}`;
+  const rate = cg.hourlyRate || cg.hourly_rate || 28;
+  const match = cg.matchScore ? Math.round(cg.matchScore) : 90;
+  document.getElementById('booking-cg-mini').innerHTML = `
+    <div class="booking-cg-avatar">${cg.avatar || '👩‍⚕️'}</div>
+    <div>
+      <div style="font-size:16px;font-weight:700;">${name}</div>
+      <div style="font-size:13px;color:rgba(255,255,255,0.6);">$${rate}/hr · 🎯 ${match}% match · ⭐ ${Number(cg.rating || 4.8).toFixed(1)}</div>
+    </div>`;
+  renderDateScroll();
+  selectedDate = null; selectedTime = null; selectedInterviewType = 'video';
+  document.querySelectorAll('.time-slot').forEach(b => b.classList.remove('selected'));
+  document.querySelectorAll('.type-btn').forEach(b => b.classList.remove('selected'));
+  document.querySelector('.type-btn[data-type="video"]').classList.add('selected');
+  document.getElementById('book-email').value = localStorage.getItem('gc_email') || '';
+  document.getElementById('book-notes').value = '';
+  showScreen('screen-booking');
+}
+
+// ── BOOKING FROM MY TEAM SAVED TAB ──
+function startBookingFromTeam(cg) {
+  startBookingDirect(cg);
+}
+
+// ── HIRE STATUS TRACKER ──
+function showHireStatus(cg) {
+  const name = `${cg.firstName || cg.first_name || ''} ${cg.lastName || cg.last_name || ''}`.trim();
+  const rate = cg.hourlyRate || cg.hourly_rate || 28;
+  const avatar = cg.avatar || '👩‍⚕️';
+  const specs = Array.isArray(cg.specializations) ? cg.specializations.slice(0,2).join(', ') : (cg.specializations || 'Home Care');
+
+  const bookingKey = `gc_booked_${cg.id}`;
+  const booking = JSON.parse(localStorage.getItem(bookingKey) || 'null');
+  const bStatus = booking ? booking.status : 'pending';
+
+  // Populate caregiver card
+  document.getElementById('hire-status-cg-card').innerHTML = `
+    <div style="width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,#7C5CFF,#4A90E2);display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0;">${avatar}</div>
+    <div style="flex:1;min-width:0;">
+      <div style="font-size:17px;font-weight:700;color:#0F172A;">${name}</div>
+      <div style="font-size:13px;color:#64748B;">${specs} · $${rate}/hr</div>
+      ${booking ? `<div style="font-size:11px;color:#94A3B8;margin-top:2px;">Requested ${booking.date ? new Date(booking.date+'T12:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric'}) : ''} ${booking.time || ''}</div>` : ''}
+    </div>`;
+
+  const hasSchedule = !!(careScheduleCache && careScheduleCache[cg.email || '']);
+
+  // Build steps
+  const steps = [
+    {
+      icon: '📋',
+      title: 'Interview Request Sent',
+      sub: booking ? `Sent via ${booking.interviewType === 'video' ? 'Video Call' : booking.interviewType === 'phone' ? 'Phone' : 'In Person'}` : 'Your request is on its way',
+      state: 'done'
+    },
+    {
+      icon: '👀',
+      title: 'Caregiver Reviewing',
+      sub: bStatus === 'accepted' ? 'They reviewed and accepted!' : 'Waiting for caregiver response (usually within 24 hrs)',
+      state: bStatus === 'accepted' ? 'done' : 'current'
+    },
+    {
+      icon: '🤝',
+      title: 'Interview Confirmed',
+      sub: bStatus === 'accepted' ? 'Confirmed! Check your My Team tab' : 'Once they accept, you'll see them in My Team',
+      state: bStatus === 'accepted' ? 'done' : 'future'
+    },
+    {
+      icon: '📅',
+      title: 'Care Schedule Set',
+      sub: hasSchedule ? 'Schedule is set — you're all set!' : 'Set a recurring schedule for ongoing care',
+      state: hasSchedule ? 'done' : (bStatus === 'accepted' ? 'current' : 'future')
+    },
+    {
+      icon: '🌟',
+      title: 'First Day of Care!',
+      sub: 'Your caregiver arrives and care begins',
+      state: hasSchedule ? 'current' : 'future'
+    }
+  ];
+
+  document.getElementById('hire-steps-list').innerHTML = steps.map(s => `
+    <div class="hire-step ${s.state}">
+      <div class="hire-step-icon">${s.state === 'done' ? '✓' : s.icon}</div>
+      <div class="hire-step-content">
+        <div class="hire-step-title">${s.title}</div>
+        <div class="hire-step-sub">${s.sub}</div>
+      </div>
+    </div>`).join('');
+
+  // Tip
+  const tips = {
+    pending: '💡 Most caregivers respond within a few hours. You'll see them move to your Active Team once they confirm.',
+    accepted: '🎉 Great news — your caregiver accepted! Go to My Team to set a care schedule and get started.',
+  };
+  document.getElementById('hire-status-tip').textContent = tips[bStatus] || tips.pending;
+
+  showScreen('screen-hire-status');
+}
+
+// ── WIRE UP btn-request-direct ──
+document.addEventListener('DOMContentLoaded', () => {
+  const reqBtn = document.getElementById('btn-request-direct');
+  if (reqBtn) {
+    reqBtn.addEventListener('click', () => startBookingDirect());
+  }
+});
+// Also wire immediately in case DOMContentLoaded already fired
+(function() {
+  const reqBtn = document.getElementById('btn-request-direct');
+  if (reqBtn) {
+    reqBtn.addEventListener('click', () => startBookingDirect());
+  }
+})();
+
+document.getElementById('hire-status-back').addEventListener('click', () => showScreen('screen-team'));
 
 </script>
 
