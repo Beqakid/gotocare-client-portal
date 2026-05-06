@@ -1598,7 +1598,8 @@
     /* ── SHORTLIST extras ── */
     .sl-meta { font-size: 13px; color: rgba(255,255,255,0.6); }
     .sl-match { font-size: 13px; font-weight: 700; color: rgba(34, 197, 94, 0.4); }
-    .sl-book-btn { background: linear-gradient(135deg, var(--purple), var(--blue)); border: none; border-radius: 10px; padding: 8px 16px; color: #fff; font-size: 13px; font-weight: 700; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+    .sl-hire-btn { background: linear-gradient(135deg, var(--purple), var(--blue)); border: none; border-radius: 10px; padding: 8px 16px; color: #fff; font-size: 13px; font-weight: 700; cursor: pointer; -webkit-tap-highlight-color: transparent; white-space: nowrap; }
+    .sl-book-btn { background: transparent; border: 1.5px solid rgba(124,92,255,0.5); border-radius: 10px; padding: 7px 12px; color: #7C5CFF; font-size: 12px; font-weight: 600; cursor: pointer; -webkit-tap-highlight-color: transparent; white-space: nowrap; }
     .sl-remove-btn { background: rgba(239,68,68,0.2); border: 1px solid rgba(239,68,68,0.3); border-radius: 10px; padding: 6px 12px; color: rgba(239, 68, 68, 0.4); font-size: 12px; font-weight: 600; cursor: pointer; margin-top: 8px; -webkit-tap-highlight-color: transparent; }
 
     /* ── BOOKING extras ── */
@@ -2813,6 +2814,20 @@
       transition: all 0.2s ease;
     }
     .btn-request-direct:active { transform: scale(0.98); opacity:0.92; }
+    /* ── Schedule Interview (secondary) ── */
+    .btn-schedule-interview {
+      width: 100%;
+      padding: 11px;
+      background: transparent;
+      color: #7C5CFF;
+      border: 1.5px solid rgba(124,92,255,0.45);
+      border-radius: 12px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .btn-schedule-interview:active { background: rgba(124,92,255,0.08); transform: scale(0.98); }
 
     /* ── Hire Status Tracker ── */
     .hire-step {
@@ -3072,7 +3087,8 @@
     <!-- Cards rendered by JS -->
   </div>
   <div class="action-bar" style="flex-direction:column;gap:8px;padding:10px 16px;">
-    <button class="btn-request-direct" id="btn-request-direct">📋 Request This Caregiver</button>
+    <button class="btn-request-direct" id="btn-request-direct">💼 Hire Directly</button>
+    <button class="btn-schedule-interview" id="btn-schedule-interview" onclick="startBookingDirect()">📅 Schedule Interview First</button>
     <div style="display:flex;gap:10px;">
       <button class="btn-shortlist" id="btn-shortlist" style="flex:1;">♡ Save</button>
       <button class="btn-next" id="btn-next" style="flex:1;">Next →</button>
@@ -3769,7 +3785,10 @@ function renderShortlist() {
         <div class="sl-match">🎯 ${match}% match</div>
         <button class="sl-remove-btn" onclick="removeShortlist(${cg.id})">Remove</button>
       </div>
-      <button class="sl-book-btn" onclick="startBooking(${i})">Book</button>
+      <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end;">
+        <button class="sl-hire-btn" onclick="directHireFromShortlist(${i})">💼 Hire Now</button>
+        <button class="sl-book-btn" onclick="startBooking(${i})">📅 Interview</button>
+      </div>
     </div>`;
   }).join('');
 }
@@ -5056,6 +5075,43 @@ async function saveSchedule() {
 
 
 // ── DIRECT BOOKING FROM SWIPER CARD ──
+// ── DIRECT HIRE (no interview) ──
+async function directHireNow(cg) {
+  if (!cg) cg = caregivers[currentIndex];
+  if (!cg) return;
+  const token = localStorage.getItem('gc_client_token');
+  if (!token) {
+    toast('Please log in to hire a caregiver');
+    setTimeout(() => showScreen('screen-client-login'), 900);
+    return;
+  }
+  const name = (cg.firstName || cg.first_name || cg.name || 'Caregiver').split(' ')[0];
+  const confirmed = confirm(`Add ${name} to your Care Team now?\n\nNo interview needed — you can always message them after.`);
+  if (!confirmed) return;
+  const btn = document.getElementById('btn-request-direct');
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ Adding...'; }
+  try {
+    await addToTeam(cg, null);
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = '💼 Hire Directly'; }
+  }
+}
+
+async function directHireFromShortlist(idx) {
+  const cg = shortlist[idx];
+  if (!cg) return;
+  const token = localStorage.getItem('gc_client_token');
+  if (!token) {
+    toast('Please log in to hire a caregiver');
+    setTimeout(() => showScreen('screen-client-login'), 900);
+    return;
+  }
+  const name = (cg.firstName || cg.first_name || cg.name || 'Caregiver').split(' ')[0];
+  const confirmed = confirm(`Hire ${name} directly?\n\nThey'll appear on your Care Team immediately.`);
+  if (!confirmed) return;
+  await addToTeam(cg, null);
+}
+
 function startBookingDirect(cg) {
   if (!cg) {
     cg = caregivers[currentIndex];
@@ -5219,14 +5275,14 @@ async function addToTeam(cg, bookingId) {
 document.addEventListener('DOMContentLoaded', () => {
   const reqBtn = document.getElementById('btn-request-direct');
   if (reqBtn) {
-    reqBtn.addEventListener('click', () => startBookingDirect());
+    reqBtn.addEventListener('click', () => directHireNow());
   }
 });
 // Also wire immediately in case DOMContentLoaded already fired
 (function() {
   const reqBtn = document.getElementById('btn-request-direct');
   if (reqBtn) {
-    reqBtn.addEventListener('click', () => startBookingDirect());
+    reqBtn.addEventListener('click', () => directHireNow());
   }
 })();
 
