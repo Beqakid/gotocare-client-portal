@@ -4483,7 +4483,7 @@ function showTeamScreen() {
   startLiveStatusPolling();
 }
 
-let teamApiData = { active: [], past: [] };
+let teamApiData = { hired: [], active: [], past: [] };
 let teamApiLoaded = false;
 
 function loadTeamFromAPI() {
@@ -4494,7 +4494,11 @@ function loadTeamFromAPI() {
     .then(r => r.json())
     .then(data => {
       if (data.success) {
-        teamApiData = { active: data.active || [], past: data.past || [] };
+        teamApiData = {
+          hired: data.hired || [],
+          active: data.active || [],
+          past: data.past || []
+        };
         teamApiLoaded = true;
         renderTeamContent();
       }
@@ -4531,13 +4535,16 @@ function renderTeamContent() {
   }
 
   if (currentTeamTab === 'active') {
-    const activeList = teamApiData.active || [];
-    if (activeList.length === 0) {
+    const hiredList = teamApiData.hired || [];
+    const pendingList = teamApiData.active || [];
+    const totalActive = hiredList.length + pendingList.length;
+
+    if (totalActive === 0) {
       el.innerHTML = `
         <div class="team-empty">
           <div class="team-empty-icon">✅</div>
-          <div class="team-empty-title">No active arrangements yet</div>
-          <div class="team-empty-sub">When a caregiver accepts your interview request and you have an upcoming session, they'll appear here.</div>
+          <div class="team-empty-title">No team members yet</div>
+          <div class="team-empty-sub">Book an interview, then add your caregiver to your Care Team — they'll appear here.</div>
         </div>
         <div class="save-cta">
           <div class="save-cta-icon">🔍</div>
@@ -4546,8 +4553,10 @@ function renderTeamContent() {
         </div>`;
     } else {
       el.innerHTML = `
-        <div class="team-section-title">Upcoming Sessions (${activeList.length})</div>
-        ${activeList.map(cg => renderApiTeamCard(cg, 'active')).join('')}`;
+        ${hiredList.length > 0 ? `<div class="team-section-title">💜 My Care Team (${hiredList.length})</div>
+        ${hiredList.map(cg => renderHiredCard(cg)).join('')}` : ''}
+        ${pendingList.length > 0 ? `<div class="team-section-title" style="margin-top:${hiredList.length > 0 ? '20px' : '0'};">⏳ Interview Accepted — Ready to Hire (${pendingList.length})</div>
+        ${pendingList.map(cg => renderApiTeamCard(cg, 'active')).join('')}` : ''}`;
     }
     return;
   }
@@ -4615,12 +4624,71 @@ function renderApiTeamCard(cg, status) {
         ${status === 'past' ? `<button class="btn-rebook" onclick="showScreen('screen-dispatch')">Find Again</button>` : ''}
       </div>
     </div>
-    ${status === 'active' ? `<button class="${scheduleBtnClass}" onclick="openScheduleModal('${cgEmail}', '${name.replace(/'/g,"\'")}')">
+    ${status === 'active' ? `
+    <button onclick="addToTeam(${JSON.stringify(cg).replace(/"/g,'&quot;')}, ${cg.bookingId || 'null'})" style="width:100%;padding:13px;background:linear-gradient(135deg,#7C5CFF,#4A90E2);color:#fff;border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;">💜 Add to My Care Team</button>
+    <button class="${scheduleBtnClass}" onclick="openScheduleModal('${cgEmail}', '${name.replace(/'/g,"\'")}')">
       ${scheduleBtnLabel}
     </button>` : ''}
   </div>`;
 }
 
+function renderHiredCard(cg) {
+  const name = cg.name || 'Caregiver';
+  const initials = name.split(' ').map(n => n[0]).join('').substring(0,2).toUpperCase();
+  const rate = cg.hourlyRate || 28;
+  const specialty = cg.specialty || 'Home Care';
+  const city = cg.city ? `${cg.city}${cg.state ? ', ' + cg.state : ''}` : '';
+  const hiredDate = cg.hiredAt ? new Date(cg.hiredAt).toLocaleDateString('en-US', {month:'short', day:'numeric', year:'numeric'}) : '';
+  const avatarHtml = cg.photoUrl
+    ? `<img src="${cg.photoUrl}" style="width:52px;height:52px;border-radius:50%;object-fit:cover;" />`
+    : `<div style="width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,#7C5CFF,#4A90E2);color:#fff;font-size:20px;font-weight:700;display:flex;align-items:center;justify-content:center;">${initials}</div>`;
+
+  const liveInfo = liveStatusData[cg.email] || null;
+  const isOnsite = liveInfo && liveInfo.isOnsite;
+  const startTs = isOnsite && liveInfo.startTime ? new Date(liveInfo.startTime).getTime() : null;
+  const cgEmail = cg.email || '';
+  const hasSchedule = !!careScheduleCache[cgEmail];
+
+  return `<div class="team-card" style="flex-direction:column;align-items:stretch;gap:10px;border:1.5px solid rgba(124,92,255,0.25);background:linear-gradient(135deg,rgba(124,92,255,0.04),rgba(74,144,226,0.04));">
+    ${isOnsite ? `<div class="onsite-banner"><div class="onsite-dot"></div><span>🟢 ONSITE NOW</span><span class="onsite-timer" data-start="${startTs}">--:--</span></div>` : ''}
+    <div style="display:flex;align-items:center;gap:14px;">
+      <div class="team-avatar-wrap">
+        ${avatarHtml}
+        <div class="team-status-dot active"></div>
+      </div>
+      <div class="team-info" style="flex:1;min-width:0;">
+        <div class="team-name">${name}</div>
+        <div class="team-meta">$${rate}/hr · ${specialty}${city ? ' · ' + city : ''}</div>
+        <div class="team-badge active">💜 On My Team${hiredDate ? ' · Since ' + hiredDate : ''}</div>
+      </div>
+      <div class="team-actions">
+        <button class="btn-rebook" onclick="removeFromTeam(${cg.id})" style="background:rgba(239,68,68,0.1);color:#EF4444;border:1px solid rgba(239,68,68,0.2);font-size:10px;">Remove</button>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;">
+      <button class="${hasSchedule ? 'btn-schedule has-schedule' : 'btn-schedule'}" style="flex:1;" onclick="openScheduleModal('${cgEmail}', '${name.replace(/'/g,"\'")}')">
+        ${hasSchedule ? '📅 Schedule ✓' : '📅 Set Schedule'}
+      </button>
+      <button class="btn-rebook" style="flex:1;" onclick="rebookApiCaregiver(${JSON.stringify({name, email: cgEmail, specialty})})">🔄 Rebook</button>
+    </div>
+  </div>`;
+}
+
+async function removeFromTeam(caregiverId) {
+  const token = localStorage.getItem('gc_client_token');
+  if (!token || !confirm('Remove this caregiver from your team?')) return;
+  try {
+    const API = 'https://gotocare-original.jjioji.workers.dev/api';
+    await fetch(`${API}/remove-from-team`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token, caregiverId })
+    });
+    teamApiLoaded = false;
+    loadTeamFromAPI();
+    toast('Removed from your Care Team');
+  } catch(e) { toast('Error removing — please try again'); }
+}
 
 function renderTeamCard(cg, status) {
   const name = `${cg.firstName || cg.first_name || ''} ${cg.lastName || cg.last_name || ''}`.trim();
@@ -5040,6 +5108,9 @@ function showHireStatus(cg) {
   const hasSchedule = !!(careScheduleCache && careScheduleCache[cg.email || '']);
 
   // Build steps
+  const isHired = bStatus === 'hired' || !!(getSavedTeam().find && false); // check localStorage hired flag
+  const hiredFlag = booking && booking.hired;
+
   const steps = [
     {
       icon: '📋',
@@ -5050,20 +5121,27 @@ function showHireStatus(cg) {
     {
       icon: '👀',
       title: 'Caregiver Reviewing',
-      sub: bStatus === 'accepted' ? 'They reviewed and accepted!' : 'Waiting for caregiver response (usually within 24 hrs)',
-      state: bStatus === 'accepted' ? 'done' : 'current'
+      sub: (bStatus === 'accepted' || bStatus === 'hired') ? 'They reviewed and accepted!' : 'Waiting for caregiver response (usually within 24 hrs)',
+      state: (bStatus === 'accepted' || bStatus === 'hired') ? 'done' : 'current'
     },
     {
       icon: '🤝',
-      title: 'Interview Confirmed',
-      sub: bStatus === 'accepted' ? 'Confirmed! Check your My Team tab' : 'Once they accept, you'll see them in My Team',
-      state: bStatus === 'accepted' ? 'done' : 'future'
+      title: 'Interview Complete',
+      sub: (bStatus === 'accepted' || bStatus === 'hired') ? 'Great — interview was a success!' : 'Once they confirm, you can proceed to hire',
+      state: (bStatus === 'accepted' || bStatus === 'hired') ? 'done' : 'future'
+    },
+    {
+      icon: '💜',
+      title: hiredFlag ? 'Added to My Care Team ✅' : 'Add to My Care Team',
+      sub: hiredFlag ? `${name} is officially on your care team!` : 'Interview went well? Make it official — add them to your permanent care team.',
+      state: hiredFlag ? 'done' : (bStatus === 'accepted' ? 'current' : 'future'),
+      showHireBtn: !hiredFlag && bStatus === 'accepted',
     },
     {
       icon: '📅',
       title: 'Care Schedule Set',
-      sub: hasSchedule ? 'Schedule is set — you're all set!' : 'Set a recurring schedule for ongoing care',
-      state: hasSchedule ? 'done' : (bStatus === 'accepted' ? 'current' : 'future')
+      sub: hasSchedule ? 'Schedule is set — you\'re all set!' : 'Set a recurring schedule for ongoing care',
+      state: hasSchedule ? 'done' : (hiredFlag ? 'current' : 'future')
     },
     {
       icon: '🌟',
@@ -5079,17 +5157,62 @@ function showHireStatus(cg) {
       <div class="hire-step-content">
         <div class="hire-step-title">${s.title}</div>
         <div class="hire-step-sub">${s.sub}</div>
+        ${s.showHireBtn ? `<button onclick="addToTeam(${JSON.stringify(cg).replace(/"/g,'&quot;')}, ${booking ? booking.bookingId || booking.id || 'null' : 'null'})" style="margin-top:10px;width:100%;padding:14px 20px;background:linear-gradient(135deg,#7C5CFF,#4A90E2);color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;letter-spacing:0.01em;">💜 Add ${name} to My Team</button>` : ''}
       </div>
     </div>`).join('');
 
   // Tip
   const tips = {
-    pending: '💡 Most caregivers respond within a few hours. You'll see them move to your Active Team once they confirm.',
-    accepted: '🎉 Great news — your caregiver accepted! Go to My Team to set a care schedule and get started.',
+    pending: '💡 Most caregivers respond within a few hours. You\'ll see them move to your Active Team once they confirm.',
+    accepted: '✨ Interview went well? Tap "Add to My Team" above to make it official and unlock scheduling.',
+    hired: '🎉 ' + name + ' is on your care team! Head to My Team to set a recurring schedule.',
   };
   document.getElementById('hire-status-tip').textContent = tips[bStatus] || tips.pending;
 
   showScreen('screen-hire-status');
+}
+
+async function addToTeam(cg, bookingId) {
+  const token = localStorage.getItem('gc_client_token');
+  if (!token) { toast('Please log in first'); return; }
+
+  const btn = event && event.target;
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ Adding...'; }
+
+  try {
+    const API = 'https://gotocare-original.jjioji.workers.dev/api';
+    const res = await fetch(`${API}/hire-caregiver`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token, caregiverId: cg.id, bookingId })
+    });
+    const data = await res.json();
+
+    if (data.success) {
+      // Update localStorage booking status
+      const bookingKey = `gc_booked_${cg.id}`;
+      const existing = JSON.parse(localStorage.getItem(bookingKey) || '{}');
+      localStorage.setItem(bookingKey, JSON.stringify({ ...existing, status: 'hired', hired: true }));
+
+      // Also update teamApiData so Active tab shows them immediately
+      teamApiLoaded = false; // force reload next time
+
+      const name = `${cg.firstName || cg.first_name || cg.name || ''}`.trim().split(' ')[0] || 'Caregiver';
+      toast(`🎉 ${data.caregiverName || name} is now on your Care Team!`);
+
+      // Navigate to My Team → Active tab
+      setTimeout(() => {
+        currentTeamTab = 'active';
+        showTeamScreen();
+      }, 700);
+    } else {
+      toast('Something went wrong. Please try again.');
+      if (btn) { btn.disabled = false; btn.textContent = '💜 Add to My Team'; }
+    }
+  } catch (e) {
+    toast('Network error — please try again');
+    if (btn) { btn.disabled = false; btn.textContent = '💜 Add to My Team'; }
+  }
 }
 
 // ── WIRE UP btn-request-direct ──
