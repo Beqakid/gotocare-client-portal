@@ -3146,9 +3146,11 @@
     </div>
     <!-- Stats Row -->
     <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;position:relative;z-index:1;">
-      <div style="background:rgba(255,255,255,0.1);backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,0.15);border-radius:14px;padding:14px 12px;text-align:center;cursor:pointer;" onclick="document.querySelector('[data-screen=screen-team]').click()">
-        <div id="home-stat-team" style="font-size:22px;font-weight:900;color:#fff;">—</div>
-        <div style="font-size:10px;color:rgba(255,255,255,0.6);font-weight:600;margin-top:2px;">My Team</div>
+      <div id="home-onsite-card" style="background:rgba(255,255,255,0.1);backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,0.15);border-radius:14px;padding:10px 8px;text-align:center;cursor:pointer;position:relative;overflow:hidden;" onclick="document.querySelector('[data-screen=screen-team]').click()">
+        <div id="home-onsite-glow" style="display:none;position:absolute;inset:0;background:radial-gradient(circle at 50% 50%,rgba(34,197,94,0.18),transparent 70%);pointer-events:none;"></div>
+        <div id="home-onsite-label" style="font-size:8px;font-weight:700;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:2px;">ONSITE</div>
+        <div id="home-onsite-name" style="font-size:12px;font-weight:800;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;">—</div>
+        <div id="home-onsite-clock" style="font-size:11px;font-weight:700;color:rgba(255,255,255,0.4);font-family:monospace;margin-top:3px;letter-spacing:0.5px;">No shift</div>
       </div>
       <div style="background:rgba(255,255,255,0.1);backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,0.15);border-radius:14px;padding:14px 12px;text-align:center;cursor:pointer;" onclick="document.querySelector('[data-screen=screen-account]').click()">
         <div id="home-stat-bookings" style="font-size:22px;font-weight:900;color:#fff;">—</div>
@@ -5723,7 +5725,86 @@ function showHomeScreen() {
   loadHomeData();
 }
 
-async function loadHomeData() {
+
+    // ══════════════════════════════════════════
+    // ONSITE CAREGIVER REAL-TIME TRACKER
+    // ══════════════════════════════════════════
+    let _onsiteStart = null;
+    let _onsiteName = '';
+    let _onsiteClockTimer = null;
+    let _onsitePollTimer = null;
+
+    async function loadOnsiteStatus() {
+      const token = localStorage.getItem('client_token');
+      if (!token) { _renderOnsite(false); return; }
+      try {
+        const res = await fetch('https://gotocare-original.jjioji.workers.dev/api/client-onsite-caregiver?clientToken=' + encodeURIComponent(token));
+        const d = await res.json();
+        if (d.active && d.start_time) {
+          _onsiteStart = new Date(d.start_time);
+          _onsiteName = d.caregiver_name || 'Caregiver';
+          _renderOnsite(true);
+        } else {
+          _onsiteStart = null; _onsiteName = '';
+          _renderOnsite(false);
+        }
+      } catch(e) { _renderOnsite(false); }
+    }
+
+    function _renderOnsite(active) {
+      const label = document.getElementById('home-onsite-label');
+      const name = document.getElementById('home-onsite-name');
+      const clock = document.getElementById('home-onsite-clock');
+      const glow = document.getElementById('home-onsite-glow');
+      if (!label) return;
+      if (active) {
+        // Show green active state
+        label.textContent = '● ONSITE NOW';
+        label.style.color = '#22C55E';
+        const parts = (_onsiteName || '').split(' ');
+        const abbr = parts[0] + (parts[1] ? ' ' + parts[1][0] + '.' : '');
+        name.textContent = abbr;
+        name.style.color = '#fff';
+        if (glow) glow.style.display = 'block';
+        // Start ticking clock
+        if (_onsiteClockTimer) clearInterval(_onsiteClockTimer);
+        function tick() {
+          if (!_onsiteStart || !clock) return;
+          const secs = Math.floor((Date.now() - _onsiteStart.getTime()) / 1000);
+          if (secs < 0) { clock.textContent = '00:00:00'; return; }
+          const h = String(Math.floor(secs / 3600)).padStart(2, '0');
+          const m = String(Math.floor((secs % 3600) / 60)).padStart(2, '0');
+          const s = String(secs % 60).padStart(2, '0');
+          clock.textContent = h + ':' + m + ':' + s;
+          clock.style.color = '#22C55E';
+        }
+        tick();
+        _onsiteClockTimer = setInterval(tick, 1000);
+      } else {
+        // Inactive state
+        if (_onsiteClockTimer) clearInterval(_onsiteClockTimer);
+        label.textContent = 'ONSITE';
+        label.style.color = 'rgba(255,255,255,0.4)';
+        name.textContent = '—';
+        name.style.color = 'rgba(255,255,255,0.7)';
+        clock.textContent = 'No shift';
+        clock.style.color = 'rgba(255,255,255,0.35)';
+        if (glow) glow.style.display = 'none';
+      }
+    }
+
+    function startOnsitePolling() {
+      loadOnsiteStatus();
+      if (_onsitePollTimer) clearInterval(_onsitePollTimer);
+      _onsitePollTimer = setInterval(loadOnsiteStatus, 60000); // poll every 60s
+    }
+    function stopOnsitePolling() {
+      if (_onsitePollTimer) clearInterval(_onsitePollTimer);
+      if (_onsiteClockTimer) clearInterval(_onsiteClockTimer);
+    }
+
+    async function loadHomeData() {
+      startOnsitePolling();
   // Greeting
   const hour = new Date().getHours();
   const greet = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
