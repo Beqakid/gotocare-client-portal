@@ -5663,13 +5663,13 @@ async function saveSchedule() {
 
 // ── DIRECT BOOKING FROM SWIPER CARD ──
 // ── DIRECT HIRE (no interview) ──
-async function directHireNow(cg) {
+async async function directHireNow(cg) {
   if (!cg) cg = caregivers[currentIndex];
   if (!cg) return;
   const token = localStorage.getItem('gc_client_token');
   if (!token) {
     toast('Please log in to hire a caregiver');
-    setTimeout(() => showScreen('screen-client-login'), 900);
+    setTimeout(() => showScreen('screen-auth'), 900);
     return;
   }
   const name = (cg.firstName || cg.first_name || cg.name || 'Caregiver').split(' ')[0];
@@ -5690,7 +5690,7 @@ async function directHireFromShortlist(idx) {
   const token = localStorage.getItem('gc_client_token');
   if (!token) {
     toast('Please log in to hire a caregiver');
-    setTimeout(() => showScreen('screen-client-login'), 900);
+    setTimeout(() => showScreen('screen-auth'), 900);
     return;
   }
   const name = (cg.firstName || cg.first_name || cg.name || 'Caregiver').split(' ')[0];
