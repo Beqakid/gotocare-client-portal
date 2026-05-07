@@ -5663,7 +5663,7 @@ async function saveSchedule() {
 
 // ── DIRECT BOOKING FROM SWIPER CARD ──
 // ── DIRECT HIRE (no interview) ──
-async async function directHireNow(cg) {
+async function directHireNow(cg) {
   if (!cg) cg = caregivers[currentIndex];
   if (!cg) return;
   const token = localStorage.getItem('gc_client_token');
