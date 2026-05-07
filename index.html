@@ -5757,9 +5757,9 @@ async function loadHomeData() {
         teamScroll.style.display = 'flex';
         teamScroll.innerHTML = team.map(m => {
           const initials = (m.caregiver_name || 'CG').split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
-          return `<div style="flex-shrink:0;text-align:center;cursor:pointer;width:80px;" onclick="document.querySelector('[data-screen=screen-team]').click()">
+          return `<div style="flex-shrink:0;text-align:center;cursor:pointer;width:96px;background:#fff;border:1.5px solid #E2E8F0;border-radius:16px;padding:12px 8px 10px;box-shadow:0 2px 8px rgba(0,0,0,0.06);" onclick="document.querySelector('[data-screen=screen-team]').click()">
             <div style="width:60px;height:60px;border-radius:50%;background:linear-gradient(135deg,#7C5CFF,#4A90E2);display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:800;color:#fff;margin:0 auto 6px;border:2px solid rgba(124,92,255,0.3);">${initials}</div>
-            <div style="font-size:11px;font-weight:600;color:#0F172A;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${(m.caregiver_name||'').split(' ')[0]}</div>
+            <div style="font-size:13px;font-weight:700;color:#0F172A;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:80px;">${(m.caregiver_name||'').split(' ')[0]}</div>
             <div style="font-size:10px;color:#22C55E;font-weight:600;margin-top:1px;">● Active</div>
           </div>`;
         }).join('');
