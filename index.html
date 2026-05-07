@@ -2571,7 +2571,151 @@
     /* Care profile subtitle */
     #screen-care-profile > div:nth-child(2) { color: #475569 !important; }
 
-    /* Empty state in team/bookings */
+    /* ── Reschedule Modal ── */
+    #reschedule-modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      background: rgba(0,0,0,0.6);
+      backdrop-filter: blur(4px);
+      align-items: flex-end;
+      justify-content: center;
+    }
+    #reschedule-modal.active { display: flex; }
+    .reschedule-sheet {
+      background: #fff;
+      border-radius: 24px 24px 0 0;
+      width: 100%;
+      max-width: 480px;
+      padding: 24px 20px 40px;
+      animation: slideUp 0.3s cubic-bezier(0.34,1.56,0.64,1);
+      max-height: 88dvh;
+      overflow-y: auto;
+    }
+    @keyframes slideUp {
+      from { transform: translateY(100%); }
+      to { transform: translateY(0); }
+    }
+    .reschedule-handle {
+      width: 40px; height: 4px;
+      background: #E2E8F0;
+      border-radius: 4px;
+      margin: 0 auto 20px;
+    }
+    .reschedule-title {
+      font-size: 18px; font-weight: 800; color: #0F172A;
+      text-align: center; margin-bottom: 4px;
+    }
+    .reschedule-sub {
+      font-size: 13px; color: #64748B;
+      text-align: center; margin-bottom: 24px;
+    }
+    .rs-label {
+      font-size: 11px; font-weight: 700; color: #7C5CFF;
+      text-transform: uppercase; letter-spacing: 0.5px;
+      margin-bottom: 8px;
+    }
+    .rs-date-scroll {
+      display: flex; gap: 8px; overflow-x: auto;
+      padding-bottom: 4px; margin-bottom: 20px;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+    }
+    .rs-date-scroll::-webkit-scrollbar { display: none; }
+    .rs-date-chip {
+      flex-shrink: 0;
+      display: flex; flex-direction: column; align-items: center;
+      min-width: 52px; padding: 10px 8px;
+      border: 1.5px solid #E2E8F0;
+      border-radius: 14px;
+      cursor: pointer;
+      transition: all 0.2s;
+      background: #fff;
+    }
+    .rs-date-chip .day-name { font-size: 10px; font-weight: 600; color: #94A3B8; text-transform: uppercase; }
+    .rs-date-chip .day-num { font-size: 18px; font-weight: 800; color: #0F172A; }
+    .rs-date-chip .month { font-size: 10px; color: #94A3B8; }
+    .rs-date-chip.selected {
+      background: linear-gradient(135deg,#7C5CFF,#4A90E2);
+      border-color: #7C5CFF;
+    }
+    .rs-date-chip.selected .day-name,
+    .rs-date-chip.selected .day-num,
+    .rs-date-chip.selected .month { color: #fff; }
+    .rs-time-slots {
+      display: grid; grid-template-columns: 1fr 1fr 1fr;
+      gap: 8px; margin-bottom: 20px;
+    }
+    .rs-time-slot {
+      display: flex; flex-direction: column; align-items: center;
+      padding: 10px 6px;
+      border: 1.5px solid #E2E8F0; border-radius: 12px;
+      cursor: pointer; font-size: 12px; font-weight: 600; color: #475569;
+      background: #fff; transition: all 0.2s;
+    }
+    .rs-time-slot span { font-size: 10px; font-weight: 400; color: #94A3B8; margin-top: 2px; }
+    .rs-time-slot.selected {
+      background: linear-gradient(135deg,#7C5CFF,#4A90E2);
+      border-color: #7C5CFF; color: #fff;
+    }
+    .rs-time-slot.selected span { color: rgba(255,255,255,0.8); }
+    .rs-type-toggle {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 8px; margin-bottom: 20px;
+    }
+    .rs-type-btn {
+      padding: 10px; border: 1.5px solid #E2E8F0; border-radius: 12px;
+      font-size: 13px; font-weight: 600; color: #475569;
+      background: #fff; cursor: pointer; transition: all 0.2s;
+    }
+    .rs-type-btn.selected {
+      background: linear-gradient(135deg,#7C5CFF,#4A90E2);
+      border-color: #7C5CFF; color: #fff;
+    }
+    .rs-notes {
+      width: 100%; padding: 12px; border: 1.5px solid #E2E8F0;
+      border-radius: 12px; font-size: 13px; color: #0F172A;
+      resize: none; min-height: 70px; margin-bottom: 20px;
+      font-family: inherit;
+    }
+    .rs-notes:focus { outline: none; border-color: #7C5CFF; }
+    .btn-save-reschedule {
+      width: 100%; padding: 16px;
+      background: linear-gradient(135deg,#7C5CFF,#4A90E2);
+      border: none; border-radius: 14px;
+      color: #fff; font-size: 15px; font-weight: 700;
+      cursor: pointer; margin-bottom: 10px;
+      transition: all 0.2s;
+    }
+    .btn-save-reschedule:active { transform: scale(0.98); }
+    .btn-cancel-modal {
+      width: 100%; padding: 13px;
+      background: #F1F5F9; border: none; border-radius: 14px;
+      color: #64748B; font-size: 14px; font-weight: 600;
+      cursor: pointer; transition: all 0.2s;
+    }
+    .bc-actions {
+      display: flex; gap: 8px; margin-top: 10px;
+    }
+    .bc-btn-reschedule {
+      flex: 1; padding: 8px 10px;
+      background: rgba(124,92,255,0.08);
+      border: 1.5px solid rgba(124,92,255,0.25);
+      border-radius: 10px; font-size: 12px; font-weight: 600;
+      color: #7C5CFF; cursor: pointer; transition: all 0.2s;
+    }
+    .bc-btn-reschedule:active { transform: scale(0.97); }
+    .bc-btn-cancel {
+      padding: 8px 12px;
+      background: rgba(239,68,68,0.06);
+      border: 1.5px solid rgba(239,68,68,0.2);
+      border-radius: 10px; font-size: 12px; font-weight: 600;
+      color: #EF4444; cursor: pointer; transition: all 0.2s;
+    }
+    .bc-btn-cancel:active { transform: scale(0.97); }
+
+        /* Empty state in team/bookings */
     .empty-state-icon { opacity: 0.4 !important; }
     .empty-state-title, .empty-state h3 { color: #0F172A !important; }
     .empty-state-desc, .empty-state p { color: #475569 !important; }
@@ -4192,13 +4336,20 @@ async function renderAccountForEmail(email) {
         const st = b.status || 'pending';
         const dateStr = b.preferredDate ? new Date(b.preferredDate + 'T12:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric'}) : 'TBD';
         const timeStr = b.preferredTime ? {morning:'9–11 AM',afternoon:'12–3 PM',evening:'4–7 PM'}[b.preferredTime] || b.preferredTime : 'TBD';
-        return `<div class="booking-card">
+        const canAct = st !== 'cancelled' && st !== 'hired' && st !== 'declined';
+        const actionsHTML = canAct ? `
+          <div class="bc-actions">
+            <button class="bc-btn-reschedule" onclick="openRescheduleModal(${b.id}, '${b.preferredDate||''}', '${b.preferredTime||'morning'}', '${b.interviewType||'video'}', \`${(b.notes||'').replace(/`/g,'\`')}\`)">✏️ Reschedule</button>
+            ${st !== 'hired' ? `<button class="bc-btn-cancel" onclick="cancelBooking(${b.id}, this)">✕ Cancel</button>` : ''}
+          </div>` : '';
+        return `<div class="booking-card status-${st}" id="bc-${b.id}">
           <div class="bc-top">
             <div class="bc-type">${b.careNeeds || 'Care Interview'}</div>
             <div class="bc-status ${statusColors[st]}">${statusLabels[st] || st}</div>
           </div>
           <div class="bc-detail">📅 ${dateStr} · ${timeStr}</div>
           <div class="bc-detail">🎥 ${b.interviewType === 'video' ? 'Video Call' : 'In Person'}</div>
+          ${actionsHTML}
         </div>`; }).join('')
     : `<div class="no-bookings"><div class="nb-icon">📋</div><p>No interview requests yet.<br/><span style="font-size:12px;">Book a caregiver interview from the search screen.</span></p></div>`;
 
@@ -4220,6 +4371,158 @@ async function renderAccountForEmail(email) {
     <button onclick="clientSignOut()" style="margin-top:24px;width:100%;background:rgba(255,255,255,0.06);border:1.5px solid rgba(255,255,255,0.12);border-radius:12px;padding:12px;color:rgba(255,255,255,0.5);font-size:13px;cursor:pointer;">
       Sign out
     </button>`;
+}
+
+// ── RESCHEDULE / CANCEL BOOKING ──
+let rsBookingId = null;
+let rsSelectedDate = null;
+let rsSelectedTime = null;
+let rsSelectedType = 'video';
+
+function openRescheduleModal(bookingId, currentDate, currentTime, currentType, currentNotes) {
+  rsBookingId = bookingId;
+  rsSelectedDate = currentDate || null;
+  rsSelectedTime = currentTime || 'morning';
+  rsSelectedType = currentType || 'video';
+
+  // Populate date chips (next 14 days)
+  const scroll = document.getElementById('rs-date-scroll');
+  scroll.innerHTML = '';
+  const today = new Date();
+  const days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  for (let i = 0; i < 14; i++) {
+    const d = new Date(today); d.setDate(today.getDate() + i);
+    const iso = d.toISOString().split('T')[0];
+    const chip = document.createElement('button');
+    chip.className = 'rs-date-chip' + (iso === rsSelectedDate ? ' selected' : '');
+    chip.dataset.date = iso;
+    chip.innerHTML = `<span class="day-name">${days[d.getDay()]}</span><span class="day-num">${d.getDate()}</span><span class="month">${months[d.getMonth()]}</span>`;
+    chip.onclick = () => {
+      document.querySelectorAll('.rs-date-chip').forEach(c => c.classList.remove('selected'));
+      chip.classList.add('selected');
+      rsSelectedDate = iso;
+    };
+    scroll.appendChild(chip);
+  }
+
+  // Pre-select time
+  document.querySelectorAll('.rs-time-slot').forEach(btn => {
+    btn.classList.toggle('selected', btn.dataset.time === rsSelectedTime);
+  });
+  // Pre-select type
+  document.querySelectorAll('.rs-type-btn').forEach(btn => {
+    btn.classList.toggle('selected', btn.dataset.type === rsSelectedType);
+  });
+  // Pre-fill notes
+  document.getElementById('rs-notes').value = currentNotes || '';
+
+  document.getElementById('reschedule-modal').classList.add('active');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeRescheduleModal() {
+  document.getElementById('reschedule-modal').classList.remove('active');
+  document.body.style.overflow = '';
+  rsBookingId = null;
+}
+
+function selectRsTime(btn) {
+  document.querySelectorAll('.rs-time-slot').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+  rsSelectedTime = btn.dataset.time;
+}
+
+function selectRsType(btn) {
+  document.querySelectorAll('.rs-type-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+  rsSelectedType = btn.dataset.type;
+}
+
+async function saveReschedule() {
+  if (!rsBookingId) return;
+  if (!rsSelectedDate) { alert('Please select a date'); return; }
+  if (!rsSelectedTime) { alert('Please select a time'); return; }
+
+  const btn = document.getElementById('btn-save-reschedule');
+  btn.textContent = 'Saving…'; btn.disabled = true;
+
+  const email = localStorage.getItem('gc_email') || localStorage.getItem('gc_client_session') && JSON.parse(localStorage.getItem('gc_client_session')).email;
+
+  try {
+    const res = await fetch(`${API}/reschedule-booking`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        bookingId: rsBookingId,
+        clientEmail: email,
+        preferredDate: rsSelectedDate,
+        preferredTime: rsSelectedTime,
+        interviewType: rsSelectedType,
+        notes: document.getElementById('rs-notes').value.trim(),
+      })
+    });
+    const data = await res.json();
+    if (data.success) {
+      closeRescheduleModal();
+      // Refresh account screen
+      showAccountScreen();
+      // Show brief success toast
+      showRsToast('✅ Interview rescheduled!');
+    } else {
+      btn.textContent = '✅ Confirm Reschedule'; btn.disabled = false;
+      alert(data.error || 'Failed to reschedule');
+    }
+  } catch(e) {
+    btn.textContent = '✅ Confirm Reschedule'; btn.disabled = false;
+    alert('Network error. Please try again.');
+  }
+}
+
+async function cancelBooking(bookingId, btnEl) {
+  if (!confirm('Cancel this interview request?')) return;
+  const email = localStorage.getItem('gc_email') || (localStorage.getItem('gc_client_session') && JSON.parse(localStorage.getItem('gc_client_session')).email);
+  const card = document.getElementById('bc-' + bookingId);
+  if (btnEl) { btnEl.textContent = '…'; btnEl.disabled = true; }
+  try {
+    const res = await fetch(`${API}/cancel-booking`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ bookingId, clientEmail: email })
+    });
+    const data = await res.json();
+    if (data.success) {
+      // Visually update the card immediately
+      if (card) {
+        card.classList.remove('status-pending','status-accepted');
+        card.classList.add('status-cancelled');
+        const statusEl = card.querySelector('.bc-status');
+        if (statusEl) { statusEl.className = 'bc-status declined'; statusEl.textContent = '❌ Cancelled'; }
+        const actions = card.querySelector('.bc-actions');
+        if (actions) actions.remove();
+      }
+      showRsToast('🗑️ Booking cancelled');
+    } else {
+      if (btnEl) { btnEl.textContent = '✕ Cancel'; btnEl.disabled = false; }
+      alert(data.error || 'Failed to cancel');
+    }
+  } catch(e) {
+    if (btnEl) { btnEl.textContent = '✕ Cancel'; btnEl.disabled = false; }
+    alert('Network error. Please try again.');
+  }
+}
+
+function showRsToast(msg) {
+  let toast = document.getElementById('rs-toast');
+  if (!toast) {
+    toast = document.createElement('div');
+    toast.id = 'rs-toast';
+    toast.style.cssText = 'position:fixed;bottom:100px;left:50%;transform:translateX(-50%);background:#0F172A;color:#fff;padding:12px 20px;border-radius:50px;font-size:13px;font-weight:600;z-index:99999;opacity:0;transition:opacity 0.3s;white-space:nowrap;';
+    document.body.appendChild(toast);
+  }
+  toast.textContent = msg;
+  toast.style.opacity = '1';
+  setTimeout(() => { toast.style.opacity = '0'; }, 2500);
 }
 
 // Update account button label on load
@@ -5367,6 +5670,40 @@ document.getElementById('hire-status-back').addEventListener('click', () => show
       <button class="btn-save-schedule" onclick="saveSchedule()">💾 Save Care Schedule</button>
     </div>
   </div>
+
+
+<!-- ══════════════════════════════════════════════════════════════
+     RESCHEDULE MODAL
+     ══════════════════════════════════════════════════════════════ -->
+<div id="reschedule-modal" onclick="if(event.target===this)closeRescheduleModal()">
+  <div class="reschedule-sheet">
+    <div class="reschedule-handle"></div>
+    <div class="reschedule-title">✏️ Reschedule Interview</div>
+    <div class="reschedule-sub" id="rs-caregiver-name">Update your preferred date &amp; time</div>
+
+    <div class="rs-label">📅 Select a new date</div>
+    <div class="rs-date-scroll" id="rs-date-scroll"></div>
+
+    <div class="rs-label">⏰ Preferred time</div>
+    <div class="rs-time-slots">
+      <button class="rs-time-slot" data-time="morning" onclick="selectRsTime(this)">🌅 Morning<span>9–11 AM</span></button>
+      <button class="rs-time-slot" data-time="afternoon" onclick="selectRsTime(this)">☀️ Afternoon<span>12–3 PM</span></button>
+      <button class="rs-time-slot" data-time="evening" onclick="selectRsTime(this)">🌆 Evening<span>4–7 PM</span></button>
+    </div>
+
+    <div class="rs-label">💬 Interview type</div>
+    <div class="rs-type-toggle">
+      <button class="rs-type-btn selected" data-type="video" onclick="selectRsType(this)">📹 Video Call</button>
+      <button class="rs-type-btn" data-type="inperson" onclick="selectRsType(this)">🏠 In Person</button>
+    </div>
+
+    <div class="rs-label">📝 Notes (optional)</div>
+    <textarea class="rs-notes" id="rs-notes" placeholder="Any updates or special requirements…"></textarea>
+
+    <button class="btn-save-reschedule" id="btn-save-reschedule" onclick="saveReschedule()">✅ Confirm Reschedule</button>
+    <button class="btn-cancel-modal" onclick="closeRescheduleModal()">Back</button>
+  </div>
+</div>
 
 </body>
 </html>
