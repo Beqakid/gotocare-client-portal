@@ -5053,7 +5053,7 @@ let teamApiData = { hired: [], active: [], past: [] };
 let teamApiLoaded = false;
 
 function loadTeamFromAPI() {
-  const token = localStorage.getItem('gc_client_token');
+  const token = localStorage.getItem('gc_client_session');
   if (!token || teamApiLoaded) return;
   const API = 'https://gotocare-original.jjioji.workers.dev/api';
   fetch(`${API}/client-team?token=${encodeURIComponent(token)}`)
@@ -5241,7 +5241,7 @@ function renderHiredCard(cg) {
 }
 
 async function removeFromTeam(caregiverId) {
-  const token = localStorage.getItem('gc_client_token');
+  const token = localStorage.getItem('gc_client_session');
   if (!token || !confirm('Remove this caregiver from your team?')) return;
   try {
     const API = 'https://gotocare-original.jjioji.workers.dev/api';
@@ -5531,7 +5531,7 @@ function stopLiveStatusPolling() {
 }
 
 async function pollLiveStatus() {
-  const token = localStorage.getItem('gc_client_token');
+  const token = localStorage.getItem('gc_client_session');
   if (!token) return;
   try {
     const r = await fetch(`${API}/team-live-status?clientToken=${encodeURIComponent(token)}`);
@@ -5597,7 +5597,7 @@ function toggleScheduleDay(el) {
 }
 
 async function loadScheduleFromAPI(caregiverEmail) {
-  const token = localStorage.getItem('gc_client_token');
+  const token = localStorage.getItem('gc_client_session');
   if (!token) return;
   try {
     const r = await fetch(`${API}/care-schedule?clientToken=${encodeURIComponent(token)}&caregiverEmail=${encodeURIComponent(caregiverEmail)}`);
@@ -5630,7 +5630,7 @@ async function saveSchedule() {
   const careType = document.getElementById('schedule-care-type').value;
   const notes = document.getElementById('schedule-notes').value;
   const isRecurring = document.getElementById('schedule-recurring').checked;
-  const token = localStorage.getItem('gc_client_token');
+  const token = localStorage.getItem('gc_client_session');
   const btn = document.querySelector('.btn-save-schedule');
   btn.textContent = 'Saving…';
   btn.disabled = true;
@@ -5666,7 +5666,7 @@ async function saveSchedule() {
 async function directHireNow(cg) {
   if (!cg) cg = caregivers[currentIndex];
   if (!cg) return;
-  const token = localStorage.getItem('gc_client_token');
+  const token = localStorage.getItem('gc_client_session');
   if (!token) {
     toast('Please log in to hire a caregiver');
     setTimeout(() => showScreen('screen-auth'), 900);
@@ -5687,7 +5687,7 @@ async function directHireNow(cg) {
 async function directHireFromShortlist(idx) {
   const cg = shortlist[idx];
   if (!cg) return;
-  const token = localStorage.getItem('gc_client_token');
+  const token = localStorage.getItem('gc_client_session');
   if (!token) {
     toast('Please log in to hire a caregiver');
     setTimeout(() => showScreen('screen-auth'), 900);
@@ -5816,7 +5816,7 @@ function showHireStatus(cg) {
 }
 
 async function addToTeam(cg, bookingId) {
-  const token = localStorage.getItem('gc_client_token');
+  const token = localStorage.getItem('gc_client_session');
   if (!token) { toast('Please log in first'); return; }
 
   const btn = event && event.target;
