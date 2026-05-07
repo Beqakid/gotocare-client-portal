@@ -1,6 +1,6 @@
 // @ts-nocheck
 
-export type TabId = 'schedule' | 'caregivers' | 'invoices' | 'profile';
+export type TabId = 'home' | 'find' | 'schedule' | 'invoices' | 'profile';
 
 export interface ClientSession {
   clientId: number;
