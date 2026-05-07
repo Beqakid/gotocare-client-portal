@@ -3820,6 +3820,7 @@ document.getElementById('gps-btn').addEventListener('click', () => {
 // ── FIND CAREGIVERS ──
 document.getElementById('find-btn').addEventListener('click', async () => {
   const loc = document.getElementById('location-input').value.trim() || 'Atlanta, GA';
+  saveClientPreferences(loc, selectedCareTypes); // persist for next visit
   setLoading(true);
   try {
     const params = new URLSearchParams({ location: loc, page: 1, limit: 20 });
@@ -3827,6 +3828,18 @@ document.getElementById('find-btn').addEventListener('click', async () => {
     const res = await fetch(`${API}/search-caregivers?${params}`);
     const data = await res.json();
     caregivers = data.caregivers || data.docs || [];
+    // Filter out already-hired/active team members
+    if (typeof teamApiData !== 'undefined' && teamApiData) {
+      const hiredIds = new Set([
+        ...(teamApiData.hired || []).map(c => String(c.caregiver_id || c.id || '')),
+        ...(teamApiData.active || []).map(c => String(c.caregiver_id || c.id || '')),
+      ]);
+      if (hiredIds.size > 0) {
+        const beforeFilter = caregivers.length;
+        caregivers = caregivers.filter(c => !hiredIds.has(String(c.id || '')));
+        if (beforeFilter > caregivers.length) toast(`✅ Hiding ${beforeFilter - caregivers.length} caregivers already on your team`);
+      }
+    }
     if (caregivers.length === 0) {
       caregivers = getDemoCaregivers();
       toast('📍 Showing demo caregivers for your area');
@@ -4008,6 +4021,67 @@ function updateShortlistFab() {
   document.getElementById('sl-count').textContent = shortlist.length;
   fab.classList.toggle('visible', shortlist.length > 0);
 }
+
+// ── Auto-fill Find Care preferences for returning logged-in clients ──
+async function prefillFindCare() {
+  const prefs = await loadClientPreferences();
+  if (!prefs) return;
+  
+  // Pre-fill zip/location
+  if (prefs.zip) {
+    const locInput = document.getElementById('location-input');
+    if (locInput && !locInput.value) {
+      locInput.value = prefs.zip;
+    }
+  }
+  
+  // Pre-select care need pills
+  if (prefs.careNeeds && prefs.careNeeds.length > 0) {
+    const tiles = document.querySelectorAll('.care-tile');
+    let anySelected = Array.from(tiles).some(t => t.classList.contains('selected'));
+    if (!anySelected) {
+      tiles.forEach(tile => {
+        if (prefs.careNeeds.includes(tile.dataset.value)) {
+          tile.classList.add('selected');
+        }
+      });
+    }
+  }
+  
+  // Show "We remembered you" badge
+  const existingBanner = document.getElementById('prefs-banner');
+  if (!existingBanner && (prefs.zip || (prefs.careNeeds && prefs.careNeeds.length > 0))) {
+    const dispatchHeader = document.querySelector('.dispatch-header');
+    if (dispatchHeader) {
+      const banner = document.createElement('div');
+      banner.id = 'prefs-banner';
+      banner.style.cssText = 'background:rgba(124,92,255,0.12);border:1px solid rgba(124,92,255,0.3);border-radius:12px;padding:8px 14px;margin:8px 16px 0;font-size:13px;color:#7C5CFF;display:flex;align-items:center;gap:8px;';
+      const needs = (prefs.careNeeds || []).slice(0,2).join(', ');
+      const extra = (prefs.careNeeds || []).length > 2 ? ` +${prefs.careNeeds.length - 2} more` : '';
+      banner.innerHTML = `<span>✨</span><span>Showing results for: <strong>${needs}${extra}</strong>${prefs.zip ? ' · ' + prefs.zip : ''}</span><button onclick="document.getElementById('prefs-banner').remove()" style="background:none;border:none;cursor:pointer;color:#7C5CFF;margin-left:auto;font-size:16px;">×</button>`;
+      dispatchHeader.appendChild(banner);
+    }
+  }
+}
+
+// ── Auto-load cloud shortlist after login ────────────────────────
+async function syncShortlistFromCloud() {
+  const token = localStorage.getItem(AUTH_STORAGE_KEY);
+  if (!token) return;
+  const cloudItems = await loadCloudShortlist();
+  if (cloudItems.length > 0) {
+    // Merge: add cloud items not already in local shortlist
+    const existingIds = new Set(shortlist.map(s => String(s.id)));
+    cloudItems.forEach(cg => {
+      if (!existingIds.has(String(cg.id))) {
+        shortlist.push(cg);
+      }
+    });
+    updateShortlistFab();
+  }
+}
+// ─────────────────────────────────────────────────────────────────
+
 
 document.getElementById('shortlist-fab').addEventListener('click', () => {
   renderShortlist();
@@ -4642,6 +4716,70 @@ function showRsToast(msg) {
 
 // ── CLIENT AUTH ──
 const AUTH_STORAGE_KEY = 'gc_client_session';
+
+// ── Search Preferences & Shortlist Sync ───────────────────────────
+const API_BASE = 'https://gotocare-original.jjioji.workers.dev/api';
+
+async function loadClientPreferences() {
+  const token = localStorage.getItem(AUTH_STORAGE_KEY);
+  if (!token) return null;
+  try {
+    const r = await fetch(`${API_BASE}/client-preferences?clientToken=${token}`);
+    const data = await r.json();
+    if (data.success) return data;
+  } catch(e) {}
+  return null;
+}
+
+async function saveClientPreferences(zip, careNeeds) {
+  const token = localStorage.getItem(AUTH_STORAGE_KEY);
+  if (!token) return;
+  try {
+    await fetch(`${API_BASE}/client-preferences?clientToken=${token}`, {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ zip, careNeeds })
+    });
+  } catch(e) {}
+}
+
+async function loadCloudShortlist() {
+  const token = localStorage.getItem(AUTH_STORAGE_KEY);
+  if (!token) return [];
+  try {
+    const r = await fetch(`${API_BASE}/client-shortlist?clientToken=${token}`);
+    const data = await r.json();
+    if (data.success && data.items) {
+      return data.items.map(i => i.data).filter(Boolean);
+    }
+  } catch(e) {}
+  return [];
+}
+
+async function syncShortlistAdd(cg) {
+  const token = localStorage.getItem(AUTH_STORAGE_KEY);
+  if (!token) return;
+  try {
+    await fetch(`${API_BASE}/client-shortlist?clientToken=${token}`, {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ action: 'add', caregiverId: cg.id, caregiverData: cg })
+    });
+  } catch(e) {}
+}
+
+async function syncShortlistRemove(cgId) {
+  const token = localStorage.getItem(AUTH_STORAGE_KEY);
+  if (!token) return;
+  try {
+    await fetch(`${API_BASE}/client-shortlist?clientToken=${token}`, {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ action: 'remove', caregiverId: cgId })
+    });
+  } catch(e) {}
+}
+// ─────────────────────────────────────────────────────────────────
 let authMode = 'signin'; // 'signin' | 'signup'
 
 function switchAuthTab(mode) {
@@ -4690,6 +4828,7 @@ async function handleAuthSubmit() {
 
 function clientAuthSuccess(token, email, name) {
   localStorage.setItem(AUTH_STORAGE_KEY, token);
+  syncShortlistFromCloud(); // load cloud shortlist
   localStorage.setItem('gc_email', email);
   if (name) localStorage.setItem('gc_client_name', name);
   const label = document.getElementById('account-btn-label');
@@ -5197,6 +5336,30 @@ function rebookTeamCaregiver(cg) {
   toast(`♻️ Rebooking ${name}!`);
 }
 
+// Fix: rebookApiCaregiver — handles rebook from API-loaded team cards
+function rebookApiCaregiver(cgData) {
+  // cgData = {name, email, specialty}
+  const cgObj = {
+    id: cgData.email, // use email as stable key
+    firstName: (cgData.name || '').split(' ')[0] || '',
+    lastName: (cgData.name || '').split(' ').slice(1).join(' ') || '',
+    email: cgData.email || '',
+    specializations: cgData.specialty || '',
+    hourlyRate: 28,
+    matchScore: 90,
+    skills: cgData.specialty ? [cgData.specialty] : [],
+  };
+  if (!shortlist.find(s => s.id === cgObj.id)) {
+    shortlist.push(cgObj);
+    updateShortlistFab();
+    // Persist to cloud if logged in
+    syncShortlistAdd(cgObj);
+  }
+  bookingCaregiver = cgObj;
+  showScreen('screen-booking');
+}
+
+
 function unsaveCaregiver(id) {
   const team = getSavedTeam().filter(c => c.id !== id);
   saveTeamToStorage(team);
@@ -5296,12 +5459,13 @@ document.querySelectorAll('.condition-pill').forEach(p => {
         showHomeScreen();
       }, true);
     } else if (screen === 'screen-dispatch') {
-      item.addEventListener('click', (e) => {
+      item.addEventListener('click', async (e) => {
         e.stopImmediatePropagation();
         document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
         item.classList.add('active');
-        showScreen('screen-home');
+        showScreen('screen-dispatch');
         document.getElementById('bottom-nav').classList.add('visible');
+        prefillFindCare(); // auto-fill saved preferences
       }, true);
     } else if (screen === 'screen-team') {
       item.addEventListener('click', (e) => {
