@@ -3846,11 +3846,28 @@ function showScreen(id, pushHistory = true) {
   document.getElementById(id).classList.add('active');
   window.scrollTo(0, 0);
   if (pushHistory) history.pushState({ screen: id }, '');
+  // Update bottom nav active state
+  document.querySelectorAll('.nav-item').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.screen === id);
+  });
+  // Show/hide bottom nav on overlay screens
+  const overlayScreens = ['screen-auth', 'screen-swiper', 'screen-shortlist', 'screen-booking', 'screen-confirm', 'screen-subscribe', 'screen-hire-status'];
+  const nav = document.getElementById('bottom-nav');
+  if (nav) nav.style.display = overlayScreens.includes(id) ? 'none' : 'flex';
 }
 window.addEventListener('popstate', (e) => {
   showScreen((e.state && e.state.screen) || 'screen-home', false);
 });
 history.replaceState({ screen: 'screen-home' }, '');
+
+// ── BOTTOM NAV ──
+document.querySelectorAll('.nav-item').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const screenId = btn.dataset.screen;
+    if (screenId) showScreen(screenId);
+  });
+});
+
 
 // ── TOAST ──
 function toast(msg, duration = 3000) {
