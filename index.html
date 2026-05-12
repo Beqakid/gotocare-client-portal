@@ -3826,6 +3826,564 @@ document.getElementById('find-btn').addEventListener('click', async () => {
 
 )();
 
+// ── NO CAREGIVERS SCREEN ──
+function showNoCaregivers() {
+  document.getElementById('card-viewport').innerHTML = `
+    <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:60vh;padding:32px;text-align:center;">
+      <div style="font-size:64px;margin-bottom:16px;">🔍</div>
+      <div style="font-size:20px;font-weight:700;color:#0F172A;margin-bottom:8px;">No caregivers found yet</div>
+      <div style="font-size:14px;color:#475569;margin-bottom:24px;max-width:280px;">We're growing fast! Try a different location or check back soon.</div>
+      <button onclick="showScreen('screen-dispatch')" style="background:linear-gradient(135deg,#7C5CFF,#4A90E2);color:#fff;border:none;border-radius:12px;padding:14px 28px;font-size:15px;font-weight:600;cursor:pointer;">← Try Again</button>
+    </div>`;
+  showScreen('screen-swiper');
+}
+
+// ════════════════════════════════════════════════════════════
+// SWIPER CARD RENDERER
+// ════════════════════════════════════════════════════════════
+function renderSwiperCard() {
+  if (caregivers.length === 0) return;
+  const cg = caregivers[currentIndex];
+  const isLast = currentIndex === caregivers.length - 1;
+  const isShortlisted = shortlist.some(s => s.id === cg.id);
+  const days = ['M','T','W','T','F','S','S'];
+  const avail = cg.availability || [1,1,1,1,1,0,0];
+  const rate = cg.hourlyRate || cg.hourly_rate || 28;
+  const match = cg.matchScore ? Math.round(cg.matchScore) : Math.round(82 + Math.random() * 15);
+  const name = `${cg.firstName || cg.first_name || ''} ${cg.lastName || cg.last_name || ''}`.trim() || cg.name || 'Caregiver';
+  const specialties = Array.isArray(cg.specializations) ? cg.specializations.join(', ') : (cg.specializations || 'Home Care');
+  const rating = cg.rating || (4.5 + Math.random() * 0.5).toFixed(1);
+  const reviewCount = cg.reviews || cg.review_count || Math.floor(20 + Math.random() * 60);
+  const exp = cg.yearsExp || cg.years_experience || Math.floor(2 + Math.random() * 10);
+  const skills = cg.skills || cg.specializations || ['Elder Care', 'Companionship', 'Medication'];
+  const langs = cg.languages || ['English'];
+  const certs = cg.certifications || ['CNA', 'CPR/AED'];
+  const bio = cg.bio || 'Dedicated caregiver committed to providing compassionate, personalized care to help clients maintain dignity and independence at home.';
+  const avatar = cg.avatar || cg.photo_url || '';
+  const avatarHtml = avatar && avatar.startsWith('http')
+    ? `<img src="${avatar}" style="width:100px;height:100px;border-radius:50%;object-fit:cover;" onerror="this.outerHTML='<div style=\\'width:100px;height:100px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:40px;background:#EDE9FE;\\'>👩‍⚕️</div>'">`
+    : `<div style="width:100px;height:100px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:40px;background:#EDE9FE;">👩‍⚕️</div>`;
+
+  // Contact section — locked or unlocked based on subscription
+  const contactHtml = subscription?.subscribed
+    ? `<div style="display:flex;flex-direction:column;gap:10px;">
+        <div style="display:flex;align-items:center;gap:10px;background:rgba(34,197,94,0.08);border:1px solid rgba(34,197,94,0.2);border-radius:12px;padding:12px;">
+          <span style="font-size:20px;">📞</span>
+          <div><div style="font-size:12px;color:#475569;">Phone</div><div style="font-weight:700;color:#0F172A;">${cg.phone || 'Not provided'}</div></div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;background:rgba(34,197,94,0.08);border:1px solid rgba(34,197,94,0.2);border-radius:12px;padding:12px;">
+          <span style="font-size:20px;">✉️</span>
+          <div><div style="font-size:12px;color:#475569;">Email</div><div style="font-weight:700;color:#0F172A;">${cg.email || 'Not provided'}</div></div>
+        </div>
+      </div>`
+    : `<div class="contact-locked">
+        <div class="contact-locked-text"><strong>🔒 Contact info locked</strong>Subscribe to see phone &amp; email</div>
+        <button class="unlock-btn" onclick="showSubscribe()">Unlock →</button>
+      </div>`;
+
+  document.getElementById('card-viewport').innerHTML = `
+    <div class="cg-card">
+      <div class="cg-hero">
+        <div class="cg-avatar-wrap">
+          <div class="cg-avatar">${avatarHtml}</div>
+          <div class="cg-online"></div>
+        </div>
+        <div class="cg-name">${name}</div>
+        <div class="cg-title">${specialties}</div>
+        <div class="cg-rating-row">
+          <div class="cg-rating">⭐ ${Number(rating).toFixed(1)} <span style="color:#94A3B8;font-weight:400;font-size:13px;">(${reviewCount})</span></div>
+          <div class="cg-match">🎯 ${match}% match</div>
+        </div>
+        <div class="cg-badges">
+          <div class="badge">📅 ${exp} yrs exp</div>
+          ${(Array.isArray(certs) ? certs : []).slice(0,2).map(c => `<div class="badge">✅ ${typeof c === 'string' ? c : c.name || c}</div>`).join('')}
+          ${langs.length > 1 ? `<div class="badge">🌐 ${(Array.isArray(langs) ? langs : []).slice(0,2).join(', ')}</div>` : ''}
+        </div>
+        <div class="cg-rate">$${rate}<span>/hr</span></div>
+      </div>
+
+      <div class="cg-section">
+        <div class="cg-section-title">About</div>
+        <div class="cg-bio">${bio}</div>
+      </div>
+      
+      <div class="cg-section">
+        <div class="cg-section-title">Skills & Specializations</div>
+        <div class="skill-list">${(Array.isArray(skills) ? skills : [skills]).map(s => `<div class="skill-tag">${s}</div>`).join('')}</div>
+      </div>
+      
+      <div class="cg-section">
+        <div class="cg-section-title">Weekly Availability</div>
+        <div class="avail-grid">${days.map((d,i) => `<div class="avail-day"><div class="avail-day-label">${d}</div><div class="avail-dot ${avail[i] ? 'on' : 'off'}">${avail[i] ? '✓' : '–'}</div></div>`).join('')}</div>
+      </div>
+
+      <div class="cg-section">
+        <div class="cg-section-title">Contact Info</div>
+        ${contactHtml}
+      </div>
+      
+      <div class="cg-section">
+        <div class="cg-section-title">Client Reviews</div>
+        <div class="review-item"><div class="review-author">⭐⭐⭐⭐⭐ Linda H.</div><div class="review-text">"${name.split(' ')[0]} was absolutely wonderful with my mother. Patient, kind, and so professional. We couldn't be happier!"</div></div>
+        <div class="review-item"><div class="review-author">⭐⭐⭐⭐⭐ Robert T.</div><div class="review-text">"Reliable, compassionate, and goes above and beyond. I feel completely at ease knowing my father is in good hands."</div></div>
+      </div>
+
+      <div class="cert-row" style="padding: 0 16px 12px; display: flex; align-items: center; gap: 8px;">
+        <div class="cert-badge" id="cert-badge-${cg.email ? cg.email.replace('@','_').replace(/\./g,'_') : cg.id}" style="display:flex;align-items:center;gap:6px;background:rgba(124,92,255,0.08);border:1px solid rgba(124,92,255,0.15);border-radius:50px;padding:5px 12px;cursor:pointer;font-size:12px;color:#7C5CFF;font-weight:600;" onclick="loadCaregiverCerts('${cg.email || ''}', this)">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          View Certifications
+        </div>
+      </div>
+
+      <div style="height:8px;"></div>
+    </div>`;
+
+  // Update counter + dots + buttons
+  document.getElementById('swiper-counter').textContent = `${currentIndex + 1}/${caregivers.length}`;
+  
+  // Dots (max 7 shown)
+  const dotsEl = document.getElementById('progress-dots');
+  const maxDots = Math.min(caregivers.length, 7);
+  dotsEl.innerHTML = Array.from({length: maxDots}, (_, i) => `<div class="dot${i === (currentIndex % maxDots) ? ' active' : ''}"></div>`).join('');
+  
+  // Shortlist btn
+  const slBtn = document.getElementById('btn-shortlist');
+  if (isShortlisted) {
+    slBtn.innerHTML = '💜 Shortlisted'; slBtn.classList.add('active');
+  } else {
+    slBtn.innerHTML = '♡ Shortlist'; slBtn.classList.remove('active');
+  }
+  
+  // Next btn
+  const nextBtn = document.getElementById('btn-next');
+  nextBtn.textContent = isLast ? '← Back' : 'Next →';
+  
+  // Scroll card to top
+  document.getElementById('card-viewport').scrollTo(0, 0);
+}
+
+// ── SHORTLIST ACTIONS ──
+document.getElementById('btn-shortlist').addEventListener('click', () => {
+  const cg = caregivers[currentIndex];
+  const idx = shortlist.findIndex(s => s.id === cg.id);
+  if (idx >= 0) {
+    shortlist.splice(idx, 1);
+    toast('Removed from shortlist');
+  } else {
+    shortlist.push(cg);
+    toast(`💜 ${cg.firstName || cg.first_name || cg.name || 'Caregiver'} added to shortlist!`);
+  }
+  updateShortlistFab();
+  renderSwiperCard();
+});
+
+document.getElementById('btn-next').addEventListener('click', () => {
+  if (currentIndex === caregivers.length - 1) {
+    currentIndex = 0;
+  } else {
+    currentIndex++;
+  }
+  renderSwiperCard();
+});
+
+document.getElementById('swiper-back').addEventListener('click', () => showScreen('screen-dispatch'));
+
+function updateShortlistFab() {
+  const fab = document.getElementById('shortlist-fab');
+  document.getElementById('sl-count').textContent = shortlist.length;
+  fab.classList.toggle('visible', shortlist.length > 0);
+}
+
+document.getElementById('shortlist-fab').addEventListener('click', () => {
+  renderShortlist();
+  showScreen('screen-shortlist');
+});
+
+// ── SHORTLIST SCREEN ──
+function renderShortlist() {
+  const list = document.getElementById('shortlist-list');
+  const empty = document.getElementById('shortlist-empty');
+  const banner = document.getElementById('auto-schedule-banner');
+  banner.style.display = shortlist.length > 0 ? 'block' : 'none';
+  empty.style.display = shortlist.length === 0 ? 'block' : 'none';
+  list.innerHTML = shortlist.map((cg, i) => {
+    const name = `${cg.firstName || cg.first_name || ''} ${cg.lastName || cg.last_name || ''}`.trim() || cg.name || 'Caregiver';
+    const rate = cg.hourlyRate || cg.hourly_rate || 28;
+    const rating = cg.rating || '4.8';
+    const match = cg.matchScore ? Math.round(cg.matchScore) : (90 - i * 5);
+    return `<div class="shortlist-card">
+      <div class="sl-avatar">${cg.avatar || '👩‍⚕️'}</div>
+      <div class="sl-info">
+        <div class="sl-name">${name}</div>
+        <div class="sl-meta">⭐ ${Number(rating).toFixed(1)} · $${rate}/hr</div>
+        <div class="sl-match">🎯 ${match}% match</div>
+        <button class="sl-remove-btn" onclick="removeShortlist(${cg.id})">Remove</button>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end;">
+        <button class="sl-hire-btn" onclick="directHireFromShortlist(${i})">💼 Hire Now</button>
+        <button class="sl-book-btn" onclick="startBooking(${i})">📅 Interview</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function removeShortlist(id) {
+  shortlist = shortlist.filter(s => s.id !== id);
+  updateShortlistFab();
+  renderShortlist();
+}
+
+document.getElementById('shortlist-back').addEventListener('click', () => showScreen('screen-swiper'));
+
+document.getElementById('btn-auto-schedule').addEventListener('click', () => {
+  const best = shortlist.reduce((a, b) => ((a.matchScore || 90) > (b.matchScore || 85) ? a : b));
+  const idx = shortlist.indexOf(best);
+  startBooking(idx);
+});
+
+// ── BOOKING / INTERVIEW STATE ──
+let selectedDate = null;
+let selectedTime = null;
+let selectedInterviewType = 'video';
+
+// ── BOOKING ──
+function startBooking(shortlistIdx) {
+  bookingCaregiver = shortlist[shortlistIdx];
+  const cg = bookingCaregiver;
+  const name = `${cg.firstName || cg.first_name || ''} ${cg.lastName || cg.last_name || ''}`.trim() || cg.name || 'Caregiver';
+  const rate = cg.hourlyRate || cg.hourly_rate || 28;
+  const match = cg.matchScore ? Math.round(cg.matchScore) : 90;
+  document.getElementById('booking-cg-mini').innerHTML = `
+    <div class="booking-cg-avatar">${cg.avatar || '\u{1F469}\u200d\u2695\uFE0F'}</div>
+    <div>
+      <div style="font-size:16px;font-weight:700;color:#0F172A;">${name}</div>
+      <div style="font-size:13px;color:#475569;">$${rate}/hr · 🎯 ${match}% match · ⭐ ${Number(cg.rating || 4.8).toFixed(1)}</div>
+    </div>`;
+
+  renderDateScroll();
+  selectedDate = null; selectedTime = null; selectedInterviewType = 'video';
+  document.querySelectorAll('.time-slot').forEach(b => b.classList.remove('selected'));
+  document.querySelectorAll('.type-btn').forEach(b => b.classList.remove('selected'));
+  const videoBtn = document.querySelector('.type-btn[data-type="video"]');
+  if (videoBtn) videoBtn.classList.add('selected');
+  const bookEmail = document.getElementById('book-email');
+  if (bookEmail) bookEmail.value = localStorage.getItem('gc_email') || '';
+  const bookNotes = document.getElementById('book-notes');
+  if (bookNotes) bookNotes.value = '';
+  showScreen('screen-booking');
+}
+
+function renderDateScroll() {
+  const scroll = document.getElementById('date-scroll');
+  const dayNames = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const chips = [];
+  const today = new Date();
+  for (let i = 1; i <= 14; i++) {
+    const d = new Date(today);
+    d.setDate(today.getDate() + i);
+    const iso = d.toISOString().split('T')[0];
+    chips.push(`<div class="date-chip" data-date="${iso}" onclick="selectDate('${iso}', this)">
+      <div class="dc-day">${dayNames[d.getDay()]}</div>
+      <div class="dc-num">${d.getDate()}</div>
+      <div class="dc-mon">${months[d.getMonth()]}</div>
+    </div>`);
+  }
+  scroll.innerHTML = chips.join('');
+}
+
+function selectDate(iso, el) {
+  selectedDate = iso;
+  document.querySelectorAll('.date-chip').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+}
+
+// Time slot clicks
+document.addEventListener('click', (e) => {
+  const ts = e.target.closest('.time-slot');
+  if (ts) {
+    document.querySelectorAll('.time-slot').forEach(b => b.classList.remove('selected'));
+    ts.classList.add('selected');
+    selectedTime = ts.dataset.time;
+  }
+  const tb = e.target.closest('.type-btn');
+  if (tb) {
+    document.querySelectorAll('.type-btn').forEach(b => b.classList.remove('selected'));
+    tb.classList.add('selected');
+    selectedInterviewType = tb.dataset.type;
+  }
+});
+
+document.getElementById('booking-back').addEventListener('click', () => showScreen('screen-shortlist'));
+
+document.getElementById('btn-request-interview').addEventListener('click', async () => {
+  const email = document.getElementById('book-email').value.trim();
+  const notes = document.getElementById('book-notes').value.trim();
+  if (!selectedDate) { toast('⚠️ Please select a date'); return; }
+  if (!selectedTime) { toast('⚠️ Please select a time slot'); return; }
+  if (!email || !email.includes('@')) { toast('⚠️ Please enter your email'); return; }
+
+  setLoading(true, 'Sending interview request…');
+  try {
+    const cg = bookingCaregiver;
+    await fetch(`${API}/book-interview`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        caregiverId: cg.id,
+        clientEmail: email,
+        careNeeds: selectedCareTypes.join(', ') || 'General Care',
+        preferredDate: selectedDate,
+        preferredTime: selectedTime,
+        interviewType: selectedInterviewType,
+        notes
+      }),
+    }).catch(() => {});
+    if (email) localStorage.setItem('gc_email', email);
+    showInterviewConfirmation({ email, cg, date: selectedDate, time: selectedTime, type: selectedInterviewType });
+  } catch (e) {
+    const cg = bookingCaregiver;
+    showInterviewConfirmation({ email, cg, date: selectedDate, time: selectedTime, type: selectedInterviewType });
+  } finally {
+    setLoading(false);
+  }
+});
+
+function showInterviewConfirmation({ email, cg, date, time, type }) {
+  const cgName = `${cg.firstName || cg.first_name || ''} ${cg.lastName || cg.last_name || ''}`.trim() || cg.name || 'Caregiver';
+  const timeLabels = { morning: '9 – 11 AM', afternoon: '12 – 3 PM', evening: '4 – 7 PM' };
+  const typeLabels = { video: '📹 Video Call', inperson: '🏠 In Person' };
+  const dateFormatted = new Date(date + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+  // Drop this caregiver from the shortlist
+  shortlist = shortlist.filter(s => s.id !== cg.id);
+  renderShortlist();
+
+  // Save booking status to localStorage
+  const bookingKey = `gc_booked_${cg.id}`;
+  const existingBooking = JSON.parse(localStorage.getItem(bookingKey) || 'null');
+  if (!existingBooking) {
+    localStorage.setItem(bookingKey, JSON.stringify({
+      status: 'pending',
+      caregiverName: cgName,
+      caregiverEmail: cg.email || '',
+      date: date,
+      time: time,
+      interviewType: type,
+      bookedAt: new Date().toISOString()
+    }));
+  }
+
+  document.getElementById('confirm-icon').textContent = '📅';
+  document.getElementById('confirm-title').textContent = 'Interview Request Sent!';
+  document.getElementById('confirm-sub').textContent = `${cgName} has been notified and will confirm within 24 hours. Check your email for updates.`;
+  document.getElementById('confirm-card').innerHTML = `
+    <div class="confirm-row"><span class="confirm-label">Caregiver</span><span class="confirm-value">${cgName}</span></div>
+    <div class="confirm-row"><span class="confirm-label">Date</span><span class="confirm-value">${dateFormatted}</span></div>
+    <div class="confirm-row"><span class="confirm-label">Time</span><span class="confirm-value">${timeLabels[time] || time}</span></div>
+    <div class="confirm-row"><span class="confirm-label">Format</span><span class="confirm-value">${typeLabels[type] || type}</span></div>
+    <div class="confirm-row"><span class="confirm-label">Your Email</span><span class="confirm-value">${email}</span></div>
+    <div class="confirm-row"><span class="confirm-label">Cost</span><span class="confirm-value" style="color:#22C55E;">FREE ✨</span></div>`;
+  showScreen('screen-confirm');
+  setTimeout(() => {
+    const trackBtn = document.getElementById('btn-track-hire-status');
+    if (trackBtn && cg) { trackBtn.onclick = () => showHireStatus(cg); }
+  }, 50);
+}
+
+function showConfirmation({ name, email, cg, date, hours, rate, total }) {
+  showInterviewConfirmation({ email, cg, date, time: 'morning', type: 'video' });
+}
+
+// ── SUBSCRIBE ──
+function showSubscribe() { showScreen('screen-subscribe'); }
+
+async function loadCaregiverCerts(email, el) {
+  if (!email) return;
+  const clientToken = localStorage.getItem('gc_client_session') || '';
+  el.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="animation:spin 1s linear infinite"><circle cx="12" cy="12" r="10"/></svg> Loading...';
+  el.style.pointerEvents = 'none';
+  try {
+    const res = await fetch(`${API}/caregiver-profile-docs?email=${encodeURIComponent(email)}&clientToken=${clientToken}`);
+    const data = await res.json();
+    if (!data.success) throw new Error('Failed');
+    if (!data.subscribed) {
+      el.innerHTML = '🔒 ' + data.count + ' cert' + (data.count !== 1 ? 's' : '') + ' on file — Subscribe to view';
+      el.style.background = 'rgba(239,68,68,0.08)';
+      el.style.borderColor = 'rgba(239,68,68,0.2)';
+      el.style.color = '#ef4444';
+      el.style.pointerEvents = 'auto';
+      el.onclick = () => { showSubscribe(); };
+    } else {
+      if (data.documents.length === 0) {
+        el.innerHTML = 'No certifications uploaded yet';
+        el.style.color = '#94A3B8';
+        el.style.pointerEvents = 'none';
+      } else {
+        const docList = data.documents.map(d => `<span style="background:rgba(34,197,94,0.08);color:#22C55E;padding:2px 8px;border-radius:50px;font-size:11px;font-weight:600;border:1px solid rgba(34,197,94,0.2)">${d.name}</span>`).join(' ');
+        el.outerHTML = `<div style="padding:0 16px 4px;display:flex;flex-wrap:wrap;gap:4px;align-items:center"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#22C55E" stroke-width="2" style="flex-shrink:0"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>${docList}</div>`;
+      }
+    }
+  } catch (e) {
+    el.innerHTML = '⚠️ Could not load';
+    el.style.color = '#ef4444';
+    el.style.pointerEvents = 'auto';
+    setTimeout(() => { el.innerHTML = 'View Certifications'; el.style.color = '#7C5CFF'; el.style.pointerEvents = 'auto'; }, 2000);
+  }
+}
+
+document.querySelectorAll('.plan-card').forEach(card => {
+  card.addEventListener('click', () => {
+    document.querySelectorAll('.plan-card').forEach(c => c.classList.remove('selected'));
+    card.classList.add('selected');
+    selectedPlan = card.dataset.plan;
+  });
+});
+// Default select Family
+const familyPlan = document.getElementById('plan-family');
+if (familyPlan) familyPlan.classList.add('selected');
+
+const subscribeBack = document.getElementById('subscribe-back');
+if (subscribeBack) subscribeBack.addEventListener('click', () => showScreen('screen-swiper'));
+
+const subscribeBtn = document.getElementById('btn-subscribe');
+if (subscribeBtn) subscribeBtn.addEventListener('click', async () => {
+  const email = document.getElementById('subscribe-email').value.trim();
+  if (!email || !email.includes('@')) { toast('⚠️ Please enter a valid email'); return; }
+  setLoading(true, 'Redirecting to secure checkout…');
+  try {
+    const res = await fetch(`${API}/create-subscription-checkout`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, plan: selectedPlan }),
+    });
+    const data = await res.json();
+    if (data.url) {
+      window.location.href = data.url;
+    } else {
+      toast('⚠️ ' + (data.error || 'Something went wrong'));
+    }
+  } catch (e) {
+    toast('⚠️ Connection error. Please try again.');
+  } finally {
+    setLoading(false);
+  }
+});
+
+// ── CHECK SUBSCRIPTION ──
+async function checkSubscription() {
+  const email = localStorage.getItem('gc_email');
+  if (!email) return;
+  try {
+    const res = await fetch(`${API}/check-subscription?email=${encodeURIComponent(email)}`);
+    subscription = await res.json();
+  } catch (e) {}
+}
+
+// ── STARTUP: URL PARAMS ──
+const urlParams = new URLSearchParams(window.location.search);
+
+// Subscription return handling
+if (urlParams.get('subscription') === 'success') {
+  const plan = urlParams.get('plan') || 'family';
+  const email = urlParams.get('email');
+  if (email) localStorage.setItem('gc_email', email);
+  subscription = { subscribed: true, plan };
+  toast(`🎉 You're now on the ${plan.charAt(0).toUpperCase() + plan.slice(1)} plan! Contact info unlocked.`);
+  history.replaceState({ screen: 'screen-dispatch' }, '', window.location.pathname);
+}
+if (urlParams.get('subscription') === 'cancelled') {
+  toast('Payment cancelled. Your shortlist is still saved.');
+  history.replaceState({ screen: 'screen-dispatch' }, '', window.location.pathname);
+}
+
+// Browse/landing-page param handling
+const browseMode = urlParams.get('browse') === 'true';
+const paramCare   = urlParams.get('care');
+const paramLoc    = urlParams.get('location');
+const paramUrg    = urlParams.get('urgency');
+
+if (paramLoc) {
+  const locInput = document.getElementById('location-input');
+  if (locInput) locInput.value = paramLoc;
+}
+if (paramCare) {
+  paramCare.split(',').forEach(ct => {
+    ct = ct.trim();
+    const tile = document.querySelector(`.care-tile[data-value="${ct}"]`);
+    if (tile && !tile.classList.contains('selected')) {
+      tile.classList.add('selected');
+      selectedCareTypes.push(ct);
+    }
+  });
+  if (typeof updateFindBtn === 'function') updateFindBtn();
+}
+if (paramUrg) {
+  document.querySelectorAll('.urgency-pill').forEach(p => p.classList.remove('selected'));
+  const pill = document.querySelector(`.urgency-pill[data-value="${paramUrg}"]`);
+  if (pill) { pill.classList.add('selected'); urgency = paramUrg; }
+}
+
+// Auto-load caregivers for browse mode or when location param is present
+if (browseMode || paramLoc) {
+  (async () => {
+    setLoading(true, 'Finding caregivers near you…');
+    try {
+      const loc = paramLoc || 'Atlanta, GA';
+      const sp = new URLSearchParams({ location: loc, page: 1, limit: 20 });
+      if (paramCare) sp.append('specialty', paramCare.split(',')[0].trim());
+      const res = await fetch(`${API}/search-caregivers?${sp}`);
+      const data = await res.json();
+      caregivers = data.caregivers || data.docs || [];
+    } catch(e) {
+      caregivers = [];
+    } finally {
+      setLoading(false);
+    }
+    if (caregivers.length === 0) {
+      showNoCaregivers();
+      return;
+    }
+    currentIndex = 0;
+    renderSwiperCard();
+    showScreen('screen-swiper');
+    checkSubscription();
+  })();
+}
+
+// ── PWA INSTALL ──
+let deferredPrompt = null;
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault(); deferredPrompt = e;
+  setTimeout(() => {
+    if (!sessionStorage.getItem('install-dismissed')) {
+      const ib = document.getElementById('install-banner');
+      if (ib) ib.style.display = 'flex';
+    }
+  }, 5000);
+});
+const ibAddBtn = document.getElementById('ib-add-btn');
+if (ibAddBtn) ibAddBtn.addEventListener('click', async () => {
+  if (deferredPrompt) { deferredPrompt.prompt(); const r = await deferredPrompt.userChoice; deferredPrompt = null; }
+  const ib = document.getElementById('install-banner');
+  if (ib) ib.style.display = 'none';
+});
+const ibCloseBtn = document.getElementById('ib-close-btn');
+if (ibCloseBtn) ibCloseBtn.addEventListener('click', () => {
+  const ib = document.getElementById('install-banner');
+  if (ib) ib.style.display = 'none';
+  sessionStorage.setItem('install-dismissed', '1');
+});
+const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+const isStandalone = ('standalone' in navigator && navigator.standalone) || window.matchMedia('(display-mode: standalone)').matches;
+if (isIOS && !isStandalone && !sessionStorage.getItem('ios-hint-dismissed')) {
+  setTimeout(() => {
+    const hint = document.getElementById('ios-hint');
+    if (hint) {
+      hint.style.display = 'block';
+      hint.addEventListener('click', () => { hint.style.display = 'none'; sessionStorage.setItem('ios-hint-dismissed', '1'); });
+      setTimeout(() => { hint.style.display = 'none'; }, 8000);
+    }
+  }, 6000);
+}
+
 // Init team badge on load
 updateTeamBadge();
 
