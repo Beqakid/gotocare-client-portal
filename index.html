@@ -3726,6 +3726,121 @@ let bookingCaregiver = null;
 let subscription = null;
 
 // ── SCREEN NAV ──
+
+// ── CLIENT AUTH ──
+const AUTH_STORAGE_KEY = 'gc_client_session';
+let authMode = 'signin';
+
+function switchAuthTab(mode) {
+  authMode = mode;
+  document.getElementById('tab-signin').classList.toggle('active', mode === 'signin');
+  document.getElementById('tab-signup').classList.toggle('active', mode === 'signup');
+  const nameField = document.getElementById('auth-name');
+  nameField.style.display = mode === 'signup' ? 'block' : 'none';
+  document.getElementById('auth-submit-btn').textContent = mode === 'signup' ? 'Create Account \u2192' : 'Sign In \u2192';
+  document.getElementById('auth-password').placeholder = mode === 'signup' ? 'Create a password' : 'Password';
+  document.getElementById('auth-error').style.display = 'none';
+}
+
+function showAuthError(msg) {
+  const el = document.getElementById('auth-error');
+  el.textContent = msg;
+  el.style.display = 'block';
+}
+
+async function handleAuthSubmit() {
+  const email = document.getElementById('auth-email').value.trim();
+  const password = document.getElementById('auth-password').value;
+  const name = document.getElementById('auth-name').value.trim();
+  if (!email || !email.includes('@')) { showAuthError('Please enter a valid email address.'); return; }
+  if (!password || password.length < 6) { showAuthError('Password must be at least 6 characters.'); return; }
+  if (authMode === 'signup' && !name) { showAuthError('Please enter your name.'); return; }
+
+  setLoading(true, authMode === 'signup' ? 'Creating your account\u2026' : 'Signing in\u2026');
+  document.getElementById('auth-error').style.display = 'none';
+  try {
+    const endpoint = authMode === 'signup' ? '/client-register' : '/client-auth/login';
+    const body = authMode === 'signup' ? { name, email, password } : { email, password };
+    const res = await fetch(API + endpoint, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    const data = await res.json();
+    if (!res.ok || data.error) { showAuthError(data.error || 'Something went wrong.'); return; }
+    clientAuthSuccess(data.sessionToken, data.email, data.name);
+  } catch (e) {
+    showAuthError('Connection error. Please try again.');
+  } finally {
+    setLoading(false);
+  }
+}
+
+function clientAuthSuccess(token, email, name) {
+  localStorage.setItem(AUTH_STORAGE_KEY, token);
+  localStorage.setItem('gc_email', email);
+  if (name) localStorage.setItem('gc_client_name', name);
+  const label = document.getElementById('account-btn-label');
+  if (label) label.textContent = name ? name.split(' ')[0] : email.split('@')[0];
+  showScreen('screen-dispatch');
+  toast('\ud83d\udc4b Welcome' + (name ? ', ' + name.split(' ')[0] : '') + '!');
+}
+
+function clientSkipAuth() {
+  localStorage.removeItem(AUTH_STORAGE_KEY);
+  showScreen('screen-dispatch');
+}
+
+function clientGoogleSignIn() {
+  const clientId = document.querySelector('meta[name="google-signin-client_id"]')?.content;
+  if (!clientId || !window.google) { showAuthError('Google Sign-In is loading, please try again in a moment.'); return; }
+  try {
+    google.accounts.id.initialize({
+      client_id: clientId,
+      callback: async (response) => {
+        setLoading(true, 'Signing in with Google\u2026');
+        try {
+          const payload = JSON.parse(atob(response.credential.split('.')[1]));
+          const res = await fetch(API + '/client-auth/google', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ idToken: response.credential, name: payload.name, email: payload.email, googleId: payload.sub }),
+          });
+          const data = await res.json();
+          if (!res.ok || data.error) { showAuthError(data.error || 'Google sign-in failed.'); return; }
+          clientAuthSuccess(data.sessionToken, data.email, data.name);
+        } catch (e) {
+          showAuthError('Google sign-in failed. Please try email instead.');
+        } finally {
+          setLoading(false);
+        }
+      },
+      auto_select: false,
+    });
+    google.accounts.id.prompt((notification) => {
+      if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
+        google.accounts.id.renderButton(document.getElementById('auth-google-btn'), {
+          type: 'standard', shape: 'rectangular', theme: 'outline', size: 'large'
+        });
+      }
+    });
+  } catch (e) {
+    showAuthError('Google Sign-In not available. Please use email.');
+  }
+}
+
+// Auto-login: skip auth if session exists
+(function autoLogin() {
+  const token = localStorage.getItem('gc_client_session');
+  if (token) {
+    const name = localStorage.getItem('gc_client_name');
+    const label = document.getElementById('account-btn-label');
+    if (label && name) label.textContent = name.split(' ')[0];
+    // Hide auth, show home
+    document.getElementById('screen-auth').classList.remove('active');
+    document.getElementById('screen-home').classList.add('active');
+    document.getElementById('bottom-nav').classList.add('visible');
+  }
+})();
+
 function showScreen(id, pushHistory = true) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.getElementById(id).classList.add('active');
