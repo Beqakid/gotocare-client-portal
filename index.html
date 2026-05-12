@@ -3211,7 +3211,7 @@
 <div id="screen-dispatch" class="screen">
   <div class="dispatch-header">
     <div style="font-size:22px;">🏠</div>
-    <button id="account-btn" onclick="showAccountScreen()" title="My Account">
+    <button id="account-btn" onclick="showScreen('screen-account')" title="My Account">
       <span>👤</span> <span id="account-btn-label">Account</span>
     </button>
   </div>
@@ -3499,8 +3499,8 @@
   <div class="confirm-sub" id="confirm-sub">Your caregiver has been notified and will confirm within 24 hours. You'll receive a notification by email once they respond.</div>
   <div class="confirm-card" id="confirm-card"></div>
   <button class="btn-home" style="background:linear-gradient(135deg,#7C5CFF,#4A90E2);border:none;font-size:15px;font-weight:700;" id="btn-track-hire-status">📊 Track Hire Status</button>
-  <button class="btn-home" style="margin-top:0; background:rgba(124,92,255,0.15); border:1.5px solid rgba(167,139,250,0.3); font-size:14px;" onclick="showTeamScreen()">👥 View My Care Team</button>
-  <button class="btn-home" style="margin-top:0; background:rgba(124,92,255,0.08); border:1px solid rgba(124,92,255,0.15); font-size:14px;" onclick="showAccountScreen()">📋 View My Bookings</button>
+  <button class="btn-home" style="margin-top:0; background:rgba(124,92,255,0.15); border:1.5px solid rgba(167,139,250,0.3); font-size:14px;" onclick="showScreen('screen-team')">👥 View My Care Team</button>
+  <button class="btn-home" style="margin-top:0; background:rgba(124,92,255,0.08); border:1px solid rgba(124,92,255,0.15); font-size:14px;" onclick="showScreen('screen-account')">📋 View My Bookings</button>
   <button class="btn-home" style="margin-top:0; background:rgba(255,255,255,0.05); font-size:14px; opacity:0.6;" onclick="showScreen('screen-dispatch')">Start Over</button>
 </div>
 
@@ -3915,7 +3915,6 @@ document.getElementById('gps-btn').addEventListener('click', () => {
 // ── FIND CAREGIVERS ──
 document.getElementById('find-btn').addEventListener('click', async () => {
   const loc = document.getElementById('location-input').value.trim() || 'Atlanta, GA';
-  saveClientPreferences(loc, selectedCareTypes); // persist for next visit
   setLoading(true);
   try {
     const params = new URLSearchParams({ location: loc, page: 1, limit: 20 });
@@ -4170,6 +4169,53 @@ document.getElementById('btn-next').addEventListener('click', () => {
 });
 
 document.getElementById('swiper-back').addEventListener('click', () => showScreen('screen-dispatch'));
+
+// ── PERSISTENCE HELPERS ──
+function persistShortlist() {
+  try {
+    const token = localStorage.getItem('gc_client_session');
+    localStorage.setItem('gc_shortlist_local', JSON.stringify(shortlist));
+    if (token) {
+      fetch(API + '/client-shortlist?clientToken=' + token, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ shortlist: shortlist.map(c => c.id) })
+      }).catch(() => {});
+    }
+  } catch(e) {}
+}
+
+function saveClientPreferences(loc, careTypes) {
+  try {
+    localStorage.setItem('gc_last_location', loc || '');
+    localStorage.setItem('gc_last_care_types', JSON.stringify(careTypes || []));
+    const token = localStorage.getItem('gc_client_session');
+    if (token) {
+      fetch(API + '/client-preferences?clientToken=' + token, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ location: loc, careTypes: careTypes })
+      }).catch(() => {});
+    }
+  } catch(e) {}
+}
+
+function loadClientPreferences() {
+  try {
+    const loc = localStorage.getItem('gc_last_location');
+    const inp = document.getElementById('location-input');
+    if (loc && inp) inp.value = loc;
+    const ct = JSON.parse(localStorage.getItem('gc_last_care_types') || '[]');
+    if (ct.length) {
+      ct.forEach(t => {
+        selectedCareTypes.push(t);
+        const pill = document.querySelector(`.care-pill[data-type="${t}"]`);
+        if (pill) pill.classList.add('selected');
+      });
+      updateFindBtn();
+    }
+  } catch(e) {}
+}
 
 function updateShortlistFab() {
   const fab = document.getElementById('shortlist-fab');
@@ -4907,7 +4953,7 @@ async function addToTeam(cg, bookingId) {
       // Navigate to My Team → Active tab
       setTimeout(() => {
         currentTeamTab = 'active';
-        showTeamScreen();
+        showScreen('screen-team');
       }, 700);
     } else {
       toast('Something went wrong. Please try again.');
