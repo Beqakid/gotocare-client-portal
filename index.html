@@ -4209,8 +4209,8 @@ function loadClientPreferences() {
     if (ct.length) {
       ct.forEach(t => {
         selectedCareTypes.push(t);
-        const pill = document.querySelector(`.care-pill[data-type="${t}"]`);
-        if (pill) pill.classList.add('selected');
+        const tile = document.querySelector(`.care-tile[data-value="${t}"]`);
+        if (tile) { tile.classList.add('selected'); }
       });
       updateFindBtn();
     }
