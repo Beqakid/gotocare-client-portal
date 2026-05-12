@@ -453,6 +453,114 @@
       color: var(--purple);
     }
 
+    /* ── Accordion Care Cards ── */
+    .care-card {
+      background: #FFFFFF;
+      border-radius: 14px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+      margin-bottom: 10px;
+      overflow: hidden;
+      border: 1.5px solid #E2E8F0;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .care-card.has-selection {
+      border-color: #7C5CFF;
+      box-shadow: 0 2px 16px rgba(124,92,255,0.15);
+    }
+    .care-card-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 15px 16px;
+      cursor: pointer;
+      user-select: none;
+      background: #FFFFFF;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .care-card-header:active { background: #F8FAFC; }
+    .care-card-emoji { font-size: 20px; width: 26px; text-align: center; }
+    .care-card-title {
+      flex: 1;
+      font-size: 15px;
+      font-weight: 700;
+      color: #0F172A;
+    }
+    .care-count-badge {
+      background: #7C5CFF;
+      color: #fff;
+      font-size: 11px;
+      font-weight: 700;
+      min-width: 20px;
+      height: 20px;
+      border-radius: 10px;
+      padding: 0 6px;
+      display: none;
+      align-items: center;
+      justify-content: center;
+    }
+    .care-card.has-selection .care-count-badge { display: flex; }
+    .care-card-chevron {
+      font-size: 16px;
+      color: #94A3B8;
+      transition: transform 0.25s ease;
+      line-height: 1;
+    }
+    .care-card.open .care-card-chevron { transform: rotate(180deg); }
+    .care-card-body {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.3s ease, padding 0.3s ease;
+      padding: 0 12px;
+    }
+    .care-card.open .care-card-body {
+      max-height: 500px;
+      padding: 0 12px 14px;
+    }
+    .care-tile-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+    .care-card-body .care-tile {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      white-space: normal;
+      text-align: center;
+      padding: 10px 8px;
+      font-size: 12px;
+      line-height: 1.3;
+      border-radius: 10px !important;
+    }
+    /* Summary strip */
+    .care-summary-strip {
+      display: flex;
+      gap: 6px;
+      overflow-x: auto;
+      padding: 0;
+      scrollbar-width: none;
+      max-height: 0;
+      overflow-y: hidden;
+      transition: max-height 0.25s ease, padding 0.25s ease;
+      margin-bottom: 0;
+    }
+    .care-summary-strip.visible {
+      max-height: 38px;
+      padding: 2px 0 10px;
+      margin-bottom: 4px;
+    }
+    .care-summary-strip::-webkit-scrollbar { display: none; }
+    .care-summary-chip {
+      flex-shrink: 0;
+      background: rgba(124,92,255,0.1);
+      color: #7C5CFF;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 4px 10px;
+      border-radius: 20px;
+      border: 1px solid rgba(124,92,255,0.25);
+    }
+
     /* Section label */
     .section-label {
       font-size: 15px;
@@ -3224,60 +3332,103 @@
   <div class="section-label">💜 What care do you need?</div>
 
   <div class="care-grid" id="care-grid">
+
     <!-- Senior Care -->
-    <div class="care-category">
-      <div class="care-category-label">🧓 Senior Care</div>
-      <div class="care-category-pills">
-        <div class="care-tile" data-value="Elder Care">Elder Care</div>
-        <div class="care-tile" data-value="Dementia Care">Dementia Care</div>
-        <div class="care-tile" data-value="Alzheimer's Support">Alzheimer's Support</div>
-        <div class="care-tile" data-value="Fall Prevention">Fall Prevention</div>
+    <div class="care-card" id="care-card-0">
+      <div class="care-card-header" onclick="toggleCareCard(this.closest('.care-card'))">
+        <span class="care-card-emoji">🧓</span>
+        <span class="care-card-title">Senior Care</span>
+        <span class="care-count-badge" id="badge-0"></span>
+        <span class="care-card-chevron">▾</span>
+      </div>
+      <div class="care-card-body">
+        <div class="care-tile-grid">
+          <div class="care-tile" data-value="Elder Care">Elder Care</div>
+          <div class="care-tile" data-value="Dementia Care">Dementia Care</div>
+          <div class="care-tile" data-value="Alzheimer's Support">Alzheimer's Support</div>
+          <div class="care-tile" data-value="Fall Prevention">Fall Prevention</div>
+        </div>
       </div>
     </div>
+
     <!-- Medical -->
-    <div class="care-category">
-      <div class="care-category-label">🏥 Medical</div>
-      <div class="care-category-pills">
-        <div class="care-tile" data-value="Medication Management">Medication Management</div>
-        <div class="care-tile" data-value="Wound Care">Wound Care</div>
-        <div class="care-tile" data-value="Physical Therapy Aid">Physical Therapy Aid</div>
-        <div class="care-tile" data-value="Respiratory Care">Respiratory Care</div>
-        <div class="care-tile" data-value="Stroke Recovery">Stroke Recovery</div>
-        <div class="care-tile" data-value="Feeding Assistance">Feeding Assistance</div>
-        <div class="care-tile" data-value="Incontinence Care">Incontinence Care</div>
+    <div class="care-card" id="care-card-1">
+      <div class="care-card-header" onclick="toggleCareCard(this.closest('.care-card'))">
+        <span class="care-card-emoji">🏥</span>
+        <span class="care-card-title">Medical</span>
+        <span class="care-count-badge" id="badge-1"></span>
+        <span class="care-card-chevron">▾</span>
+      </div>
+      <div class="care-card-body">
+        <div class="care-tile-grid">
+          <div class="care-tile" data-value="Medication Management">Medication Management</div>
+          <div class="care-tile" data-value="Wound Care">Wound Care</div>
+          <div class="care-tile" data-value="Physical Therapy Aid">Physical Therapy Aid</div>
+          <div class="care-tile" data-value="Respiratory Care">Respiratory Care</div>
+          <div class="care-tile" data-value="Stroke Recovery">Stroke Recovery</div>
+          <div class="care-tile" data-value="Feeding Assistance">Feeding Assistance</div>
+          <div class="care-tile" data-value="Incontinence Care">Incontinence Care</div>
+        </div>
       </div>
     </div>
+
     <!-- Daily Living -->
-    <div class="care-category">
-      <div class="care-category-label">🏠 Daily Living</div>
-      <div class="care-category-pills">
-        <div class="care-tile" data-value="Bathing &amp; Grooming">Bathing &amp; Grooming</div>
-        <div class="care-tile" data-value="Meal Preparation">Meal Preparation</div>
-        <div class="care-tile" data-value="Light Housekeeping">Light Housekeeping</div>
-        <div class="care-tile" data-value="Errands &amp; Shopping">Errands &amp; Shopping</div>
+    <div class="care-card" id="care-card-2">
+      <div class="care-card-header" onclick="toggleCareCard(this.closest('.care-card'))">
+        <span class="care-card-emoji">🏠</span>
+        <span class="care-card-title">Daily Living</span>
+        <span class="care-count-badge" id="badge-2"></span>
+        <span class="care-card-chevron">▾</span>
+      </div>
+      <div class="care-card-body">
+        <div class="care-tile-grid">
+          <div class="care-tile" data-value="Bathing &amp; Grooming">Bathing &amp; Grooming</div>
+          <div class="care-tile" data-value="Meal Preparation">Meal Preparation</div>
+          <div class="care-tile" data-value="Light Housekeeping">Light Housekeeping</div>
+          <div class="care-tile" data-value="Errands &amp; Shopping">Errands &amp; Shopping</div>
+        </div>
       </div>
     </div>
+
     <!-- Specialized -->
-    <div class="care-category">
-      <div class="care-category-label">💊 Specialized</div>
-      <div class="care-category-pills">
-        <div class="care-tile" data-value="Post-Surgery Recovery">Post-Surgery Recovery</div>
-        <div class="care-tile" data-value="Hospice Support">Hospice Support</div>
-        <div class="care-tile" data-value="Wheelchair Assistance">Wheelchair Assistance</div>
-        <div class="care-tile" data-value="Overnight Care">Overnight Care</div>
-        <div class="care-tile" data-value="Disability Support">Disability Support</div>
+    <div class="care-card" id="care-card-3">
+      <div class="care-card-header" onclick="toggleCareCard(this.closest('.care-card'))">
+        <span class="care-card-emoji">💊</span>
+        <span class="care-card-title">Specialized</span>
+        <span class="care-count-badge" id="badge-3"></span>
+        <span class="care-card-chevron">▾</span>
+      </div>
+      <div class="care-card-body">
+        <div class="care-tile-grid">
+          <div class="care-tile" data-value="Post-Surgery Recovery">Post-Surgery Recovery</div>
+          <div class="care-tile" data-value="Hospice Support">Hospice Support</div>
+          <div class="care-tile" data-value="Wheelchair Assistance">Wheelchair Assistance</div>
+          <div class="care-tile" data-value="Overnight Care">Overnight Care</div>
+          <div class="care-tile" data-value="Disability Support">Disability Support</div>
+        </div>
       </div>
     </div>
+
     <!-- Wellness -->
-    <div class="care-category">
-      <div class="care-category-label">💛 Wellness</div>
-      <div class="care-category-pills">
-        <div class="care-tile" data-value="Companionship">Companionship</div>
-        <div class="care-tile" data-value="Transportation">Transportation</div>
-        <div class="care-tile" data-value="Mental Health Support">Mental Health Support</div>
+    <div class="care-card" id="care-card-4">
+      <div class="care-card-header" onclick="toggleCareCard(this.closest('.care-card'))">
+        <span class="care-card-emoji">💛</span>
+        <span class="care-card-title">Wellness</span>
+        <span class="care-count-badge" id="badge-4"></span>
+        <span class="care-card-chevron">▾</span>
+      </div>
+      <div class="care-card-body">
+        <div class="care-tile-grid">
+          <div class="care-tile" data-value="Companionship">Companionship</div>
+          <div class="care-tile" data-value="Transportation">Transportation</div>
+          <div class="care-tile" data-value="Mental Health Support">Mental Health Support</div>
+        </div>
       </div>
     </div>
+
   </div>
+  <!-- Selected needs summary strip -->
+  <div class="care-summary-strip" id="care-summary-strip"></div>
 
   <div class="section-label">📍 Your location</div>
   <div class="location-row">
@@ -3894,6 +4045,7 @@ document.querySelectorAll('.care-tile').forEach(tile => {
       selectedCareTypes = selectedCareTypes.filter(v => v !== val);
     }
     updateFindBtn();
+    updateAccordionBadges();
   });
 });
 
@@ -5003,6 +5155,32 @@ document.getElementById('hire-status-back').addEventListener('click', () => show
 // ════════════════════════════════════════════════════════════
 // HOME TAB
 // ════════════════════════════════════════════════════════════
+// ── ACCORDION CARE CARDS ──
+function toggleCareCard(card) {
+  const isOpen = card.classList.contains('open');
+  // Close all cards first (optional: comment out for multi-open)
+  // document.querySelectorAll('.care-card').forEach(c => c.classList.remove('open'));
+  card.classList.toggle('open', !isOpen);
+}
+
+function updateAccordionBadges() {
+  document.querySelectorAll('.care-card').forEach(function(card) {
+    var count = card.querySelectorAll('.care-tile.selected').length;
+    var badge = card.querySelector('.care-count-badge');
+    if (badge) { badge.textContent = count > 0 ? count : ''; }
+    if (count > 0) { card.classList.add('has-selection'); }
+    else { card.classList.remove('has-selection'); }
+  });
+  // Update summary strip
+  var strip = document.getElementById('care-summary-strip');
+  if (strip) {
+    strip.innerHTML = selectedCareTypes.map(function(t) {
+      return '<span class="care-summary-chip">' + t + '</span>';
+    }).join('');
+    strip.classList.toggle('visible', selectedCareTypes.length > 0);
+  }
+}
+
 function showHomeScreen() {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   const homeScreen = document.getElementById('screen-home');
