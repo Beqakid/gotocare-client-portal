@@ -345,23 +345,7 @@
     }
     .auth-guest-link:hover { background: rgba(167,139,250,0.1); }
 
-    .auth-features {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 10px;
-    }
-    .auth-feature-card {
-      background: rgba(255,255,255,0.06);
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
-      border: 1px solid rgba(255,255,255,0.1);
-      border-radius: var(--radius);
-      padding: 18px 12px;
-      text-align: center;
-    }
-    .auth-feature-icon { font-size: 24px; margin-bottom: 8px; display: block; }
-    .auth-feature-title { font-size: 11px; font-weight: 700; color: #fff; margin-bottom: 2px; }
-    .auth-feature-desc { font-size: 10px; color: rgba(255,255,255,0.4); }
+
 
     /* ════════════════════════════════════════════════════════════════
        DISPATCH SCREEN
@@ -3104,23 +3088,7 @@
       <div class="auth-guest-link" onclick="clientSkipAuth()">Browse as Guest →</div>
     </div>
 
-    <div class="auth-features">
-      <div class="auth-feature-card">
-        <span class="auth-feature-icon">🤖</span>
-        <div class="auth-feature-title">AI Matching</div>
-        <div class="auth-feature-desc">Smart caregiver pairing</div>
-      </div>
-      <div class="auth-feature-card">
-        <span class="auth-feature-icon">📹</span>
-        <div class="auth-feature-title">Free Interviews</div>
-        <div class="auth-feature-desc">Video or in-person</div>
-      </div>
-      <div class="auth-feature-card">
-        <span class="auth-feature-icon">✅</span>
-        <div class="auth-feature-title">Verified Care</div>
-        <div class="auth-feature-desc">Background checked</div>
-      </div>
-    </div>
+
   </div>
 </div>
 
@@ -3144,21 +3112,25 @@
       </div>
       <div id="home-avatar" style="width:46px;height:46px;border-radius:50%;background:linear-gradient(135deg,#7C5CFF,#4A90E2);display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:800;color:#fff;border:2px solid rgba(255,255,255,0.25);cursor:pointer;" onclick="document.querySelector('[data-screen=screen-care-profile]').click()">?</div>
     </div>
-    <!-- Stats Row -->
-    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;position:relative;z-index:1;">
-      <div id="home-onsite-card" style="background:rgba(255,255,255,0.1);backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,0.15);border-radius:14px;padding:10px 8px;text-align:center;cursor:pointer;position:relative;overflow:hidden;" onclick="document.querySelector('[data-screen=screen-team]').click()">
+    <!-- Status Banner -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;position:relative;z-index:1;">
+      <div id="home-onsite-card" style="background:rgba(255,255,255,0.1);backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,0.15);border-radius:16px;padding:14px 16px;cursor:pointer;position:relative;overflow:hidden;" onclick="document.querySelector('[data-screen=screen-team]').click()">
         <div id="home-onsite-glow" style="display:none;position:absolute;inset:0;background:radial-gradient(circle at 50% 50%,rgba(34,197,94,0.18),transparent 70%);pointer-events:none;"></div>
-        <div id="home-onsite-label" style="font-size:8px;font-weight:700;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:2px;">ONSITE</div>
-        <div id="home-onsite-name" style="font-size:12px;font-weight:800;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;">—</div>
-        <div id="home-onsite-clock" style="font-size:11px;font-weight:700;color:rgba(255,255,255,0.4);font-family:monospace;margin-top:3px;letter-spacing:0.5px;">No shift</div>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <div id="home-onsite-dot" style="width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,0.3);flex-shrink:0;"></div>
+          <div>
+            <div id="home-onsite-label" style="font-size:10px;font-weight:700;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:0.5px;">ONSITE</div>
+            <div id="home-onsite-name" style="font-size:14px;font-weight:800;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:140px;margin-top:1px;">—</div>
+          </div>
+        </div>
+        <div id="home-onsite-clock" style="font-size:12px;font-weight:700;color:rgba(255,255,255,0.5);font-family:monospace;margin-top:6px;letter-spacing:0.5px;">No shift</div>
       </div>
-      <div style="background:rgba(255,255,255,0.1);backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,0.15);border-radius:14px;padding:14px 12px;text-align:center;cursor:pointer;" onclick="document.querySelector('[data-screen=screen-account]').click()">
-        <div id="home-stat-bookings" style="font-size:22px;font-weight:900;color:#fff;">—</div>
-        <div style="font-size:10px;color:rgba(255,255,255,0.6);font-weight:600;margin-top:2px;">Bookings</div>
-      </div>
-      <div style="background:rgba(255,255,255,0.1);backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,0.15);border-radius:14px;padding:14px 12px;text-align:center;" onclick="document.querySelector('[data-screen=screen-dispatch]').click()">
-        <div style="font-size:22px;font-weight:900;color:#22C55E;">FREE</div>
-        <div style="font-size:10px;color:rgba(255,255,255,0.6);font-weight:600;margin-top:2px;">Browse</div>
+      <div style="background:rgba(255,255,255,0.1);backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,0.15);border-radius:16px;padding:14px 16px;cursor:pointer;display:flex;flex-direction:column;justify-content:center;" onclick="document.querySelector('[data-screen=screen-account]').click()">
+        <div style="display:flex;align-items:baseline;gap:6px;">
+          <div id="home-stat-bookings" style="font-size:28px;font-weight:900;color:#fff;line-height:1;">—</div>
+          <div style="font-size:12px;color:rgba(255,255,255,0.6);font-weight:600;">Bookings</div>
+        </div>
+        <div style="font-size:11px;color:#22C55E;font-weight:700;margin-top:6px;cursor:pointer;" onclick="event.stopPropagation();document.querySelector('[data-screen=screen-dispatch]').click()">Find Care →</div>
       </div>
     </div>
   </div>
@@ -4274,11 +4246,13 @@ function showHomeScreen() {
       const name = document.getElementById('home-onsite-name');
       const clock = document.getElementById('home-onsite-clock');
       const glow = document.getElementById('home-onsite-glow');
+      const dot = document.getElementById('home-onsite-dot');
       if (!label) return;
       if (active) {
         // Show green active state
         label.textContent = '● ONSITE NOW';
         label.style.color = '#22C55E';
+        if (dot) { dot.style.background = '#22C55E'; dot.style.boxShadow = '0 0 6px #22C55E'; }
         const parts = (_onsiteName || '').split(' ');
         const abbr = parts[0] + (parts[1] ? ' ' + parts[1][0] + '.' : '');
         name.textContent = abbr;
@@ -4302,11 +4276,12 @@ function showHomeScreen() {
         // Inactive state
         if (_onsiteClockTimer) clearInterval(_onsiteClockTimer);
         label.textContent = 'ONSITE';
-        label.style.color = 'rgba(255,255,255,0.4)';
+        label.style.color = 'rgba(255,255,255,0.5)';
+        if (dot) { dot.style.background = 'rgba(255,255,255,0.3)'; dot.style.boxShadow = 'none'; }
         name.textContent = '—';
         name.style.color = 'rgba(255,255,255,0.7)';
         clock.textContent = 'No shift';
-        clock.style.color = 'rgba(255,255,255,0.35)';
+        clock.style.color = 'rgba(255,255,255,0.5)';
         if (glow) glow.style.display = 'none';
       }
     }
