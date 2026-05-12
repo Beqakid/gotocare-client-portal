@@ -618,7 +618,7 @@
     .nav-item.active {
       color: var(--purple-light);
     }
-    .nav-icon { font-size: 20px; line-height: 1; }
+    .nav-icon { font-size: 20px; line-height: 1; display: flex; align-items: center; justify-content: center; }
     .nav-label { font-size: 10px; font-weight: 600; }
 
     /* ════════════════════════════════════════════════════════════════
@@ -3163,20 +3163,14 @@
       </button>
     </div>
 
-    <!-- My Care Team -->
-    <div style="margin-bottom:20px;">
+    <!-- My Care Team — hidden by default, shown only when team has members -->
+    <div id="home-team-section" style="margin-bottom:20px;display:none;">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
         <span style="font-size:15px;font-weight:800;color:#0F172A;">My Care Team</span>
         <button onclick="document.querySelector('[data-screen=screen-team]').click()" style="background:none;border:none;font-size:12px;font-weight:700;color:#7C5CFF;cursor:pointer;">View all →</button>
       </div>
       <div id="home-team-scroll" style="display:flex;gap:12px;overflow-x:auto;padding-bottom:4px;-webkit-overflow-scrolling:touch;scrollbar-width:none;">
         <!-- filled by JS -->
-      </div>
-      <div id="home-team-empty" style="display:none;background:#fff;border:1.5px dashed #E2E8F0;border-radius:18px;padding:24px;text-align:center;">
-        <div style="font-size:32px;margin-bottom:8px;">👥</div>
-        <div style="font-size:14px;font-weight:700;color:#0F172A;margin-bottom:4px;">No team yet</div>
-        <div style="font-size:12px;color:#64748B;margin-bottom:14px;">Find and hire caregivers to build your team</div>
-        <button onclick="document.querySelector('[data-screen=screen-dispatch]').click()" style="background:linear-gradient(135deg,#7C5CFF,#4A90E2);border:none;border-radius:12px;padding:10px 24px;color:#fff;font-size:13px;font-weight:700;cursor:pointer;">Find Caregivers</button>
       </div>
     </div>
 
@@ -3666,23 +3660,23 @@
      ══════════════════════════════════════════════════════════════ -->
 <nav id="bottom-nav" class="bottom-nav visible">
   <button class="nav-item active" data-screen="screen-home">
-    <span class="nav-icon">🏠</span>
+    <span class="nav-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></span>
     <span class="nav-label">Home</span>
   </button>
   <button class="nav-item" data-screen="screen-dispatch">
-    <span class="nav-icon">🔍</span>
+    <span class="nav-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span>
     <span class="nav-label">Find Care</span>
   </button>
   <button class="nav-item" data-screen="screen-team">
-    <span class="nav-icon">💜</span>
+    <span class="nav-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg></span>
     <span class="nav-label">My Team</span>
   </button>
   <button class="nav-item" data-screen="screen-account">
-    <span class="nav-icon">📋</span>
+    <span class="nav-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="8" y1="9" x2="16" y2="9"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="12" y2="17"/></svg></span>
     <span class="nav-label">Bookings</span>
   </button>
   <button class="nav-item" data-screen="screen-care-profile">
-    <span class="nav-icon">👤</span>
+    <span class="nav-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span>
     <span class="nav-label">Profile</span>
   </button>
 </nav>
@@ -4317,7 +4311,6 @@ function showHomeScreen() {
   // Load team
   const token = localStorage.getItem('client_token') || localStorage.getItem('client_session');
   const teamScroll = document.getElementById('home-team-scroll');
-  const teamEmpty = document.getElementById('home-team-empty');
   
   if (token) {
     try {
@@ -4326,8 +4319,9 @@ function showHomeScreen() {
       const team = (data.team || []).filter(m => m.status === 'active');
       document.getElementById('home-stat-team').textContent = team.length || '0';
       
+      const teamSection = document.getElementById('home-team-section');
       if (team.length > 0) {
-        teamEmpty.style.display = 'none';
+        if (teamSection) teamSection.style.display = 'block';
         teamScroll.style.display = 'flex';
         teamScroll.innerHTML = team.map(m => {
           const initials = (m.caregiver_name || 'CG').split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
@@ -4338,8 +4332,7 @@ function showHomeScreen() {
           </div>`;
         }).join('');
       } else {
-        teamScroll.style.display = 'none';
-        teamEmpty.style.display = 'block';
+        if (teamSection) teamSection.style.display = 'none';
       }
 
       // Load bookings count
