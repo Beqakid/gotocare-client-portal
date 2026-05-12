@@ -1697,7 +1697,7 @@
     .sl-remove-btn { background: rgba(239,68,68,0.2); border: 1px solid rgba(239,68,68,0.3); border-radius: 10px; padding: 6px 12px; color: rgba(239, 68, 68, 0.4); font-size: 12px; font-weight: 600; cursor: pointer; margin-top: 8px; -webkit-tap-highlight-color: transparent; }
 
     /* ── BOOKING extras ── */
-    .booking-cg-avatar { width: 52px; height: 52px; border-radius: 50%; background: linear-gradient(135deg, var(--purple), var(--blue)); display: flex; align-items: center; justify-content: center; font-size: 22px; flex-shrink: 0; }
+    .booking-cg-avatar { width: 52px; height: 52px; border-radius: 50%; background: linear-gradient(135deg, var(--purple), var(--blue)); display: flex; align-items: center; justify-content: center; font-size: 22px; flex-shrink: 0; overflow: hidden; }
     .booking-total { background: rgba(124,92,255,0.2); border: 1px solid rgba(124,92,255,0.4); border-radius: 14px; padding: 16px; margin-bottom: 20px; }
     .total-row { display: flex; justify-content: space-between; font-size: 14px; color: rgba(255,255,255,0.7); padding: 4px 0; }
     .total-row.grand { color: #fff; font-weight: 800; font-size: 17px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.15); margin-top: 6px; }
@@ -4452,7 +4452,7 @@ function startBooking(shortlistIdx) {
   const rate = cg.hourlyRate || cg.hourly_rate || 28;
   const match = cg.matchScore ? Math.round(cg.matchScore) : 90;
   document.getElementById('booking-cg-mini').innerHTML = `
-    <div class="booking-cg-avatar">${cg.avatar || '\u{1F469}\u200d\u2695\uFE0F'}</div>
+    <div class="booking-cg-avatar">${cg.avatar && (cg.avatar.startsWith('http') || cg.avatar.startsWith('/')) ? `<img src="${cg.avatar}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" onerror="this.style.display='none';this.parentNode.textContent='\u{1F469}\u200d\u2695\uFE0F'">` : (cg.avatar || '\u{1F469}\u200d\u2695\uFE0F')}</div>
     <div>
       <div style="font-size:16px;font-weight:700;color:#0F172A;">${name}</div>
       <div style="font-size:13px;color:#475569;">$${rate}/hr · 🎯 ${match}% match · ⭐ ${Number(cg.rating || 4.8).toFixed(1)}</div>
@@ -4984,7 +4984,7 @@ function startBookingDirect(cg) {
   const rate = cg.hourlyRate || cg.hourly_rate || 28;
   const match = cg.matchScore ? Math.round(cg.matchScore) : 90;
   document.getElementById('booking-cg-mini').innerHTML = `
-    <div class="booking-cg-avatar">${cg.avatar || '👩‍⚕️'}</div>
+    <div class="booking-cg-avatar">${cg.avatar && (cg.avatar.startsWith('http') || cg.avatar.startsWith('/')) ? `<img src="${cg.avatar}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" onerror="this.style.display='none';this.parentNode.textContent='👩‍⚕️'">` : (cg.avatar || '👩‍⚕️')}</div>
     <div>
       <div style="font-size:16px;font-weight:700;">${name}</div>
       <div style="font-size:13px;color:rgba(255,255,255,0.6);">$${rate}/hr · 🎯 ${match}% match · ⭐ ${Number(cg.rating || 4.8).toFixed(1)}</div>
