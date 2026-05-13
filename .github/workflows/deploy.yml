@@ -1,11 +1,11 @@
-name: Build & Deploy Client Portal
+name: Build Check
 
 on:
   push:
     branches: [main]
 
 jobs:
-  deploy:
+  build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -14,10 +14,5 @@ jobs:
           node-version: '20'
       - name: Install dependencies
         run: npm install
-      - name: Build
+      - name: Build check
         run: npm run build
-      - name: Deploy to Cloudflare Pages
-        uses: cloudflare/wrangler-action@v3
-        with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          command: pages deploy dist --project-name=gotocare-client-portal
