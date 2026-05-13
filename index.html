@@ -3162,7 +3162,85 @@
     .swipe-hint { display: flex; justify-content: center; gap: 24px; padding: 6px 0 2px; opacity: 0.5; font-size: 11px; color: #94A3B8; }
     .swipe-hint span { display: flex; align-items: center; gap: 4px; }
 
-  </style>
+  
+/* ── CAREGIVER PROFILE BOTTOM SHEET ── */
+#cg-profile-backdrop {
+  display:none;
+  position:fixed;inset:0;
+  background:rgba(0,0,0,0.5);
+  z-index:1000;
+  backdrop-filter:blur(2px);
+  -webkit-backdrop-filter:blur(2px);
+}
+#cg-profile-backdrop.open { display:block; }
+#cg-profile-sheet {
+  position:fixed;
+  bottom:0;left:0;right:0;
+  background:#ffffff;
+  border-radius:24px 24px 0 0;
+  z-index:1001;
+  max-height:88vh;
+  display:flex;
+  flex-direction:column;
+  transform:translateY(100%);
+  transition:transform 0.35s cubic-bezier(0.32,0.72,0,1);
+  box-shadow:0 -8px 40px rgba(0,0,0,0.18);
+}
+#cg-profile-sheet.open { transform:translateY(0); }
+.cgps-handle {
+  width:40px;height:4px;
+  background:#E2E8F0;
+  border-radius:9999px;
+  margin:12px auto 4px;
+  flex-shrink:0;
+  cursor:grab;
+}
+#cg-profile-scroll {
+  flex:1;
+  overflow-y:auto;
+  -webkit-overflow-scrolling:touch;
+  padding:0 20px 8px;
+}
+#cg-profile-footer {
+  flex-shrink:0;
+  padding:12px 20px 20px;
+  border-top:1px solid #F1F5F9;
+  display:flex;
+  gap:10px;
+}
+.cgps-skill-chip {
+  display:inline-block;
+  padding:5px 12px;
+  border-radius:9999px;
+  background:#F1F0FE;
+  color:#7C5CFF;
+  font-size:12px;
+  font-weight:600;
+  margin:3px 3px 0 0;
+}
+.cgps-section-title {
+  font-size:11px;
+  font-weight:700;
+  color:#94A3B8;
+  text-transform:uppercase;
+  letter-spacing:0.6px;
+  margin:18px 0 8px;
+}
+.cg-view-profile-link {
+  display:block;
+  text-align:center;
+  margin:10px 0 4px;
+  color:#7C5CFF;
+  font-size:13px;
+  font-weight:600;
+  cursor:pointer;
+  padding:7px 0;
+  border-radius:10px;
+  background:rgba(124,92,255,0.07);
+  letter-spacing:0.1px;
+}
+
+</style>
 </head>
 <body>
 
@@ -3472,6 +3550,25 @@
   </div>
 </div>
 
+
+<!-- CAREGIVER PROFILE BOTTOM SHEET -->
+<div id="cg-profile-backdrop" onclick="closeCgProfile()"></div>
+<div id="cg-profile-sheet">
+  <div class="cgps-handle" id="cgps-handle"></div>
+  <div id="cg-profile-scroll"><!-- populated by JS --></div>
+  <div id="cg-profile-footer">
+    <button
+      onclick="closeCgProfile();setTimeout(function(){directHireNow(window._profileSheetCg);},80);"
+      style="flex:1;padding:14px;background:linear-gradient(135deg,#7C5CFF,#4A90E2);border:none;border-radius:14px;color:#fff;font-size:14px;font-weight:700;cursor:pointer;box-shadow:0 4px 14px rgba(124,92,255,0.35);">
+      &#x1F4BC; Hire Directly
+    </button>
+    <button
+      onclick="closeCgProfile();setTimeout(function(){startBookingDirect(window._profileSheetCg);},80);"
+      style="flex:1;padding:14px;background:#fff;border:2px solid #7C5CFF;border-radius:14px;color:#7C5CFF;font-size:14px;font-weight:700;cursor:pointer;">
+      &#x1F4C5; Interview
+    </button>
+  </div>
+</div>
 <!-- ══════════════════════════════════════════════════════════════
      SHORTLIST
      ══════════════════════════════════════════════════════════════ -->
@@ -4198,6 +4295,7 @@ function renderSwiperCard() {
           ${langs.length > 1 ? `<div class="badge">🌐 ${(Array.isArray(langs) ? langs : []).slice(0,2).join(', ')}</div>` : ''}
         </div>
         <div class="cg-rate">$${rate}<span>/hr</span></div>
+        <div class="cg-view-profile-link" onclick="openCgProfile(caregivers[currentIndex])">View Full Profile &#8250;</div>
       </div>
 
       <div style="height:16px;"></div>
@@ -5607,6 +5705,123 @@ window.showScreen = function(id, pushHistory) {
     loadAccountScreen();
   }
 };
+
+
+// ── CAREGIVER PROFILE BOTTOM SHEET ──
+window._profileSheetCg = null;
+
+function openCgProfile(cg) {
+  if (!cg) return;
+  window._profileSheetCg = cg;
+
+  var name = ((cg.firstName || cg.first_name || cg.name || 'Caregiver') + ' ' + (cg.lastName || cg.last_name || '')).trim();
+  var rate = cg.hourlyRate || cg.hourly_rate || 28;
+  var match = cg.matchScore ? Math.round(cg.matchScore) : null;
+  var rating = cg.rating ? Number(cg.rating).toFixed(1) : null;
+  var reviewCount = cg.reviews || cg.review_count || 0;
+  var exp = cg.yearsExp || cg.years_experience || null;
+  var bio = cg.bio || '';
+  var city = cg.city || '';
+  var state = cg.state || '';
+
+  function parseArr(val) {
+    if (!val) return [];
+    if (Array.isArray(val)) return val;
+    try { return JSON.parse(val); } catch(e) { return []; }
+  }
+
+  var specialties = parseArr(cg.specializations || cg.care_types);
+  var skills = parseArr(cg.skills);
+  var allSkills = [];
+  var seen = {};
+  [].concat(specialties, skills).forEach(function(s) {
+    var key = typeof s === 'string' ? s : (s && s.name ? s.name : '');
+    if (key && !seen[key]) { seen[key] = 1; allSkills.push(key); }
+  });
+  var certs = parseArr(cg.certifications);
+  var langs = parseArr(cg.languages);
+  if (!langs.length) langs = ['English'];
+
+  var avatar = cg.avatar || cg.photo_url || '';
+  var avatarHtml = (avatar && avatar.startsWith('http'))
+    ? '<img src="' + avatar + '" style="width:88px;height:88px;border-radius:50%;object-fit:cover;border:3px solid #EDE9FE;" onerror="this.style.display='none'">'
+    : '<div style="width:88px;height:88px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:36px;background:#EDE9FE;">&#x1F469;&#x200D;&#x2695;&#xFE0F;</div>';
+
+  var locationLine = city ? '<div style="font-size:13px;color:#94A3B8;margin-top:3px;">&#128205; ' + city + (state ? ', ' + state : '') + '</div>' : '';
+
+  var pillsHtml = '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;justify-content:center;">';
+  if (rating) pillsHtml += '<span style="background:#FEF9C3;color:#92400E;padding:4px 11px;border-radius:9999px;font-size:13px;font-weight:700;">&#11088; ' + rating + ' (' + reviewCount + ')</span>';
+  if (match)  pillsHtml += '<span style="background:#EDE9FE;color:#7C5CFF;padding:4px 11px;border-radius:9999px;font-size:13px;font-weight:700;">&#127919; ' + match + '% match</span>';
+  pillsHtml += '<span style="background:#DCFCE7;color:#166534;padding:4px 11px;border-radius:9999px;font-size:13px;font-weight:700;">$' + rate + '/hr</span>';
+  if (exp) pillsHtml += '<span style="background:#F8FAFC;border:1px solid #E2E8F0;color:#475569;padding:4px 11px;border-radius:9999px;font-size:13px;font-weight:700;">&#128197; ' + exp + ' yrs</span>';
+  pillsHtml += '</div>';
+
+  var bioSection = bio ? '<div class="cgps-section-title">About</div><div style="font-size:14px;color:#475569;line-height:1.65;">' + bio + '</div>' : '';
+
+  var skillsSection = allSkills.length
+    ? '<div class="cgps-section-title">Skills &amp; Specialties</div><div>' + allSkills.map(function(s){ return '<span class="cgps-skill-chip">' + s + '</span>'; }).join('') + '</div>'
+    : '';
+
+  var certsSection = certs.length
+    ? '<div class="cgps-section-title">Certifications</div><div>' + certs.map(function(c){ var t = typeof c==='string'?c:(c&&c.name?c.name:''); return '<span class="cgps-skill-chip" style="background:#DCFCE7;color:#166534;">&#10003; ' + t + '</span>'; }).join('') + '</div>'
+    : '';
+
+  var langsSection = langs.length
+    ? '<div class="cgps-section-title">Languages</div><div>' + langs.map(function(l){ return '<span class="cgps-skill-chip" style="background:#EFF6FF;color:#1D4ED8;">&#127760; ' + l + '</span>'; }).join('') + '</div>'
+    : '';
+
+  var lockedBanner = '<div style="margin:20px 0 4px;background:#F8FAFC;border:1px solid #E2E8F0;border-radius:14px;padding:14px 16px;display:flex;align-items:center;gap:12px;">'
+    + '<span style="font-size:24px;">&#128274;</span>'
+    + '<div><div style="font-size:13px;font-weight:700;color:#0F172A;">Contact info is private</div>'
+    + '<div style="font-size:12px;color:#94A3B8;margin-top:2px;">Hire or schedule an interview to connect</div></div>'
+    + '</div>';
+
+  var inner = '<div style="text-align:center;padding:14px 0 2px;">'
+    + avatarHtml
+    + '<div style="font-size:21px;font-weight:800;color:#0F172A;margin-top:10px;">' + name + '</div>'
+    + locationLine
+    + pillsHtml
+    + '</div>'
+    + bioSection
+    + skillsSection
+    + certsSection
+    + langsSection
+    + lockedBanner
+    + '<div style="height:6px;"></div>';
+
+  document.getElementById('cg-profile-scroll').innerHTML = inner;
+  document.getElementById('cg-profile-backdrop').classList.add('open');
+  document.getElementById('cg-profile-sheet').classList.add('open');
+  document.body.style.overflow = 'hidden';
+  document.getElementById('cg-profile-scroll').scrollTop = 0;
+
+  // Swipe-down handle
+  initCgpsHandleSwipe();
+}
+
+function closeCgProfile() {
+  document.getElementById('cg-profile-backdrop').classList.remove('open');
+  document.getElementById('cg-profile-sheet').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+function initCgpsHandleSwipe() {
+  var handle = document.getElementById('cgps-handle');
+  var sheet  = document.getElementById('cg-profile-sheet');
+  if (!handle || handle._cgpsInit) return;
+  handle._cgpsInit = true;
+  var startY = 0;
+  handle.addEventListener('touchstart', function(e) { startY = e.touches[0].clientY; }, { passive: true });
+  handle.addEventListener('touchmove',  function(e) {
+    var dy = e.touches[0].clientY - startY;
+    if (dy > 0) sheet.style.transform = 'translateY(' + dy + 'px)';
+  }, { passive: true });
+  handle.addEventListener('touchend', function(e) {
+    var dy = e.changedTouches[0].clientY - startY;
+    sheet.style.transform = '';
+    if (dy > 80) closeCgProfile();
+  }, { passive: true });
+}
 
 </script>
 
