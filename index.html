@@ -4017,6 +4017,10 @@ function showScreen(id, pushHistory = true) {
     teamApiLoaded = false;
     renderTeamContent();
   }
+  // Load bookings when navigating to Bookings tab
+  if (id === 'screen-account') {
+    loadAccountScreen();
+  }
   // Update bottom nav active state
   document.querySelectorAll('.nav-item').forEach(btn => {
     btn.classList.toggle('active', btn.dataset.screen === id);
