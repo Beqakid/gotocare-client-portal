@@ -17,10 +17,13 @@ interface Booking {
   caregiverEmail?: string;
   careType?: string;
   care_type?: string;
+  care_needs?: string;
   status?: string;
   created_at?: string;
   requested_date?: string;
+  preferred_date?: string;
   requested_time?: string;
+  preferred_time?: string;
   interview_type?: string;
   notes?: string;
 }
@@ -123,16 +126,28 @@ export function BookingsTab({ onNavigate }: Props) {
           const name = b.caregiverName || b.caregiver_name || 'Caregiver';
           const rate = b.hourlyRate || b.hourly_rate;
           const city = b.caregiverCity || b.caregiver_city;
-          const careType = b.careType || b.care_type || 'Home Care';
+          const careType = b.careType || b.care_type || b.care_needs || 'Home Care';
           const status = b.status || 'pending';
           const statusCfg = STATUS_CONFIG[status] || STATUS_CONFIG.pending;
           const id = b.bookingId || b.id;
           const canCancel = status === 'pending';
           const initials = name.split(' ').map((w: string) => w[0]).join('').toUpperCase().slice(0, 2);
-          const dateStr = b.requested_date
-            ? new Date(b.requested_date + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
+
+          // Normalise date/time — backend may use preferred_date or requested_date
+          const rawDate = b.requested_date || b.preferred_date;
+          const rawTime = b.requested_time || b.preferred_time;
+          const interviewType = b.interview_type;
+
+          const dateStr = rawDate
+            ? new Date(rawDate + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
             : b.created_at
             ? new Date(b.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+            : '';
+
+          const timeLabel = rawTime
+            ? (rawTime.length <= 10
+                ? (() => { try { return new Date('1970-01-01T' + rawTime).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }); } catch { return rawTime; } })()
+                : rawTime)
             : '';
 
           return (
@@ -154,13 +169,13 @@ export function BookingsTab({ onNavigate }: Props) {
                 </div>
 
                 {/* Interview details */}
-                {(b.requested_date || b.requested_time || b.interview_type) && (
+                {(dateStr || timeLabel || interviewType) && (
                   <div style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: 12, padding: '10px 12px', marginBottom: 12 }}>
                     <div style={{ fontSize: 11, fontWeight: 700, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 6 }}>Interview Details</div>
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 4 }}>
                       {dateStr && <div style={{ fontSize: 12, color: '#475569' }}>📅 {dateStr}</div>}
-                      {b.requested_time && <div style={{ fontSize: 12, color: '#475569' }}>⏰ {b.requested_time}</div>}
-                      {b.interview_type && <div style={{ fontSize: 12, color: '#475569' }}>💬 {b.interview_type === 'video' ? 'Video Call' : 'In Person'}</div>}
+                      {timeLabel && <div style={{ fontSize: 12, color: '#475569' }}>⏰ {timeLabel}</div>}
+                      {interviewType && <div style={{ fontSize: 12, color: '#475569' }}>💬 {interviewType === 'video' ? 'Video Call' : 'In Person'}</div>}
                     </div>
                   </div>
                 )}
