@@ -1,3 +1,12 @@
-# GoToCare Client Portal
+# Carehia Client Portal
 
-Deployed to Cloudflare Pages
+React TSX PWA — built with esbuild, deployed to Cloudflare Pages.
+
+## Build
+
+```
+npm install
+npm run build
+```
+
+Output: `_dist/` (served by Cloudflare Pages)
