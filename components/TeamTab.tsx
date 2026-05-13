@@ -154,9 +154,8 @@ export function TeamTab({ onNavigate }: Props) {
                           {date && <span style={{ fontSize: 12, color: '#94A3B8' }}>Since {date}</span>}
                         </div>
                         {email && (
-                          <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
-                            <a href={`tel:${email}`} style={{ flex: 1, padding: '10px', background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: 10, color: '#7C5CFF', fontSize: 13, fontWeight: 700, textDecoration: 'none', textAlign: 'center' }}>📞 Call</a>
-                            <a href={`mailto:${email}`} style={{ flex: 1, padding: '10px', background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: 10, color: '#7C5CFF', fontSize: 13, fontWeight: 700, textDecoration: 'none', textAlign: 'center' }}>✉️ Email</a>
+                          <div style={{ marginTop: 10 }}>
+                            <a href={`mailto:${email}`} style={{ padding: '10px', background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: 10, color: '#7C5CFF', fontSize: 13, fontWeight: 700, textDecoration: 'none', textAlign: 'center', display: 'block' }}>✉️ Message Caregiver</a>
                           </div>
                         )}
                         <div style={{ marginTop: 10 }}>
