@@ -1,207 +1,102 @@
-// @ts-nocheck
-import React, { useState } from 'react';
-import { User, Phone, Mail, MapPin, Heart, Shield, AlertTriangle, LogOut, Save, Globe, Check } from 'lucide-react';
-import { ClientSession } from '../types';
+import React from 'react';
+import { getToken, getName, getEmail, clearSession } from '../utils/storage';
+import { TabId } from '../types';
 
-interface ProfileTabProps {
-  session: ClientSession;
-  onLogout: () => void;
+interface Props {
+  onNavigate: (tab: TabId) => void;
+  onSignOut: () => void;
 }
 
-export const ProfileTab: React.FC<ProfileTabProps> = ({ session, onLogout }) => {
-  const [editing, setEditing] = useState(false);
-  const [phone, setPhone] = useState(session.phone || '');
-  const [address, setAddress] = useState(session.address || '');
-  const [emergencyContact, setEmergencyContact] = useState(session.emergencyContact || '');
-  const [emergencyPhone, setEmergencyPhone] = useState(session.emergencyPhone || '');
-  const [language, setLanguage] = useState(session.preferredLanguage || 'English');
-  const [saving, setSaving] = useState(false);
-  const [saved, setSaved] = useState(false);
+export function ProfileTab({ onNavigate, onSignOut }: Props) {
+  const token = getToken();
+  const name = getName() || '';
+  const email = getEmail() || '';
+  const initials = name ? name.split(' ').map((w: string) => w[0]).join('').toUpperCase().slice(0, 2) : '👤';
 
-  const handleSave = async () => {
-    setSaving(true);
-    try {
-      const API_BASE = 'https://gotocare-original.jjioji.workers.dev';
-      await fetch(`${API_BASE}/api/client-portal/profile?clientId=${session.clientId}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ phone, address, emergencyContact, emergencyPhone, preferredLanguage: language }),
-      });
-      setSaved(true);
-      setEditing(false);
-      setTimeout(() => setSaved(false), 3000);
-    } catch {
-      // Silent fail for demo
-    } finally {
-      setSaving(false);
-    }
-  };
+  function handleSignOut() {
+    if (!confirm('Sign out of Carehia?')) return;
+    clearSession();
+    onSignOut();
+  }
 
-  const initials = session.clientName
-    .split(' ')
-    .map(n => n[0] || '')
-    .join('')
-    .toUpperCase()
-    .slice(0, 2);
-
-  return (
-    <div className="p-4 pb-20">
-      {/* Profile Header */}
-      <div className="text-center mb-6">
-        <div className="avatar placeholder mb-3">
-          <div className="bg-primary text-primary-content rounded-full w-20 h-20">
-            <span className="text-2xl">{initials}</span>
-          </div>
-        </div>
-        <h2 className="text-xl font-bold text-base-content">{session.clientName}</h2>
-        <p className="text-sm text-base-content/60">{session.agencyName}</p>
-      </div>
-
-      {saved && (
-        <div className="alert alert-success mb-4">
-          <Check size={16} />
-          <span className="text-sm">Profile updated successfully!</span>
-        </div>
-      )}
-
-      {/* Contact Info */}
-      <div className="card bg-base-200 mb-4">
-        <div className="card-body p-4">
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="font-semibold text-base-content">Contact Information</h3>
-            {!editing && (
-              <button className="btn btn-ghost btn-xs" onClick={() => setEditing(true)}>Edit</button>
-            )}
-          </div>
-          <div className="space-y-3">
-            <div className="flex items-center gap-3">
-              <Mail size={18} className="opacity-60" />
-              <div>
-                <p className="text-xs text-base-content/50">Email</p>
-                <p className="text-sm text-base-content">{session.email}</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-3">
-              <Phone size={18} className="opacity-60" />
-              <div className="flex-1">
-                <p className="text-xs text-base-content/50">Phone</p>
-                {editing ? (
-                  <input className="input input-bordered input-sm w-full mt-1" value={phone} onChange={(e) => setPhone(e.target.value)} />
-                ) : (
-                  <p className="text-sm text-base-content">{phone || 'Not set'}</p>
-                )}
-              </div>
-            </div>
-            <div className="flex items-center gap-3">
-              <MapPin size={18} className="opacity-60" />
-              <div className="flex-1">
-                <p className="text-xs text-base-content/50">Address</p>
-                {editing ? (
-                  <input className="input input-bordered input-sm w-full mt-1" value={address} onChange={(e) => setAddress(e.target.value)} />
-                ) : (
-                  <p className="text-sm text-base-content">{address || 'Not set'}</p>
-                )}
-              </div>
-            </div>
-            <div className="flex items-center gap-3">
-              <Globe size={18} className="opacity-60" />
-              <div className="flex-1">
-                <p className="text-xs text-base-content/50">Preferred Language</p>
-                {editing ? (
-                  <select className="select select-bordered select-sm w-full mt-1" value={language} onChange={(e) => setLanguage(e.target.value)}>
-                    <option>English</option>
-                    <option>Spanish</option>
-                    <option>Mandarin</option>
-                    <option>French</option>
-                    <option>Vietnamese</option>
-                    <option>Korean</option>
-                    <option>Other</option>
-                  </select>
-                ) : (
-                  <p className="text-sm text-base-content">{language}</p>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Emergency Contact */}
-      <div className="card bg-base-200 mb-4">
-        <div className="card-body p-4">
-          <h3 className="font-semibold text-base-content mb-3 flex items-center gap-2">
-            <AlertTriangle size={16} className="text-error" />
-            Emergency Contact
-          </h3>
-          <div className="space-y-3">
-            <div className="flex items-center gap-3">
-              <User size={18} className="opacity-60" />
-              <div className="flex-1">
-                <p className="text-xs text-base-content/50">Name</p>
-                {editing ? (
-                  <input className="input input-bordered input-sm w-full mt-1" value={emergencyContact} onChange={(e) => setEmergencyContact(e.target.value)} />
-                ) : (
-                  <p className="text-sm text-base-content">{emergencyContact || 'Not set'}</p>
-                )}
-              </div>
-            </div>
-            <div className="flex items-center gap-3">
-              <Phone size={18} className="opacity-60" />
-              <div className="flex-1">
-                <p className="text-xs text-base-content/50">Phone</p>
-                {editing ? (
-                  <input className="input input-bordered input-sm w-full mt-1" value={emergencyPhone} onChange={(e) => setEmergencyPhone(e.target.value)} />
-                ) : (
-                  <p className="text-sm text-base-content">{emergencyPhone || 'Not set'}</p>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Care Needs */}
-      {session.careNeeds && (
-        <div className="card bg-base-200 mb-4">
-          <div className="card-body p-4">
-            <h3 className="font-semibold text-base-content mb-2 flex items-center gap-2">
-              <Heart size={16} className="text-primary" />
-              Care Needs
-            </h3>
-            <p className="text-sm text-base-content/80">{session.careNeeds}</p>
-          </div>
-        </div>
-      )}
-
-      {/* Save / Cancel */}
-      {editing && (
-        <div className="flex gap-3 mb-4">
-          <button className="btn btn-primary flex-1" onClick={handleSave} disabled={saving}>
-            {saving ? <span className="loading loading-spinner loading-sm" /> : <><Save size={16} /> Save Changes</>}
-          </button>
-          <button className="btn btn-ghost flex-1" onClick={() => setEditing(false)}>Cancel</button>
-        </div>
-      )}
-
-      {/* Security & Logout */}
-      <div className="card bg-base-200 mb-4">
-        <div className="card-body p-4">
-          <h3 className="font-semibold text-base-content mb-2 flex items-center gap-2">
-            <Shield size={16} className="opacity-60" />
-            Security
-          </h3>
-          <p className="text-sm text-base-content/60 mb-3">
-            Your data is encrypted and only accessible by you and your care agency.
-          </p>
-          <button className="btn btn-error btn-outline btn-sm w-full" onClick={onLogout}>
-            <LogOut size={16} /> Sign Out
-          </button>
-        </div>
-      </div>
-
-      <p className="text-center text-base-content/30 text-xs mt-4">
-        GoToCare Client Portal v1.0
-      </p>
+  if (!token) return (
+    <div style={{ background: '#F8FAFC', minHeight: '100dvh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 32, textAlign: 'center', paddingBottom: 90 }}>
+      <div style={{ fontSize: 64, marginBottom: 20 }}>👤</div>
+      <div style={{ fontSize: 20, fontWeight: 800, color: '#0F172A', marginBottom: 8 }}>Your Profile</div>
+      <div style={{ fontSize: 14, color: '#475569', marginBottom: 28, lineHeight: 1.7 }}>Sign in to access your full profile, billing, and settings</div>
+      <button onClick={() => onNavigate('findcare')} style={{ background: 'linear-gradient(135deg,#7C5CFF,#4A90E2)', color: '#fff', border: 'none', borderRadius: 12, padding: '14px 28px', fontSize: 15, fontWeight: 700, cursor: 'pointer' }}>Get Started Free →</button>
     </div>
   );
-};
+
+  return (
+    <div style={{ background: '#F8FAFC', minHeight: '100dvh', paddingBottom: 90 }}>
+      {/* Header */}
+      <div style={{ background: 'linear-gradient(160deg,#1a1a2e 0%,#2d1b69 55%,#1e3a5f 100%)', padding: '52px 20px 32px', textAlign: 'center' }}>
+        <div style={{ width: 80, height: 80, borderRadius: '50%', background: 'linear-gradient(135deg,#7C5CFF,#4A90E2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: name ? 28 : 36, fontWeight: 800, color: '#fff', margin: '0 auto 14px', border: '3px solid rgba(255,255,255,0.2)', boxShadow: '0 0 0 4px rgba(124,92,255,0.2)' }}>{initials}</div>
+        <div style={{ fontSize: 22, fontWeight: 800, color: '#fff', marginBottom: 4 }}>{name || 'Guest'}</div>
+        <div style={{ fontSize: 14, color: 'rgba(255,255,255,0.6)' }}>{email}</div>
+      </div>
+
+      <div style={{ padding: '20px 16px' }}>
+        {/* Plan card */}
+        <div style={{ background: 'linear-gradient(135deg,rgba(124,92,255,0.08),rgba(74,144,226,0.08))', border: '1.5px solid rgba(124,92,255,0.2)', borderRadius: 18, padding: '18px 20px', marginBottom: 20, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div>
+            <div style={{ fontSize: 13, fontWeight: 700, color: '#7C5CFF', marginBottom: 2 }}>FREE PLAN</div>
+            <div style={{ fontSize: 14, color: '#475569' }}>Browse caregivers · Basic bookings</div>
+          </div>
+          <button style={{ background: 'linear-gradient(135deg,#7C5CFF,#4A90E2)', color: '#fff', border: 'none', borderRadius: 10, padding: '8px 14px', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>Upgrade</button>
+        </div>
+
+        {/* Stats */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10, marginBottom: 20 }}>
+          {[['📋', 'Bookings', '—'], ['💜', 'Team', '—'], ['⭐', 'Reviews', '—']].map(([emoji, label, val]) => (
+            <div key={label} style={{ background: '#fff', border: '1px solid #E2E8F0', borderRadius: 14, padding: '14px 8px', textAlign: 'center', boxShadow: '0 2px 6px rgba(15,23,42,0.04)' }}>
+              <div style={{ fontSize: 20, marginBottom: 4 }}>{emoji}</div>
+              <div style={{ fontSize: 20, fontWeight: 800, color: '#0F172A' }}>{val}</div>
+              <div style={{ fontSize: 11, color: '#94A3B8', fontWeight: 500 }}>{label}</div>
+            </div>
+          ))}
+        </div>
+
+        {/* Menu items */}
+        <div style={{ background: '#fff', border: '1px solid #E2E8F0', borderRadius: 18, overflow: 'hidden', marginBottom: 16, boxShadow: '0 2px 8px rgba(15,23,42,0.04)' }}>
+          {([
+            ['📋', 'My Bookings', () => onNavigate('bookings')],
+            ['💜', 'My Care Team', () => onNavigate('team')],
+            ['🔍', 'Find Care', () => onNavigate('findcare')],
+          ] as [string, string, () => void][]).map(([icon, label, action], i, arr) => (
+            <div key={label} onClick={action} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '16px', cursor: 'pointer', borderBottom: i < arr.length - 1 ? '1px solid #F1F5F9' : 'none', WebkitTapHighlightColor: 'transparent' }}>
+              <span style={{ fontSize: 20, width: 32, textAlign: 'center' }}>{icon}</span>
+              <span style={{ flex: 1, fontSize: 15, fontWeight: 600, color: '#0F172A' }}>{label}</span>
+              <span style={{ color: '#CBD5E1', fontSize: 18 }}>›</span>
+            </div>
+          ))}
+        </div>
+
+        <div style={{ background: '#fff', border: '1px solid #E2E8F0', borderRadius: 18, overflow: 'hidden', marginBottom: 16, boxShadow: '0 2px 8px rgba(15,23,42,0.04)' }}>
+          {([
+            ['🔔', 'Notifications', () => {}],
+            ['🔒', 'Privacy & Security', () => {}],
+            ['❓', 'Help & Support', () => { window.open('mailto:support@carehia.com'); }],
+            ['📄', 'Terms of Service', () => {}],
+          ] as [string, string, () => void][]).map(([icon, label, action], i, arr) => (
+            <div key={label} onClick={action} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '16px', cursor: 'pointer', borderBottom: i < arr.length - 1 ? '1px solid #F1F5F9' : 'none', WebkitTapHighlightColor: 'transparent' }}>
+              <span style={{ fontSize: 20, width: 32, textAlign: 'center' }}>{icon}</span>
+              <span style={{ flex: 1, fontSize: 15, fontWeight: 600, color: '#0F172A' }}>{label}</span>
+              <span style={{ color: '#CBD5E1', fontSize: 18 }}>›</span>
+            </div>
+          ))}
+        </div>
+
+        {/* Sign out */}
+        <button onClick={handleSignOut} style={{ width: '100%', padding: '16px', background: '#FEF2F2', border: '1px solid #FECACA', borderRadius: 16, color: '#DC2626', fontSize: 15, fontWeight: 700, cursor: 'pointer' }}>
+          Sign Out
+        </button>
+
+        <div style={{ textAlign: 'center', marginTop: 24, fontSize: 12, color: '#CBD5E1' }}>
+          Carehia v2.0 · <a href="mailto:support@carehia.com" style={{ color: '#7C5CFF', textDecoration: 'none' }}>support@carehia.com</a>
+        </div>
+      </div>
+    </div>
+  );
+}
