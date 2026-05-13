@@ -1,35 +1,26 @@
 {
-  "name": "GoToCare — Find Care Now",
-  "short_name": "GoToCare",
-  "description": "Find trusted caregivers near you in minutes",
+  "name": "Carehia",
+  "short_name": "Carehia",
+  "description": "Find trusted home caregivers near you",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#1a1a2e",
-  "theme_color": "#7c3aed",
-  "orientation": "portrait-primary",
+  "background_color": "#2d1b69",
+  "theme_color": "#7C5CFF",
+  "orientation": "portrait",
   "icons": [
     {
-      "src": "https://api.dicebear.com/7.x/initials/svg?seed=GC&backgroundColor=7c3aed&textColor=ffffff&fontSize=40&chars=2",
+      "src": "/icons/icon-192.png",
       "sizes": "192x192",
-      "type": "image/svg+xml",
+      "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "https://api.dicebear.com/7.x/initials/svg?seed=GC&backgroundColor=7c3aed&textColor=ffffff&fontSize=40&chars=2",
+      "src": "/icons/icon-512.png",
       "sizes": "512x512",
-      "type": "image/svg+xml",
+      "type": "image/png",
       "purpose": "any maskable"
     }
   ],
-  "screenshots": [
-    {
-      "src": "/",
-      "sizes": "390x844",
-      "type": "text/html",
-      "form_factor": "narrow",
-      "label": "Find a caregiver near you"
-    }
-  ],
-  "categories": ["health", "lifestyle", "medical"],
-  "lang": "en-US"
+  "categories": ["health", "lifestyle"],
+  "screenshots": []
 }

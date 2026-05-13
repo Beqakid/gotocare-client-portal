@@ -1,68 +1,55 @@
-const CACHE_NAME = 'gotocare-client-v4';
-const STATIC_ASSETS = [
-  '/',
-  '/index.html'
-];
+// Carehia Client Portal Service Worker v5
+const CACHE_NAME = 'carehia-client-v5';
 
-// Install — cache shell
-self.addEventListener('install', e => {
-  e.waitUntil(
-    caches.open(CACHE_NAME).then(cache => cache.addAll(STATIC_ASSETS))
-  );
+// Always network-first for HTML + JS bundles
+const NETWORK_FIRST = ['/index.html', '/', '/dist/'];
+
+self.addEventListener('install', event => {
+  console.log('[SW] Installing v5');
   self.skipWaiting();
-});
-
-// Activate — remove old caches
-self.addEventListener('activate', e => {
-  e.waitUntil(
-    caches.keys().then(keys =>
-      Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k)))
-    )
+  event.waitUntil(
+    caches.open(CACHE_NAME).then(cache => {
+      return cache.addAll(['/styles.css', '/manifest.json']);
+    })
   );
-  self.clients.claim();
 });
 
-// Fetch — network first for HTML (always fresh), cache fallback for static
-self.addEventListener('fetch', e => {
-  const url = new URL(e.request.url);
+self.addEventListener('activate', event => {
+  console.log('[SW] Activating v5');
+  event.waitUntil(
+    caches.keys().then(keys => {
+      return Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k)));
+    }).then(() => self.clients.claim())
+  );
+});
 
-  // Skip non-GET and API calls
-  if (e.request.method !== 'GET') return;
-  if (url.pathname.startsWith('/api/')) return;
-  if (url.hostname.includes('stripe.com')) return;
+self.addEventListener('fetch', event => {
+  const url = new URL(event.request.url);
+  const isNetworkFirst = NETWORK_FIRST.some(p => url.pathname === p || url.pathname.startsWith(p));
+  const isAPI = url.hostname.includes('workers.dev') || url.hostname.includes('stripe.com');
 
-  // Always network-first for HTML pages — never serve stale index.html
-  if (url.pathname === '/' || url.pathname.endsWith('.html')) {
-    e.respondWith(
-      fetch(e.request)
-        .then(res => {
-          if (res.ok) {
-            const clone = res.clone();
-            caches.open(CACHE_NAME).then(cache => cache.put(e.request, clone));
-          }
-          return res;
-        })
-        .catch(() => caches.match(e.request).then(cached => cached || caches.match('/index.html')))
+  if (isAPI || event.request.method !== 'GET') return;
+
+  if (isNetworkFirst) {
+    event.respondWith(
+      fetch(event.request).then(res => {
+        const clone = res.clone();
+        caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
+        return res;
+      }).catch(() => caches.match(event.request))
     );
     return;
   }
 
-  e.respondWith(
-    fetch(e.request)
-      .then(res => {
-        if (res.ok) {
-          const clone = res.clone();
-          caches.open(CACHE_NAME).then(cache => cache.put(e.request, clone));
-        }
+  // Cache-first for static assets
+  event.respondWith(
+    caches.match(event.request).then(cached => {
+      if (cached) return cached;
+      return fetch(event.request).then(res => {
+        const clone = res.clone();
+        caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
         return res;
-      })
-      .catch(() => caches.match(e.request))
+      });
+    })
   );
-});
-
-// Background sync placeholder for offline bookings
-self.addEventListener('sync', e => {
-  if (e.tag === 'sync-booking') {
-    console.log('[SW] Background sync: booking');
-  }
 });
