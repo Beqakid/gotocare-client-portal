@@ -13,6 +13,37 @@ export function ProfileTab({ onNavigate, onSignOut }: Props) {
   const email = getEmail() || '';
   const initials = name ? name.split(' ').map((w: string) => w[0]).join('').toUpperCase().slice(0, 2) : '👤';
 
+  const [sub, setSub] = React.useState<{plan: string, subscribed: boolean, currentPeriodEnd?: string, contactUnlocksUsed?: number} | null>(null);
+  const [subLoading, setSubLoading] = React.useState(true);
+  const [showUpgradeModal, setShowUpgradeModal] = React.useState(false);
+  const [upgradeLoading, setUpgradeLoading] = React.useState('');
+
+  React.useEffect(() => {
+    const emailVal = localStorage.getItem('gc_email');
+    if (!emailVal) { setSubLoading(false); return; }
+    fetch(`https://gotocare-original.jjioji.workers.dev/api/check-subscription?email=${encodeURIComponent(emailVal)}`)
+      .then(r => r.json())
+      .then(d => setSub(d))
+      .catch(() => setSub(null))
+      .finally(() => setSubLoading(false));
+  }, []);
+
+  async function handleUpgrade(plan: string) {
+    const emailVal = localStorage.getItem('gc_email');
+    if (!emailVal) return;
+    setUpgradeLoading(plan);
+    try {
+      const r = await fetch('https://gotocare-original.jjioji.workers.dev/api/create-subscription-checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: emailVal, plan }),
+      });
+      const d = await r.json();
+      if (d.url) window.location.href = d.url;
+    } catch (e) {}
+    setUpgradeLoading('');
+  }
+
   function handleSignOut() {
     if (!confirm('Sign out of Carehia?')) return;
     clearSession();
@@ -38,14 +69,38 @@ export function ProfileTab({ onNavigate, onSignOut }: Props) {
       </div>
 
       <div style={{ padding: '20px 16px' }}>
-        {/* Plan card */}
-        <div style={{ background: 'linear-gradient(135deg,rgba(124,92,255,0.08),rgba(74,144,226,0.08))', border: '1.5px solid rgba(124,92,255,0.2)', borderRadius: 18, padding: '18px 20px', marginBottom: 20, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div>
-            <div style={{ fontSize: 13, fontWeight: 700, color: '#7C5CFF', marginBottom: 2 }}>FREE PLAN</div>
-            <div style={{ fontSize: 14, color: '#475569' }}>Browse caregivers · Basic bookings</div>
+        {/* Subscription card */}
+        {subLoading ? (
+          <div style={{ background: '#fff', border: '1px solid #E2E8F0', borderRadius: 18, padding: '18px 20px', marginBottom: 20, textAlign: 'center', color: '#94A3B8', fontSize: 13 }}>Loading plan...</div>
+        ) : sub?.subscribed ? (
+          <div style={{ background: 'linear-gradient(135deg,rgba(124,92,255,0.08),rgba(74,144,226,0.08))', border: '1.5px solid rgba(124,92,255,0.3)', borderRadius: 18, padding: '18px 20px', marginBottom: 20 }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+              <div>
+                <div style={{ fontSize: 13, fontWeight: 700, color: '#7C5CFF', marginBottom: 2 }}>
+                  {sub.plan === 'essential' ? '⭐ ESSENTIAL' : sub.plan === 'family' ? '💜 FAMILY' : sub.plan === 'premium' ? '👑 PREMIUM' : sub.plan.toUpperCase()} PLAN
+                </div>
+                <div style={{ fontSize: 14, color: '#475569' }}>
+                  {sub.plan === 'essential' ? `${sub.contactUnlocksUsed || 0}/5 contact unlocks used` : sub.plan === 'family' ? 'Unlimited contact unlocks' : 'Full premium access'}
+                </div>
+              </div>
+              <div style={{ fontSize: 11, color: '#22C55E', fontWeight: 700, background: 'rgba(34,197,94,0.1)', padding: '4px 10px', borderRadius: 20 }}>ACTIVE</div>
+            </div>
+            {sub.currentPeriodEnd && (
+              <div style={{ fontSize: 12, color: '#94A3B8' }}>Renews {new Date(sub.currentPeriodEnd).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</div>
+            )}
+            <button onClick={() => setShowUpgradeModal(true)} style={{ marginTop: 10, fontSize: 12, fontWeight: 600, color: '#7C5CFF', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
+              Change plan →
+            </button>
           </div>
-          <button style={{ background: 'linear-gradient(135deg,#7C5CFF,#4A90E2)', color: '#fff', border: 'none', borderRadius: 10, padding: '8px 14px', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>Upgrade</button>
-        </div>
+        ) : (
+          <div style={{ background: 'linear-gradient(135deg,rgba(124,92,255,0.08),rgba(74,144,226,0.08))', border: '1.5px solid rgba(124,92,255,0.2)', borderRadius: 18, padding: '18px 20px', marginBottom: 20, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div>
+              <div style={{ fontSize: 13, fontWeight: 700, color: '#7C5CFF', marginBottom: 2 }}>FREE PLAN</div>
+              <div style={{ fontSize: 14, color: '#475569' }}>Browse caregivers · Basic bookings</div>
+            </div>
+            <button onClick={() => setShowUpgradeModal(true)} style={{ background: 'linear-gradient(135deg,#7C5CFF,#4A90E2)', color: '#fff', border: 'none', borderRadius: 10, padding: '8px 14px', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>Upgrade</button>
+          </div>
+        )}
 
         {/* Stats */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10, marginBottom: 20 }}>
@@ -96,6 +151,44 @@ export function ProfileTab({ onNavigate, onSignOut }: Props) {
         <div style={{ textAlign: 'center', marginTop: 24, fontSize: 12, color: '#CBD5E1' }}>
           Carehia v2.0 · <a href="mailto:support@carehia.com" style={{ color: '#7C5CFF', textDecoration: 'none' }}>support@carehia.com</a>
         </div>
+
+        {/* Upgrade Modal */}
+        {showUpgradeModal && (
+          <div style={{ position: 'fixed', inset: 0, zIndex: 200, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }} onClick={e => { if (e.target === e.currentTarget) setShowUpgradeModal(false); }}>
+            <div style={{ background: '#fff', borderRadius: '24px 24px 0 0', width: '100%', maxWidth: 480, padding: '24px 20px 40px', maxHeight: '90vh', overflowY: 'auto' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
+                <div style={{ fontSize: 20, fontWeight: 800, color: '#0F172A' }}>Choose Your Plan</div>
+                <button onClick={() => setShowUpgradeModal(false)} style={{ background: '#F1F5F9', border: 'none', borderRadius: '50%', width: 32, height: 32, cursor: 'pointer', fontSize: 16 }}>✕</button>
+              </div>
+              {[
+                { key: 'essential', emoji: '⭐', name: 'Essential', price: '$15', period: '/mo', features: ['5 contact unlocks/month', 'Priority caregiver matching', 'Interview scheduling', 'Email support'], color: '#4A90E2', popular: false },
+                { key: 'family', emoji: '💜', name: 'Family', price: '$29', period: '/mo', features: ['Unlimited contact unlocks', '2 active caregivers', 'Family coordination tools', 'Chat support', 'Care schedule tracking'], color: '#7C5CFF', popular: true },
+                { key: 'premium', emoji: '👑', name: 'Premium', price: '$59', period: '/mo', features: ['Everything in Family', 'Dedicated care coordinator', '24/7 phone support', 'Background check priority', 'Personalized care plan'], color: '#F59E0B', popular: false },
+              ].map(plan => (
+                <div key={plan.key} style={{ border: `2px solid ${plan.popular ? '#7C5CFF' : '#E2E8F0'}`, borderRadius: 18, padding: '18px 16px', marginBottom: 12, position: 'relative', background: plan.popular ? 'linear-gradient(135deg,rgba(124,92,255,0.04),rgba(74,144,226,0.04))' : '#fff' }}>
+                  {plan.popular && <div style={{ position: 'absolute', top: -12, left: '50%', transform: 'translateX(-50%)', background: '#7C5CFF', color: '#fff', fontSize: 11, fontWeight: 700, padding: '3px 12px', borderRadius: 20 }}>MOST POPULAR</div>}
+                  <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 12 }}>
+                    <div>
+                      <div style={{ fontSize: 16, fontWeight: 800, color: '#0F172A' }}>{plan.emoji} {plan.name}</div>
+                      <div style={{ fontSize: 22, fontWeight: 800, color: plan.color, marginTop: 2 }}>{plan.price}<span style={{ fontSize: 13, fontWeight: 500, color: '#94A3B8' }}>{plan.period}</span></div>
+                    </div>
+                    <button
+                      onClick={() => handleUpgrade(plan.key)}
+                      disabled={upgradeLoading === plan.key || sub?.plan === plan.key}
+                      style={{ background: sub?.plan === plan.key ? '#E2E8F0' : `linear-gradient(135deg,${plan.color},${plan.color}cc)`, color: sub?.plan === plan.key ? '#94A3B8' : '#fff', border: 'none', borderRadius: 12, padding: '10px 16px', fontSize: 13, fontWeight: 700, cursor: sub?.plan === plan.key ? 'default' : 'pointer', whiteSpace: 'nowrap' }}
+                    >
+                      {upgradeLoading === plan.key ? '...' : sub?.plan === plan.key ? 'Current' : 'Choose'}
+                    </button>
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                    {plan.features.map(f => <div key={f} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: '#475569' }}><span style={{ color: '#22C55E', flexShrink: 0 }}>✓</span>{f}</div>)}
+                  </div>
+                </div>
+              ))}
+              <div style={{ textAlign: 'center', fontSize: 12, color: '#94A3B8', marginTop: 8 }}>Cancel anytime · Secure payment via Stripe</div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
