@@ -268,12 +268,12 @@ export function FindCareTab() {
               <span style={{ fontSize: 16, color: '#94A3B8', transition: 'transform 0.25s', display: 'inline-block', transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)' }}>▾</span>
             </div>
             {isOpen && (
-              <div style={{ padding: '0 12px 14px' }}>
+              <div style={{ padding: '0 12px 14px', background: '#FAFBFC' }}>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
                   {cat.needs.map(need => {
                     const sel = selectedNeeds.includes(need);
                     return (
-                      <div key={need} onClick={() => toggleNeed(need)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '10px 8px', borderRadius: 10, border: sel ? '1.5px solid #7C5CFF' : '1.5px solid transparent', background: sel ? '#fff' : 'rgba(255,255,255,0.08)', color: sel ? '#1a1a2e' : 'rgba(255,255,255,0.8)', fontSize: 12, fontWeight: sel ? 700 : 500, cursor: 'pointer', textAlign: 'center', lineHeight: 1.3, transition: 'all 0.25s' }}>
+                      <div key={need} onClick={() => toggleNeed(need)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '10px 8px', borderRadius: 10, border: sel ? '1.5px solid #7C5CFF' : '1.5px solid #E2E8F0', background: sel ? '#EDE9FE' : '#F8FAFC', color: sel ? '#7C5CFF' : '#475569', fontSize: 12, fontWeight: sel ? 700 : 500, cursor: 'pointer', textAlign: 'center', lineHeight: 1.3, transition: 'all 0.25s' }}>
                         {sel && <span style={{ color: '#7C5CFF', fontWeight: 800, marginRight: 4 }}>✓</span>}
                         {need}
                       </div>
