@@ -3649,7 +3649,7 @@
   <div class="confirm-title" id="confirm-title">Interview Request Sent!</div>
   <div class="confirm-sub" id="confirm-sub">Your caregiver has been notified and will confirm within 24 hours. You'll receive a notification by email once they respond.</div>
   <div class="confirm-card" id="confirm-card"></div>
-  <button class="btn-home" style="background:linear-gradient(135deg,#7C5CFF,#4A90E2);border:none;font-size:15px;font-weight:700;" id="btn-track-hire-status">📊 Track Hire Status</button>
+  <button class="btn-home" onclick="showScreen('screen-account')" style="background:linear-gradient(135deg,#7C5CFF,#4A90E2);border:none;font-size:15px;font-weight:700;" id="btn-track-hire-status">📊 Track Hire Status</button>
   <button class="btn-home" style="margin-top:0; background:rgba(124,92,255,0.15); border:1.5px solid rgba(167,139,250,0.3); font-size:14px;" onclick="showScreen('screen-team')">👥 View My Care Team</button>
   <button class="btn-home" style="margin-top:0; background:rgba(124,92,255,0.08); border:1px solid rgba(124,92,255,0.15); font-size:14px;" onclick="showScreen('screen-account')">📋 View My Bookings</button>
   <button class="btn-home" style="margin-top:0; background:rgba(255,255,255,0.05); font-size:14px; opacity:0.6;" onclick="showScreen('screen-dispatch')">Start Over</button>
@@ -5522,7 +5522,7 @@ async function loadAccountScreen() {
   const el = document.getElementById('account-content');
   if (!el) return;
   el.innerHTML = '<div style="text-align:center;padding:40px 20px;color:#94A3B8;font-size:14px;">Loading your bookings…</div>';
-  const email = localStorage.getItem('gc_client_email');
+  const email = localStorage.getItem('gc_email');
   if (!email) {
     el.innerHTML = '<div style="text-align:center;padding:40px 20px;color:#94A3B8;font-size:14px;">Sign in to view your bookings.</div>';
     return;
@@ -5581,7 +5581,7 @@ async function loadAccountScreen() {
 
 async function cancelBooking(bookingId, caregiverName) {
   if (!confirm('Cancel your request with ' + (caregiverName || 'this caregiver') + '?')) return;
-  const email = localStorage.getItem('gc_client_email');
+  const email = localStorage.getItem('gc_email');
   try {
     const res = await fetch('https://gotocare-original.jjioji.workers.dev/api/cancel-booking', {
       method: 'POST',
