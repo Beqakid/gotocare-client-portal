@@ -1,21 +1,20 @@
 {
-  "name": "gotocare-client-portal",
+  "name": "carehia-client-portal",
+  "version": "2.0.0",
   "private": true,
-  "version": "1.0.0",
-  "type": "module",
+  "description": "Carehia Client Portal — React PWA",
   "scripts": {
-    "build": "vite build"
+    "build": "npx esbuild app.tsx --bundle --splitting --format=esm --outdir=dist --platform=browser --target=es2020 --loader:.tsx=tsx --loader:.ts=tsx --minify",
+    "dev": "npx esbuild app.tsx --bundle --splitting --format=esm --outdir=dist --platform=browser --target=es2020 --loader:.tsx=tsx --loader:.ts=tsx --watch"
   },
   "dependencies": {
-    "lucide-react": "^1.11.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"
   },
   "devDependencies": {
-    "@types/react": "^18.3.12",
+    "@types/react": "^18.3.1",
     "@types/react-dom": "^18.3.1",
-    "@vitejs/plugin-react": "^4.3.4",
-    "typescript": "^5.6.3",
-    "vite": "^5.4.11"
+    "esbuild": "^0.24.0",
+    "typescript": "^5.5.0"
   }
 }
