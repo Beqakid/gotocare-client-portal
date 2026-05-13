@@ -2,10 +2,9 @@
   "name": "carehia-client-portal",
   "version": "2.0.0",
   "private": true,
-  "description": "Carehia Client Portal — React PWA",
   "scripts": {
-    "build": "npx esbuild app.tsx --bundle --splitting --format=esm --outdir=dist --platform=browser --target=es2020 --loader:.tsx=tsx --loader:.ts=tsx --minify",
-    "dev": "npx esbuild app.tsx --bundle --splitting --format=esm --outdir=dist --platform=browser --target=es2020 --loader:.tsx=tsx --loader:.ts=tsx --watch"
+    "build": "esbuild app.tsx --bundle --splitting --format=esm --outdir=dist --minify --target=es2020",
+    "dev": "esbuild app.tsx --bundle --splitting --format=esm --outdir=dist --sourcemap --watch"
   },
   "dependencies": {
     "react": "^18.3.1",
@@ -15,6 +14,9 @@
     "@types/react": "^18.3.1",
     "@types/react-dom": "^18.3.1",
     "esbuild": "^0.24.0",
-    "typescript": "^5.5.0"
+    "typescript": "^5.4.0"
+  },
+  "engines": {
+    "node": ">=20"
   }
 }
