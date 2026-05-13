@@ -181,7 +181,7 @@ export function TeamTab({ onNavigate }: Props) {
             <div style={{ fontSize: 14, color: '#475569', marginBottom: 24, lineHeight: 1.6 }}>
               {activeSubTab === 'saved' ? 'Browse and hire a caregiver to add them to your team' : activeSubTab === 'active' ? 'Hired caregivers will appear here once they start' : 'Caregivers who have completed shifts will appear here'}
             </div>
-            <button onClick={() => onNavigate('findcare')} style={{ background: 'linear-gradient(135deg,#7C5CFF,#4A90E2)', color: '#fff', border: 'none', borderRadius: 12, padding: '12px 24px', fontSize: 14, fontWeight: 700, cursor: 'pointer' }}>Find a Caregiver &#8594;</button>
+            <button onClick={() => onNavigate('findcare')} style={{ background: 'linear-gradient(135deg,#7C5CFF,#4A90E2)', color: '#fff', border: 'none', borderRadius: 12, padding: '12px 24px', fontSize: 14, fontWeight: 700, cursor: 'pointer' }}>Find a Caregiver →</button>
           </div>
         ) : (
           <>
@@ -204,7 +204,7 @@ export function TeamTab({ onNavigate }: Props) {
                       <div style={{ width: 56, height: 56, borderRadius: '50%', background: 'linear-gradient(135deg,#7C5CFF,#4A90E2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, fontWeight: 800, color: '#fff', flexShrink: 0, border: '2px solid rgba(124,92,255,0.3)' }}>{initials}</div>
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ fontSize: 16, fontWeight: 800, color: '#0F172A', marginBottom: 2 }}>{name}</div>
-                        <div style={{ fontSize: 13, color: '#7C5CFF', fontWeight: 700, marginBottom: 4 }}>&#128156; {activeSubTab === 'saved' ? 'ON MY TEAM' : activeSubTab === 'active' ? 'ACTIVE' : 'PAST'}</div>
+                        <div style={{ fontSize: 13, color: '#7C5CFF', fontWeight: 700, marginBottom: 4 }}>💜 {activeSubTab === 'saved' ? 'ON MY TEAM' : activeSubTab === 'active' ? 'ACTIVE' : 'PAST'}</div>
                         <div style={{ fontSize: 13, color: '#475569', marginBottom: 2 }}>{specialty}</div>
                         <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
                           <span style={{ fontSize: 13, fontWeight: 600, color: '#22C55E' }}>${rate}/hr</span>
@@ -219,7 +219,7 @@ export function TeamTab({ onNavigate }: Props) {
                               onClick={() => openSchedule(m)}
                               style={{ width: '100%', padding: '11px', background: 'linear-gradient(135deg,#7C5CFF,#4A90E2)', border: 'none', borderRadius: 10, color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
                             >
-                              &#128197; Set Care Schedule
+                              📅 Set Care Schedule
                             </button>
                           )}
 
@@ -230,7 +230,7 @@ export function TeamTab({ onNavigate }: Props) {
                                 href={`mailto:${email}`}
                                 style={{ flex: 1, padding: '10px', background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: 10, color: '#7C5CFF', fontSize: 13, fontWeight: 700, textDecoration: 'none', textAlign: 'center', display: 'block' }}
                               >
-                                &#9993;&#65039; Message
+                                ✉️ Message
                               </a>
                             )}
                             {/* Remove button */}
@@ -239,7 +239,7 @@ export function TeamTab({ onNavigate }: Props) {
                               disabled={removing === removingId}
                               style={{ flex: email ? '0 0 auto' : 1, padding: '10px 14px', background: 'none', border: '1px solid #FECACA', borderRadius: 10, color: '#DC2626', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}
                             >
-                              {removing === removingId ? '&#9203; Removing&#8230;' : '&#x2715; Remove'}
+                              {removing === removingId ? '⏳ Removing…' : '✕ Remove'}
                             </button>
                           </div>
                         </div>
@@ -250,7 +250,7 @@ export function TeamTab({ onNavigate }: Props) {
               );
             })}
 
-            <button onClick={() => onNavigate('findcare')} style={{ width: '100%', padding: '14px', background: 'linear-gradient(135deg,rgba(124,92,255,0.08),rgba(74,144,226,0.08))', border: '1.5px dashed #C4B5FD', borderRadius: 16, color: '#7C5CFF', fontSize: 14, fontWeight: 700, cursor: 'pointer', marginTop: 4 }}>&#65291; Add Another Caregiver</button>
+            <button onClick={() => onNavigate('findcare')} style={{ width: '100%', padding: '14px', background: 'linear-gradient(135deg,rgba(124,92,255,0.08),rgba(74,144,226,0.08))', border: '1.5px dashed #C4B5FD', borderRadius: 16, color: '#7C5CFF', fontSize: 14, fontWeight: 700, cursor: 'pointer', marginTop: 4 }}>＋ Add Another Caregiver</button>
           </>
         )}
       </div>
@@ -277,12 +277,12 @@ export function TeamTab({ onNavigate }: Props) {
                   <div style={{ fontSize: 18, fontWeight: 800, color: '#0F172A' }}>Set Care Schedule</div>
                   <div style={{ fontSize: 13, color: '#7C5CFF', fontWeight: 600, marginTop: 2 }}>with {memberName(scheduleTarget)}</div>
                 </div>
-                <button onClick={() => setScheduleTarget(null)} style={{ background: '#F1F5F9', border: 'none', borderRadius: 50, width: 32, height: 32, cursor: 'pointer', fontSize: 16, color: '#64748B', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>&#x2715;</button>
+                <button onClick={() => setScheduleTarget(null)} style={{ background: '#F1F5F9', border: 'none', borderRadius: 50, width: 32, height: 32, cursor: 'pointer', fontSize: 16, color: '#64748B', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
               </div>
 
               {scheduleSuccess ? (
                 <div style={{ textAlign: 'center', padding: '40px 20px' }}>
-                  <div style={{ fontSize: 56, marginBottom: 12 }}>&#127881;</div>
+                  <div style={{ fontSize: 56, marginBottom: 12 }}>🎉</div>
                   <div style={{ fontSize: 18, fontWeight: 800, color: '#0F172A', marginBottom: 6 }}>Schedule Saved!</div>
                   <div style={{ fontSize: 14, color: '#475569' }}>Your care schedule with {memberName(scheduleTarget)} has been set.</div>
                 </div>
@@ -408,7 +408,7 @@ export function TeamTab({ onNavigate }: Props) {
                       boxShadow: scheduleDays.length > 0 ? '0 4px 16px rgba(124,92,255,0.3)' : 'none',
                     }}
                   >
-                    {savingSchedule ? '&#9203; Saving Schedule&#8230;' : '&#128197; Confirm Schedule'}
+                    {savingSchedule ? '⏳ Saving Schedule…' : '📅 Confirm Schedule'}
                   </button>
                 </>
               )}
@@ -428,7 +428,7 @@ function LoadingCard() {
   return (
     <div style={{ padding: 40, textAlign: 'center' }}>
       <div style={{ width: 36, height: 36, border: '3px solid #E2E8F0', borderTop: '3px solid #7C5CFF', borderRadius: '50%', margin: '0 auto 16px', animation: 'spin 1s linear infinite' }} />
-      <div style={{ color: '#94A3B8', fontSize: 14 }}>Loading your team&#8230;</div>
+      <div style={{ color: '#94A3B8', fontSize: 14 }}>Loading your team…</div>
     </div>
   );
 }
@@ -436,10 +436,10 @@ function LoadingCard() {
 function GuestCTA({ label, onFindCare }: { label: string; onFindCare: () => void }) {
   return (
     <div style={{ padding: '80px 24px', textAlign: 'center' }}>
-      <div style={{ fontSize: 64, marginBottom: 20 }}>&#128156;</div>
+      <div style={{ fontSize: 64, marginBottom: 20 }}>💜</div>
       <div style={{ fontSize: 18, fontWeight: 700, color: '#0F172A', marginBottom: 8 }}>Your Care Team</div>
       <div style={{ fontSize: 14, color: '#475569', marginBottom: 28, lineHeight: 1.7 }}>{label}</div>
-      <button onClick={onFindCare} style={{ background: 'linear-gradient(135deg,#7C5CFF,#4A90E2)', color: '#fff', border: 'none', borderRadius: 12, padding: '14px 28px', fontSize: 15, fontWeight: 700, cursor: 'pointer' }}>Find a Caregiver &#8594;</button>
+      <button onClick={onFindCare} style={{ background: 'linear-gradient(135deg,#7C5CFF,#4A90E2)', color: '#fff', border: 'none', borderRadius: 12, padding: '14px 28px', fontSize: 15, fontWeight: 700, cursor: 'pointer' }}>Find a Caregiver →</button>
     </div>
   );
 }
