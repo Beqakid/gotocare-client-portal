@@ -3904,6 +3904,16 @@ function showAuthError(msg) {
   el.style.display = 'block';
 }
 
+function clientSignOut() {
+  localStorage.removeItem('gc_client_session');
+  localStorage.removeItem('gc_client_name');
+  localStorage.removeItem('gc_client_email');
+  localStorage.removeItem('gc_shortlist');
+  localStorage.removeItem('gc_client_prefs');
+  // Reload to landing/auth screen
+  window.location.href = window.location.pathname;
+}
+
 async function handleAuthSubmit() {
   const email = document.getElementById('auth-email').value.trim();
   const password = document.getElementById('auth-password').value;
