@@ -5296,7 +5296,7 @@ function showHomeScreen() {
   
   if (token) {
     try {
-      const r = await fetch('https://gotocare-original.jjioji.workers.dev/api/client-team?clientToken=' + encodeURIComponent(token));
+      const r = await fetch('https://gotocare-original.jjioji.workers.dev/api/client-team?token=' + encodeURIComponent(token));
       const data = await r.json();
       const team = (data.team || []).filter(m => m.status === 'active');
       document.getElementById('home-stat-team').textContent = team.length || '0';
