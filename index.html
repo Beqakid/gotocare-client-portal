@@ -5744,7 +5744,7 @@ function openCgProfile(cg) {
 
   var avatar = cg.avatar || cg.photo_url || '';
   var avatarHtml = (avatar && avatar.startsWith('http'))
-    ? '<img src="' + avatar + '" style="width:88px;height:88px;border-radius:50%;object-fit:cover;border:3px solid #EDE9FE;" onerror="this.style.display='none'">'
+    ? '<img src="' + avatar + '" style="width:88px;height:88px;border-radius:50%;object-fit:cover;border:3px solid #EDE9FE;" onerror=\"this.style.display=\'none\'">'
     : '<div style="width:88px;height:88px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:36px;background:#EDE9FE;">&#x1F469;&#x200D;&#x2695;&#xFE0F;</div>';
 
   var locationLine = city ? '<div style="font-size:13px;color:#94A3B8;margin-top:3px;">&#128205; ' + city + (state ? ', ' + state : '') + '</div>' : '';
