@@ -17,6 +17,9 @@ export function ProfileTab({ onNavigate, onSignOut }: Props) {
   const [subLoading, setSubLoading] = React.useState(true);
   const [showUpgradeModal, setShowUpgradeModal] = React.useState(false);
   const [upgradeLoading, setUpgradeLoading] = React.useState('');
+  const [bookingCount, setBookingCount] = React.useState<number | null>(null);
+  const [teamCount, setTeamCount] = React.useState<number | null>(null);
+  const [subSuccess, setSubSuccess] = React.useState(false);
 
   React.useEffect(() => {
     const emailVal = localStorage.getItem('gc_email');
@@ -26,6 +29,56 @@ export function ProfileTab({ onNavigate, onSignOut }: Props) {
       .then(d => setSub(d))
       .catch(() => setSub(null))
       .finally(() => setSubLoading(false));
+  }, []);
+
+  // Handle post-Stripe redirect + load real stats
+  React.useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const subResult = params.get('subscription');
+    const planParam = params.get('plan');
+    const emailParam = params.get('email');
+
+    // If returning from Stripe with success, confirm the subscription
+    if (subResult === 'success' && planParam && emailParam) {
+      fetch('https://gotocare-original.jjioji.workers.dev/api/confirm-client-subscription', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: emailParam, plan: planParam }),
+      })
+        .then(r => r.json())
+        .then(() => {
+          setSubSuccess(true);
+          // Clean the URL without reload
+          window.history.replaceState({}, '', window.location.pathname);
+          // Reload subscription state
+          fetch(`https://gotocare-original.jjioji.workers.dev/api/check-subscription?email=${encodeURIComponent(emailParam)}`)
+            .then(r => r.json())
+            .then(d => setSub(d))
+            .catch(() => {});
+        })
+        .catch(() => {});
+    }
+
+    // Load real booking count
+    const emailVal = localStorage.getItem('gc_email');
+    if (emailVal) {
+      fetch(`https://gotocare-original.jjioji.workers.dev/api/my-bookings?email=${encodeURIComponent(emailVal)}`)
+        .then(r => r.json())
+        .then(d => setBookingCount(Array.isArray(d.bookings) ? d.bookings.length : 0))
+        .catch(() => setBookingCount(0));
+    }
+
+    // Load real team count
+    const tok = localStorage.getItem('gc_client_session');
+    if (tok) {
+      fetch(`https://gotocare-original.jjioji.workers.dev/api/client-team?token=${encodeURIComponent(tok)}`)
+        .then(r => r.json())
+        .then(d => {
+          const total = (d.hired?.length || 0) + (d.active?.length || 0);
+          setTeamCount(total);
+        })
+        .catch(() => setTeamCount(0));
+    }
   }, []);
 
   async function handleUpgrade(plan: string) {
@@ -69,6 +122,17 @@ export function ProfileTab({ onNavigate, onSignOut }: Props) {
       </div>
 
       <div style={{ padding: '20px 16px' }}>
+        {/* Subscription success banner */}
+        {subSuccess && (
+          <div style={{ background: 'linear-gradient(135deg,#22C55E,#16A34A)', borderRadius: 16, padding: '14px 18px', marginBottom: 16, display: 'flex', alignItems: 'center', gap: 12 }}>
+            <span style={{ fontSize: 24 }}>🎉</span>
+            <div>
+              <div style={{ fontSize: 14, fontWeight: 700, color: '#fff' }}>You're subscribed!</div>
+              <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.85)' }}>Your plan is now active. Enjoy unlimited care.</div>
+            </div>
+            <button onClick={() => setSubSuccess(false)} style={{ marginLeft: 'auto', background: 'none', border: 'none', color: 'rgba(255,255,255,0.8)', fontSize: 18, cursor: 'pointer', lineHeight: 1 }}>✕</button>
+          </div>
+        )}
         {/* Subscription card */}
         {subLoading ? (
           <div style={{ background: '#fff', border: '1px solid #E2E8F0', borderRadius: 18, padding: '18px 20px', marginBottom: 20, textAlign: 'center', color: '#94A3B8', fontSize: 13 }}>Loading plan...</div>
@@ -104,7 +168,11 @@ export function ProfileTab({ onNavigate, onSignOut }: Props) {
 
         {/* Stats */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10, marginBottom: 20 }}>
-          {[['📋', 'Bookings', '—'], ['💜', 'Team', '—'], ['⭐', 'Reviews', '—']].map(([emoji, label, val]) => (
+          {([
+            ['📋', 'Bookings', bookingCount === null ? '—' : String(bookingCount)],
+            ['💜', 'Team', teamCount === null ? '—' : String(teamCount)],
+            ['⭐', 'Reviews', '—'],
+          ] as [string, string, string][]).map(([emoji, label, val]) => (
             <div key={label} style={{ background: '#fff', border: '1px solid #E2E8F0', borderRadius: 14, padding: '14px 8px', textAlign: 'center', boxShadow: '0 2px 6px rgba(15,23,42,0.04)' }}>
               <div style={{ fontSize: 20, marginBottom: 4 }}>{emoji}</div>
               <div style={{ fontSize: 20, fontWeight: 800, color: '#0F172A' }}>{val}</div>
@@ -130,10 +198,10 @@ export function ProfileTab({ onNavigate, onSignOut }: Props) {
 
         <div style={{ background: '#fff', border: '1px solid #E2E8F0', borderRadius: 18, overflow: 'hidden', marginBottom: 16, boxShadow: '0 2px 8px rgba(15,23,42,0.04)' }}>
           {([
-            ['🔔', 'Notifications', () => {}],
-            ['🔒', 'Privacy & Security', () => {}],
+            ['🔔', 'Notifications', () => { alert('Notification preferences — coming soon!'); }],
+            ['🔒', 'Privacy & Security', () => { window.open('https://carehia.com/privacy', '_blank'); }],
             ['❓', 'Help & Support', () => { window.open('mailto:support@carehia.com'); }],
-            ['📄', 'Terms of Service', () => {}],
+            ['📄', 'Terms of Service', () => { window.open('https://carehia.com/terms', '_blank'); }],
           ] as [string, string, () => void][]).map(([icon, label, action], i, arr) => (
             <div key={label} onClick={action} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '16px', cursor: 'pointer', borderBottom: i < arr.length - 1 ? '1px solid #F1F5F9' : 'none', WebkitTapHighlightColor: 'transparent' }}>
               <span style={{ fontSize: 20, width: 32, textAlign: 'center' }}>{icon}</span>
