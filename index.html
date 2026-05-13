@@ -3880,6 +3880,11 @@ let subscription = null;
 
 // ── CLIENT AUTH ──
 const AUTH_STORAGE_KEY = 'gc_client_session';
+// ── MY TEAM STATE ──
+let teamApiLoaded = false;
+let teamApiData = null;
+let currentTeamTab = 'active';
+
 let authMode = 'signin';
 
 function switchAuthTab(mode) {
@@ -3997,6 +4002,11 @@ function showScreen(id, pushHistory = true) {
   document.getElementById(id).classList.add('active');
   window.scrollTo(0, 0);
   if (pushHistory) history.pushState({ screen: id }, '');
+  // Load team data when navigating to My Team
+  if (id === 'screen-team') {
+    teamApiLoaded = false;
+    renderTeamContent();
+  }
   // Update bottom nav active state
   document.querySelectorAll('.nav-item').forEach(btn => {
     btn.classList.toggle('active', btn.dataset.screen === id);
@@ -5134,6 +5144,147 @@ async function addToTeam(cg, bookingId) {
   }
 }
 
+
+// ═══════════════════════════════════════════════════════
+// MY TEAM — RENDERING ENGINE
+
+function _renderTeamCard(cg, idx) {
+  const hasSchedule = !!(window.careScheduleCache && window.careScheduleCache[cg.email]);
+  const badge = cg.isHired
+    ? '<span style="background:rgba(34,197,94,0.1);color:#22C55E;border:1px solid rgba(34,197,94,0.2);padding:3px 10px;border-radius:50px;font-size:11px;font-weight:700;">💜 ON MY TEAM</span>'
+    : '<span style="background:rgba(245,158,11,0.1);color:#d97706;border:1px solid rgba(245,158,11,0.2);padding:3px 10px;border-radius:50px;font-size:11px;font-weight:700;">📅 INTERVIEW ACCEPTED</span>';
+  const d = cg.hiredAt ? new Date(cg.hiredAt).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) : '';
+  const initials = (cg.name||'CG').split(' ').map(function(w){return w[0]||'';}).join('').toUpperCase().slice(0,2)||'CG';
+  const sz = 52;
+  const av = '<div style="width:'+sz+'px;height:'+sz+'px;border-radius:50%;background:linear-gradient(135deg,#7C5CFF,#4A90E2);display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:800;color:#fff;flex-shrink:0;">'+initials+'</div>';
+  const schedBtn = '<button onclick="_teamSchedule('+idx+')" style="flex:1;min-width:120px;padding:10px;background:'+(hasSchedule?'rgba(34,197,94,0.08)':'rgba(124,92,255,0.08)')+';color:'+(hasSchedule?'#22C55E':'#7C5CFF')+';border:1.5px solid '+(hasSchedule?'rgba(34,197,94,0.2)':'rgba(124,92,255,0.2)')+';border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;">'+(hasSchedule?'✅ Schedule Set':'📅 Set Schedule')+'</button>';
+  const addBtn = !cg.isHired ? '<button onclick="_teamAddToTeam('+idx+')" style="flex:1;min-width:120px;padding:10px;background:linear-gradient(135deg,#7C5CFF,#4A90E2);color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;">💜 Add to My Team</button>' : '';
+  const rmBtn = '<button onclick="removeFromMyTeam('+cg.id+')" style="padding:10px 14px;background:rgba(239,68,68,0.06);color:#ef4444;border:1.5px solid rgba(239,68,68,0.15);border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;">✕ Remove</button>';
+  return '<div style="background:#fff;border:1.5px solid #E2E8F0;border-radius:16px;padding:18px;margin-bottom:14px;box-shadow:0 2px 8px rgba(0,0,0,0.05);">'
+    + '<div style="display:flex;align-items:center;gap:14px;margin-bottom:12px;">' + av
+    + '<div style="flex:1;min-width:0;"><div style="font-size:16px;font-weight:700;color:#0F172A;">' + cg.name + '</div>'
+    + '<div style="font-size:12px;color:#94A3B8;margin-top:2px;">' + (cg.specialty||'Home Care') + ' · $' + (cg.hourlyRate||28) + '/hr' + (d?' · Since '+d:'') + '</div></div></div>'
+    + '<div style="margin-bottom:14px;">' + badge + '</div>'
+    + '<div style="display:flex;gap:8px;flex-wrap:wrap;">' + schedBtn + addBtn + rmBtn + '</div></div>';
+}
+function _teamSchedule(idx) {
+  var cg = (window._teamActiveCaregivers||[])[idx];
+  if (cg) openScheduleModal(cg.email, cg.name);
+}
+function _teamAddToTeam(idx) {
+  var cg = (window._teamActiveCaregivers||[])[idx];
+  if (cg) addToTeam(cg, cg.bookingId || null);
+}
+
+function _teamEmptyState(type) {
+  const icon = type === 'saved' ? '💜' : type === 'active' ? '🤝' : '📋';
+  const msg = type === 'saved' ? 'No saved caregivers yet' : type === 'active' ? 'No active caregivers yet' : 'No past caregivers';
+  const sub = type === 'saved' ? 'Browse and save your favorites from Find Care' : type === 'active' ? 'Hire a caregiver from your search results' : '';
+  const btn = (type !== 'past') ? '<button onclick="showScreen(\'screen-dispatch\')" style="margin-top:20px;padding:12px 24px;background:linear-gradient(135deg,#7C5CFF,#4A90E2);color:#fff;border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;">🔍 Find Caregivers</button>' : '';
+  return '<div style="text-align:center;padding:60px 20px;color:#94A3B8;"><div style="font-size:48px;margin-bottom:16px;">' + icon + '</div><p style="font-size:15px;font-weight:600;color:#475569;">' + msg + '</p>' + (sub ? '<p style="font-size:13px;margin-top:4px;">' + sub + '</p>' : '') + btn + '</div>';
+}
+
+// ═══════════════════════════════════════════════════════
+async function loadTeamData() {
+  const token = localStorage.getItem('gc_client_session');
+  if (!token) return;
+  try {
+    const r = await fetch('https://gotocare-original.jjioji.workers.dev/api/client-team?token=' + encodeURIComponent(token));
+    const data = await r.json();
+    if (data.success) { teamApiData = data; teamApiLoaded = true; }
+  } catch(e) {}
+}
+
+function switchTeamTab(tab) {
+  currentTeamTab = tab;
+  document.querySelectorAll('.team-tab').forEach(btn => btn.classList.remove('active'));
+  const btn = document.getElementById('ttab-' + tab);
+  if (btn) btn.classList.add('active');
+  renderTeamContent();
+}
+
+async function renderTeamContent() {
+  if (!teamApiLoaded) await loadTeamData();
+  const data = teamApiData || {};
+  const hired = data.hired || [];
+  const activePending = data.active || [];
+  const past = data.past || [];
+  const el = document.getElementById('team-content');
+  if (!el) return;
+
+  // Count badge
+  const total = hired.length + activePending.length;
+  const badge = document.getElementById('team-count-badge');
+  if (badge) { badge.textContent = total + ' member' + (total !== 1 ? 's' : ''); badge.style.display = total > 0 ? 'inline-block' : 'none'; }
+
+  function avatarDiv(name, size) {
+    const initials = (name || 'CG').split(' ').map(w => w[0] || '').join('').toUpperCase().slice(0, 2) || 'CG';
+    return `<div style="width:${size}px;height:${size}px;border-radius:50%;background:linear-gradient(135deg,#7C5CFF,#4A90E2);display:flex;align-items:center;justify-content:center;font-size:${Math.floor(size*0.38)}px;font-weight:800;color:#fff;flex-shrink:0;">${initials}</div>`;
+  }
+
+  if (currentTeamTab === 'saved') {
+    if (!shortlist || !shortlist.length) {
+      el.innerHTML = _teamEmptyState('saved');
+    } else {
+      el.innerHTML = shortlist.map((cg, i) => {
+        const name = (cg.firstName || cg.first_name || cg.name || 'Caregiver').trim();
+        const rate = cg.hourlyRate || cg.hourly_rate || 28;
+        return `<div style="background:#fff;border:1.5px solid #E2E8F0;border-radius:16px;padding:16px;margin-bottom:12px;display:flex;align-items:center;gap:14px;box-shadow:0 2px 8px rgba(0,0,0,0.05);">
+          ${avatarDiv(name, 50)}
+          <div style="flex:1;min-width:0;">
+            <div style="font-size:15px;font-weight:700;color:#0F172A;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${name}</div>
+            <div style="font-size:13px;color:#475569;margin-top:2px;">$${rate}/hr</div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:6px;">
+            <button onclick="startBooking(${i})" style="padding:8px 14px;background:linear-gradient(135deg,#7C5CFF,#4A90E2);color:#fff;border:none;border-radius:10px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;">📅 Interview</button>
+            <button onclick="directHireFromShortlist(${i})" style="padding:8px 14px;background:#fff;color:#7C5CFF;border:1.5px solid rgba(124,92,255,0.4);border-radius:10px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;">💼 Hire</button>
+          </div>
+        </div>`;
+      }).join('');
+    }
+    return;
+  }
+
+  if (currentTeamTab === 'active') {
+    const all = [...hired, ...activePending];
+    if (!all.length) {
+      el.innerHTML = _teamEmptyState('active');
+    } else {
+      // Store for onclick refs
+      window._teamActiveCaregivers = all;
+      el.innerHTML = all.map((cg, idx) => _renderTeamCard(cg, idx)).join('');
+    }
+    return;
+  }
+
+  if (currentTeamTab === 'past') {
+    if (!past.length) {
+      el.innerHTML = '<div style="text-align:center;padding:60px 20px;color:#94A3B8;"><div style="font-size:48px;margin-bottom:16px;">📋</div><p style="font-size:15px;font-weight:600;color:#475569;">No past caregivers</p></div>';
+    } else {
+      el.innerHTML = past.map(cg => `<div style="background:#fff;border:1.5px solid #E2E8F0;border-radius:16px;padding:16px;margin-bottom:12px;display:flex;align-items:center;gap:14px;box-shadow:0 2px 8px rgba(0,0,0,0.05);opacity:0.7;">
+        ${avatarDiv(cg.name, 48)}
+        <div style="flex:1;"><div style="font-size:15px;font-weight:700;color:#0F172A;">${cg.name}</div><div style="font-size:12px;color:#94A3B8;margin-top:2px;">Past caregiver · $${cg.hourlyRate || 28}/hr</div></div>
+      </div>`).join('');
+    }
+    return;
+  }
+}
+
+async function removeFromMyTeam(caregiverId) {
+  if (!confirm('Remove this caregiver from your team?')) return;
+  const token = localStorage.getItem('gc_client_session');
+  if (!token) return;
+  try {
+    const r = await fetch('https://gotocare-original.jjioji.workers.dev/api/remove-from-team', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token, caregiverId })
+    });
+    const data = await r.json();
+    if (data.success) { toast('Caregiver removed'); teamApiLoaded = false; renderTeamContent(); }
+    else toast('Could not remove — please try again');
+  } catch(e) { toast('Network error'); }
+}
+
 // ── WIRE UP btn-request-direct ──
 document.addEventListener('DOMContentLoaded', () => {
   const reqBtn = document.getElementById('btn-request-direct');
@@ -5201,7 +5352,7 @@ function showHomeScreen() {
     let _onsitePollTimer = null;
 
     async function loadOnsiteStatus() {
-      const token = localStorage.getItem('client_token');
+      const token = localStorage.getItem('gc_client_session');
       if (!token) { _renderOnsite(false); return; }
       try {
         const res = await fetch('https://gotocare-original.jjioji.workers.dev/api/client-onsite-caregiver?clientToken=' + encodeURIComponent(token));
@@ -5291,14 +5442,14 @@ function showHomeScreen() {
   }
 
   // Load team
-  const token = localStorage.getItem('client_token') || localStorage.getItem('client_session');
+  const token = localStorage.getItem('gc_client_session');
   const teamScroll = document.getElementById('home-team-scroll');
   
   if (token) {
     try {
       const r = await fetch('https://gotocare-original.jjioji.workers.dev/api/client-team?token=' + encodeURIComponent(token));
       const data = await r.json();
-      const team = (data.team || []).filter(m => m.status === 'active');
+      const team = [...(data.hired || []), ...(data.active || [])];
       document.getElementById('home-stat-team').textContent = team.length || '0';
       
       const teamSection = document.getElementById('home-team-section');
@@ -5306,10 +5457,10 @@ function showHomeScreen() {
         if (teamSection) teamSection.style.display = 'block';
         teamScroll.style.display = 'flex';
         teamScroll.innerHTML = team.map(m => {
-          const initials = (m.caregiver_name || 'CG').split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
+          const initials = (m.name || m.caregiver_name || 'CG').split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
           return `<div style="flex-shrink:0;text-align:center;cursor:pointer;width:96px;background:#fff;border:1.5px solid #E2E8F0;border-radius:16px;padding:12px 8px 10px;box-shadow:0 2px 8px rgba(0,0,0,0.06);" onclick="document.querySelector('[data-screen=screen-team]').click()">
             <div style="width:60px;height:60px;border-radius:50%;background:linear-gradient(135deg,#7C5CFF,#4A90E2);display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:800;color:#fff;margin:0 auto 6px;border:2px solid rgba(124,92,255,0.3);">${initials}</div>
-            <div style="font-size:13px;font-weight:700;color:#0F172A;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:80px;">${(m.caregiver_name||'').split(' ')[0]}</div>
+            <div style="font-size:13px;font-weight:700;color:#0F172A;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:80px;">${(m.name || m.caregiver_name || '').split(' ')[0]}</div>
             <div style="font-size:10px;color:#22C55E;font-weight:600;margin-top:1px;">● Active</div>
           </div>`;
         }).join('');
