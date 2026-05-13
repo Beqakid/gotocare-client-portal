@@ -85,6 +85,17 @@ export function HomeTab({ onNavigate }: Props) {
         setTeam([...(d.hired as TeamMember[]), ...(d.active as TeamMember[])]);
       }
     } catch { /* silent */ }
+    // Load booking count
+    const emailVal = localStorage.getItem('gc_email');
+    if (emailVal) {
+      try {
+        const r = await fetch(`https://gotocare-original.jjioji.workers.dev/api/my-bookings?email=${encodeURIComponent(emailVal)}`);
+        const bd = await r.json();
+        const bArr = Array.isArray(bd.bookings) ? bd.bookings : [];
+        const upcoming = bArr.find((b: any) => b.status === 'pending' || b.status === 'accepted') || null;
+        setBookingStat({ count: bArr.length, upcoming });
+      } catch {}
+    }
   }
 
   useEffect(() => {
@@ -252,10 +263,19 @@ export function HomeTab({ onNavigate }: Props) {
                 </div>
               </div>
               <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start', padding: '14px 0' }}>
-                <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'rgba(34,197,94,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, flexShrink: 0 }}>✅</div>
+                <div style={{ width: 36, height: 36, borderRadius: '50%', background: bookingStat.upcoming ? 'rgba(74,144,226,0.1)' : 'rgba(34,197,94,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, flexShrink: 0 }}>{bookingStat.upcoming ? '📅' : '✅'}</div>
                 <div>
-                  <div style={{ fontSize: 13, fontWeight: 600, color: '#0F172A' }}>Account created</div>
-                  <div style={{ fontSize: 11, color: '#94A3B8', marginTop: 2 }}>Welcome to Carehia!</div>
+                  {bookingStat.upcoming ? (
+                    <>
+                      <div style={{ fontSize: 13, fontWeight: 600, color: '#0F172A' }}>Interview with {bookingStat.upcoming.caregiver_name || 'Caregiver'}</div>
+                      <div style={{ fontSize: 11, color: '#94A3B8', marginTop: 2 }}>{bookingStat.upcoming.status ? bookingStat.upcoming.status.charAt(0).toUpperCase() + bookingStat.upcoming.status.slice(1) : ''}</div>
+                    </>
+                  ) : (
+                    <>
+                      <div style={{ fontSize: 13, fontWeight: 600, color: '#0F172A' }}>Account created</div>
+                      <div style={{ fontSize: 11, color: '#94A3B8', marginTop: 2 }}>Welcome to Carehia!</div>
+                    </>
+                  )}
                 </div>
               </div>
             </div>

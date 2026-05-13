@@ -40,6 +40,12 @@ const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string }
   cancelled: { label: '✕ Cancelled',        color: '#475569', bg: '#F1F5F9' },
 };
 
+const TIME_LABELS: Record<string, string> = {
+  morning: '9 – 11 AM',
+  afternoon: '12 – 3 PM',
+  evening: '4 – 7 PM',
+};
+
 export function BookingsTab({ onNavigate }: Props) {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
@@ -145,9 +151,7 @@ export function BookingsTab({ onNavigate }: Props) {
             : '';
 
           const timeLabel = rawTime
-            ? (rawTime.length <= 10
-                ? (() => { try { return new Date('1970-01-01T' + rawTime).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }); } catch { return rawTime; } })()
-                : rawTime)
+            ? (TIME_LABELS[rawTime] || rawTime)
             : '';
 
           return (
