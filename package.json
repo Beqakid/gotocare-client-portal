@@ -3,7 +3,7 @@
   "version": "2.0.0",
   "private": true,
   "scripts": {
-    "build": "esbuild app.tsx --bundle --splitting --format=esm --outdir=dist --minify --target=es2020",
+    "build": "esbuild app.tsx --bundle --splitting --format=esm --outdir=_dist --minify --target=es2020 && node -e \"const fs=require('fs'),path=require('path');const d=new Date();const v='v='+d.getFullYear()+(String(d.getMonth()+1).padStart(2,'0'))+(String(d.getDate()).padStart(2,'0'))+'T'+(String(d.getHours()).padStart(2,'0'))+(String(d.getMinutes()).padStart(2,'0'));let h=fs.readFileSync('index.html','utf8');h=h.replace(/src=\\\"/dist\/app\.js\\?v=[^\\\"]+\\\"/,'src=\\\"/_dist/app.js?\\'+ v +'\\\"');fs.writeFileSync('index.html',h);console.log('Version bumped to',v);\"",
     "dev": "esbuild app.tsx --bundle --splitting --format=esm --outdir=dist --sourcemap --watch"
   },
   "dependencies": {
