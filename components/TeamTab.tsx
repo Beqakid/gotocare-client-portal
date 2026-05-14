@@ -68,6 +68,7 @@ export function TeamTab({ onNavigate, onBadgeChange }: Props) {
 
   // Schedule modal state
   const [scheduleTarget, setScheduleTarget] = useState<TeamMember | null>(null);
+  const [scheduleMap, setScheduleMap] = useState<Record<string, any>>({});
   const [scheduleDays, setScheduleDays] = useState<string[]>([]);
   const [scheduleStart, setScheduleStart] = useState('09:00');
   const [scheduleEnd, setScheduleEnd] = useState('17:00');
@@ -99,6 +100,16 @@ export function TeamTab({ onNavigate, onBadgeChange }: Props) {
         const needsAction = pendingList.filter((m: TeamMember) => m.status === 'pending_client').length;
         if (onBadgeChange) onBadgeChange(needsAction);
         setError('');
+        // Also fetch care schedules for this client to display inline
+        try {
+          const sr = await fetch(`${API}/care-schedule?clientToken=${token}`);
+          const sd = await sr.json();
+          if (sd.success && Array.isArray(sd.schedules)) {
+            const map: Record<string, any> = {};
+            for (const s of sd.schedules) { if (s.caregiver_email) map[s.caregiver_email] = s; }
+            setScheduleMap(map);
+          }
+        } catch (_) {}
       }
     } catch { setError('Could not load your care team.'); }
     finally { setLoading(false); }
@@ -367,6 +378,23 @@ export function TeamTab({ onNavigate, onBadgeChange }: Props) {
                                 onClick={() => openSchedule(m)}
                                 style={{ width: '100%', padding: '11px', background: 'linear-gradient(135deg,#7C5CFF,#4A90E2)', border: 'none', borderRadius: 10, color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
                               >
+                              {/* Inline schedule display — auto-populated from hire agreement */}
+                              {scheduleMap[email] && (() => {
+                                const sched = scheduleMap[email];
+                                const dayStr = sched.days ? sched.days.split(',').join(' · ') : '';
+                                return (
+                                  <div style={{ background: 'linear-gradient(135deg,rgba(124,92,255,0.06),rgba(74,144,226,0.04))', border: '1.5px solid rgba(124,92,255,0.2)', borderRadius: 12, padding: '10px 14px', marginBottom: 8 }}>
+                                    <div style={{ fontSize: 11, fontWeight: 700, color: '#7C5CFF', marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Confirmed Schedule</div>
+                                    <div style={{ fontSize: 13, color: '#0F172A', fontWeight: 600 }}>
+                                      {dayStr || 'Days TBD'}
+                                    </div>
+                                    <div style={{ fontSize: 12, color: '#475569', marginTop: 2 }}>
+                                      {sched.start_time} – {sched.end_time}
+                                      {sched.care_type ? ` · ${sched.care_type}` : ''}
+                                    </div>
+                                  </div>
+                                );
+                              })()}
                                 📅 Set Care Schedule
                               </button>
                               {m.agreement_token && (
