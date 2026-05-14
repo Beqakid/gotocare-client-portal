@@ -88,8 +88,14 @@ function App() {
   }
 
   return (
-    <div style={{ background: '#F8FAFC', minHeight: '100dvh' }}>
-      {/* Spin animation (CSS-in-JS via style tag) */}
+    <div style={{
+      background: '#F8FAFC',
+      height: '100dvh',
+      display: 'flex',
+      flexDirection: 'column',
+      overflow: 'hidden'
+    }}>
+      {/* Spin animation + global styles */}
       <style>{`
         @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -115,12 +121,18 @@ function App() {
         }
         .auth-input::placeholder { color: rgba(255,255,255,0.35); }
         .auth-input:focus { border-color: #7C5CFF; background: rgba(124,92,255,0.1); }
-        html, body { overscroll-behavior-y: contain; }
         ::-webkit-scrollbar { display: none; }
       `}</style>
 
-      {/* Active tab — padded for bottom nav */}
-      <div style={{ paddingBottom: 'env(safe-area-inset-bottom, 64px)' }}>
+      {/* Scrollable content area — fills space between top and bottom nav */}
+      <div style={{
+        flex: 1,
+        overflowY: 'auto',
+        overflowX: 'hidden',
+        paddingBottom: 72,
+        WebkitOverflowScrolling: 'touch',
+        overscrollBehavior: 'contain'
+      } as React.CSSProperties}>
         <Suspense fallback={<TabSpinner />}>
           {activeTab === 'home'     && <HomeTab onNavigate={navigateToTab} />}
           {activeTab === 'findcare' && <FindCareTab />}
@@ -130,7 +142,7 @@ function App() {
         </Suspense>
       </div>
 
-      {/* Bottom navigation */}
+      {/* Bottom navigation — fixed to bottom */}
       <BottomNav active={activeTab} onChange={navigateToTab} />
     </div>
   );
