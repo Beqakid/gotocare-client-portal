@@ -1,9 +1,10 @@
 import React, { useState, useRef, useCallback } from 'react';
 import { Caregiver, CARE_CATEGORIES } from '../types';
 import { searchCaregivers, bookInterview, hireCaregiver } from '../utils/api';
-import { getToken, getEmail, setEmail as storeEmail, getLastLocation, setLastLocation, getLastCareTypes, setLastCareTypes, getShortlistLocal, setShortlistLocal, setBookingStatus } from '../utils/storage';
+import { getToken, getEmail, getName, setEmail as storeEmail, getLastLocation, setLastLocation, getLastCareTypes, setLastCareTypes, getShortlistLocal, setShortlistLocal, setBookingStatus } from '../utils/storage';
 import { reverseGeocode, syncShortlist } from '../utils/api';
 import { CaregiverSheet } from './CaregiverSheet';
+import { HireAgreementModal } from './HireAgreementModal';
 
 type Screen = 'dispatch' | 'swiper' | 'shortlist' | 'booking' | 'confirm' | 'subscribe' | 'hire-status';
 
@@ -31,6 +32,7 @@ export function FindCareTab() {
 
   const [profileCg, setProfileCg] = useState<Caregiver | null>(null);
   const [bookingCg, setBookingCg] = useState<Caregiver | null>(null);
+  const [agreementCg, setAgreementCg] = useState<Caregiver | null>(null);
 
   // Swipe gesture state
   const swipeStartX = useRef(0);
@@ -180,20 +182,18 @@ export function FindCareTab() {
     isSwiping.current = false;
   }
 
-  // ── Hire directly ─────────────────────────────────────────────────────
-  async function directHire(cg: Caregiver) {
+  // ── Hire directly — opens agreement modal ────────────────────────────
+  function directHire(cg: Caregiver) {
     const token = getToken();
     if (!token) { showToast('Please sign in to hire a caregiver'); return; }
-    const name = caregiverName(cg).split(' ')[0];
-    if (!confirm(`Add ${name} to your Care Team now?\n\nNo interview needed — you can always message them after.`)) return;
-    try {
-      const d = await hireCaregiver(token, cg.id, null);
-      if (d.success) {
-        setBookingStatus(cg.id, { status: 'hired', hired: true });
-        showToast(`🎉 ${d.caregiverName || name} is now on your Care Team!`);
-        setShortlist(prev => { const next = prev.filter(s => s.id !== cg.id); persistShortlist(next); return next; });
-      } else showToast('Something went wrong. Please try again.');
-    } catch { showToast('Network error — please try again'); }
+    setAgreementCg(cg);
+  }
+
+  function onAgreementSuccess(caregiverId: number | string) {
+    setBookingStatus(caregiverId, { status: 'pending_agreement', hired: false });
+    setShortlist(prev => { const next = prev.filter(s => s.id !== caregiverId); persistShortlist(next); return next; });
+    showToast('Agreement sent! Track status in My Team.');
+    setScreen('shortlist');
   }
 
   // ── Booking (interview) ───────────────────────────────────────────────
@@ -268,12 +268,12 @@ export function FindCareTab() {
               <span style={{ fontSize: 16, color: '#94A3B8', transition: 'transform 0.25s', display: 'inline-block', transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)' }}>▾</span>
             </div>
             {isOpen && (
-              <div style={{ padding: '0 12px 14px', background: '#FAFBFC' }}>
+              <div style={{ padding: '0 12px 14px' }}>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
                   {cat.needs.map(need => {
                     const sel = selectedNeeds.includes(need);
                     return (
-                      <div key={need} onClick={() => toggleNeed(need)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '10px 8px', borderRadius: 10, border: sel ? '1.5px solid #7C5CFF' : '1.5px solid #E2E8F0', background: sel ? '#EDE9FE' : '#F8FAFC', color: sel ? '#7C5CFF' : '#475569', fontSize: 12, fontWeight: sel ? 700 : 500, cursor: 'pointer', textAlign: 'center', lineHeight: 1.3, transition: 'all 0.25s' }}>
+                      <div key={need} onClick={() => toggleNeed(need)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '10px 8px', borderRadius: 10, border: sel ? '1.5px solid #7C5CFF' : '1.5px solid transparent', background: sel ? '#fff' : 'rgba(255,255,255,0.08)', color: sel ? '#1a1a2e' : 'rgba(255,255,255,0.8)', fontSize: 12, fontWeight: sel ? 700 : 500, cursor: 'pointer', textAlign: 'center', lineHeight: 1.3, transition: 'all 0.25s' }}>
                         {sel && <span style={{ color: '#7C5CFF', fontWeight: 800, marginRight: 4 }}>✓</span>}
                         {need}
                       </div>
@@ -407,6 +407,18 @@ export function FindCareTab() {
 
         {/* Profile bottom sheet */}
         <CaregiverSheet cg={profileCg} onClose={() => setProfileCg(null)} onHire={directHire} onInterview={startInterview} />
+
+        {/* Hire Agreement Modal */}
+        {agreementCg && (
+          <HireAgreementModal
+            cg={agreementCg}
+            selectedCareTypes={selectedNeeds}
+            clientName={getName() || ''}
+            clientToken={getToken() || ''}
+            onClose={() => setAgreementCg(null)}
+            onSuccess={onAgreementSuccess}
+          />
+        )}
       </div>
     );
   }
@@ -452,6 +464,17 @@ export function FindCareTab() {
             );
           })}
         </>
+      )}
+      {/* Hire Agreement Modal — also accessible from shortlist */}
+      {agreementCg && (
+        <HireAgreementModal
+          cg={agreementCg}
+          selectedCareTypes={selectedNeeds}
+          clientName={getName() || ''}
+          clientToken={getToken() || ''}
+          onClose={() => setAgreementCg(null)}
+          onSuccess={onAgreementSuccess}
+        />
       )}
     </div>
   );

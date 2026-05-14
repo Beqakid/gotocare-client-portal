@@ -172,6 +172,26 @@ export async function getCaregiverDocs(email: string, clientToken: string) {
   );
 }
 
+// ── Hire Agreements ───────────────────────────────────────────────────
+export async function createHireAgreement(payload: {
+  clientToken: string;
+  caregiverId: number | string;
+  careTypes: string[];
+  startDate?: string | null;
+  scheduleNotes?: string | null;
+  clientSignature: string;
+}) {
+  return request<{ success: boolean; agreementToken?: string; error?: string }>('/create-hire-agreement', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function getHireAgreement(agreementToken: string) {
+  return request<{ success: boolean; agreement?: unknown }>(`/hire-agreement?token=${encodeURIComponent(agreementToken)}`);
+}
+
 // ── Geolocation reverse lookup ────────────────────────────────────────
 export async function reverseGeocode(lat: number, lon: number) {
   const res = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json`);
