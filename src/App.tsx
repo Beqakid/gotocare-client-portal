@@ -5,6 +5,8 @@ import { LoginScreen } from './components/LoginScreen';
 import { BottomNav } from './components/BottomNav';
 import { ScheduleTab } from './components/ScheduleTab';
 import { CaregiversTab } from './components/CaregiversTab';
+import { HomeTab } from './components/HomeTab';
+import { FindCareTab } from './components/FindCareTab';
 import { InvoicesTab } from './components/InvoicesTab';
 import { ProfileTab } from './components/ProfileTab';
 import { ClientSession, TabId } from './types';
@@ -12,16 +14,16 @@ import { Heart } from 'lucide-react';
 
 const App: React.FC<{}> = () => {
   const [session, setSession] = useState<ClientSession | null>(null);
-  const [activeTab, setActiveTab] = useState<TabId>('schedule');
+  const [activeTab, setActiveTab] = useState<TabId>('home');
 
   const handleLogin = (s: ClientSession) => {
     setSession(s);
-    setActiveTab('schedule');
+    setActiveTab('home');
   };
 
   const handleLogout = () => {
     setSession(null);
-    setActiveTab('schedule');
+    setActiveTab('home');
   };
 
   if (!session) {
@@ -29,7 +31,7 @@ const App: React.FC<{}> = () => {
   }
 
   return (
-    <div className="min-h-screen bg-base-100 flex flex-col">
+    <div className="h-screen bg-base-100 flex flex-col overflow-hidden">
       {/* Top Header */}
       <div className="navbar bg-base-200 border-b border-base-300 px-4">
         <div className="flex-1">
@@ -44,7 +46,9 @@ const App: React.FC<{}> = () => {
       </div>
 
       {/* Content */}
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 overflow-y-auto pb-[72px]" style={{ WebkitOverflowScrolling: "touch", overscrollBehavior: "contain" }}>
+        {activeTab === 'home' && <HomeTab session={session} onTabChange={setActiveTab} />}
+        {activeTab === 'find' && <FindCareTab session={session} />}
         {activeTab === 'schedule' && <ScheduleTab session={session} />}
         {activeTab === 'caregivers' && <CaregiversTab session={session} />}
         {activeTab === 'invoices' && <InvoicesTab session={session} />}

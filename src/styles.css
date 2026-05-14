@@ -1,9 +1,22 @@
 /* Client Portal - Mobile-first friendly styles */
 
-html, body, #root {
+html, body {
   height: 100%;
   margin: 0;
   padding: 0;
+  overflow: hidden;
+}
+
+#root {
+  height: 100%;
+  overflow: hidden;
+}
+
+/* Use dynamic viewport height for mobile (handles address bar on iOS/Android) */
+@supports (height: 100dvh) {
+  .h-screen {
+    height: 100dvh !important;
+  }
 }
 
 /* Smooth transitions */
