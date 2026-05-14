@@ -4,6 +4,7 @@ import { TabId } from '../types';
 interface Props {
   active: TabId;
   onChange: (tab: TabId) => void;
+  teamBadge?: number;
 }
 
 const TABS: { id: TabId; label: string; icon: React.ReactNode }[] = [
@@ -29,7 +30,7 @@ const TABS: { id: TabId; label: string; icon: React.ReactNode }[] = [
   },
 ];
 
-export function BottomNav({ active, onChange }: Props) {
+export function BottomNav({ active, onChange, teamBadge = 0 }: Props) {
   return (
     <nav style={{
       position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 100,
@@ -49,8 +50,22 @@ export function BottomNav({ active, onChange }: Props) {
             color: active === tab.id ? '#7C5CFF' : '#94A3B8',
             transition: 'color 0.2s',
             WebkitTapHighlightColor: 'transparent',
+            position: 'relative',
           }}
         >
+          {/* Badge on Team icon */}
+          {tab.id === 'team' && teamBadge > 0 && (
+            <div style={{
+              position: 'absolute', top: 6, right: '50%',
+              transform: 'translateX(10px)',
+              width: 16, height: 16, borderRadius: '50%',
+              background: '#EF4444', border: '2px solid #fff',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: 9, fontWeight: 800, color: '#fff', lineHeight: 1,
+            }}>
+              {teamBadge > 9 ? '9+' : teamBadge}
+            </div>
+          )}
           {tab.icon}
           <span style={{ fontSize: 10, fontWeight: active === tab.id ? 700 : 500, letterSpacing: 0.2 }}>
             {tab.label}

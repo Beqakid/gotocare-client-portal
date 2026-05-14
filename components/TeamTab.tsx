@@ -21,10 +21,12 @@ interface TeamMember {
   hired_at?: string;
   status?: string;
   agreement_token?: string;
+  photoUrl?: string;
 }
 
 interface Props {
   onNavigate: (tab: TabId) => void;
+  onBadgeChange?: (count: number) => void;
 }
 
 function memberName(m: TeamMember): string {
@@ -52,11 +54,14 @@ function memberStatus(m: TeamMember): string {
 
 const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
-export function TeamTab({ onNavigate }: Props) {
+const PRINT_BASE = 'https://gotocare-original.jjioji.workers.dev/api/hire-agreement';
+
+export function TeamTab({ onNavigate, onBadgeChange }: Props) {
   const [activeSubTab, setActiveSubTab] = useState<TeamTabId>('active');
-  const [hired, setHired] = useState<TeamMember[]>([]);
-  const [active, setActive] = useState<TeamMember[]>([]);
+  const [hired, setHired] = useState<TeamMember[]>([]);   // fully signed — Active tab
+  const [active, setActive] = useState<TeamMember[]>([]);  // accepted bookings — Active tab
   const [past, setPast] = useState<TeamMember[]>([]);
+  const [pending, setPending] = useState<TeamMember[]>([]); // awaiting signatures — Saved tab
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [removing, setRemoving] = useState<number | null>(null);
@@ -77,6 +82,7 @@ export function TeamTab({ onNavigate }: Props) {
   const [countersignLoading, setCountersignLoading] = useState(false);
   const [countersignError, setCountersignError] = useState('');
   const [countersignSuccess, setCountersignSuccess] = useState(false);
+  const [signedAgreementToken, setSignedAgreementToken] = useState('');
 
   const load = useCallback(async () => {
     const token = getToken();
@@ -87,13 +93,26 @@ export function TeamTab({ onNavigate }: Props) {
         setHired((d.hired || []) as TeamMember[]);
         setActive((d.active || []) as TeamMember[]);
         setPast((d.past || []) as TeamMember[]);
+        const pendingList = (d.pending || []) as TeamMember[];
+        setPending(pendingList);
+        // Bubble up pending_client count for badge
+        const needsAction = pendingList.filter((m: TeamMember) => m.status === 'pending_client').length;
+        if (onBadgeChange) onBadgeChange(needsAction);
         setError('');
       }
     } catch { setError('Could not load your care team.'); }
     finally { setLoading(false); }
-  }, []);
+  }, [onBadgeChange]);
 
   useEffect(() => { load(); }, [load]);
+
+  // Auto-switch to Saved tab if there are pending_client items on load
+  useEffect(() => {
+    const needsAction = pending.filter(m => m.status === 'pending_client').length;
+    if (needsAction > 0 && activeSubTab === 'active') {
+      setActiveSubTab('saved');
+    }
+  }, [pending]);
 
   async function handleRemove(m: TeamMember) {
     const token = getToken();
@@ -158,6 +177,7 @@ export function TeamTab({ onNavigate }: Props) {
     setCountersignSig('');
     setCountersignError('');
     setCountersignSuccess(false);
+    setSignedAgreementToken('');
   }
 
   async function handleCountersign() {
@@ -182,12 +202,15 @@ export function TeamTab({ onNavigate }: Props) {
       });
       const data = await res.json();
       if (data.success) {
+        setSignedAgreementToken(data.agreementToken || countersignTarget.agreement_token || '');
         setCountersignSuccess(true);
+        // Refresh team data and switch to Active tab
+        await load();
         setTimeout(() => {
           setCountersignTarget(null);
           setCountersignSuccess(false);
-          load(); // refresh team
-        }, 2500);
+          setActiveSubTab('active'); // Move to Active tab — caregiver is now on the team
+        }, 3500);
       } else {
         setCountersignError(data.error || 'Something went wrong. Please try again.');
       }
@@ -197,9 +220,20 @@ export function TeamTab({ onNavigate }: Props) {
     setCountersignLoading(false);
   }
 
-  // Include pending_caregiver + pending_client in "Saved" tab, active in "Active" tab
-  const displayList = activeSubTab === 'saved' ? hired : activeSubTab === 'active' ? active : past;
-  const allMembers = [...hired, ...active];
+  // Tab display logic:
+  // 💜 Saved → pending agreements (pending_caregiver + pending_client)
+  // ✅ Active → fully signed hires (hired) + accepted bookings (active)
+  // 📋 Past → removed/completed
+  const activeList = [...hired, ...active];
+  const displayList = activeSubTab === 'saved' ? pending : activeSubTab === 'active' ? activeList : past;
+
+  // Counts for tab badges
+  const savedCount = pending.length;
+  const activeCount = activeList.length;
+  const pastCount = past.length;
+
+  // Pending_client count — needs user action
+  const actionRequired = pending.filter(m => m.status === 'pending_client').length;
 
   if (loading) return <TabShell><LoadingCard /></TabShell>;
 
@@ -215,15 +249,42 @@ export function TeamTab({ onNavigate }: Props) {
       {/* Header */}
       <div style={{ background: 'linear-gradient(160deg,#1a1a2e 0%,#2d1b69 55%,#1e3a5f 100%)', padding: '52px 20px 24px' }}>
         <div style={{ fontSize: 22, fontWeight: 800, color: '#fff', marginBottom: 4 }}>My Care Team</div>
-        <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.6)' }}>{allMembers.length} caregiver{allMembers.length !== 1 ? 's' : ''} on your team</div>
+        <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.6)' }}>{activeList.length} active caregiver{activeList.length !== 1 ? 's' : ''}</div>
       </div>
 
+      {/* Action required banner — shows when caregiver has signed and client hasn't yet */}
+      {actionRequired > 0 && (
+        <div
+          onClick={() => setActiveSubTab('saved')}
+          style={{ background: 'linear-gradient(135deg,#7C5CFF,#4A90E2)', margin: '12px 16px 0', borderRadius: 14, padding: '14px 16px', display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer', boxShadow: '0 4px 16px rgba(124,92,255,0.3)' }}
+        >
+          <div style={{ fontSize: 28 }}>✍️</div>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: 14, fontWeight: 800, color: '#fff' }}>Action Required</div>
+            <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.8)', marginTop: 2 }}>
+              {actionRequired} caregiver{actionRequired > 1 ? 's have' : ' has'} signed — your countersignature needed
+            </div>
+          </div>
+          <div style={{ color: 'rgba(255,255,255,0.7)', fontSize: 18 }}>›</div>
+        </div>
+      )}
+
       {/* Sub-tabs */}
-      <div style={{ display: 'flex', background: '#fff', borderBottom: '1px solid #E2E8F0', overflow: 'hidden' }}>
-        {([['saved', '💜 Saved', hired.length], ['active', '✅ Active', active.length], ['past', '📋 Past', past.length]] as [TeamTabId, string, number][]).map(([id, label, count]) => (
-          <button key={id} onClick={() => setActiveSubTab(id)} style={{ flex: 1, padding: '14px 6px', background: 'none', border: 'none', borderBottom: activeSubTab === id ? '2.5px solid #7C5CFF' : '2.5px solid transparent', color: activeSubTab === id ? '#7C5CFF' : '#94A3B8', fontSize: 13, fontWeight: activeSubTab === id ? 700 : 500, cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
+      <div style={{ display: 'flex', background: '#fff', borderBottom: '1px solid #E2E8F0', overflow: 'hidden', marginTop: 12 }}>
+        {([
+          ['saved', '💜 Saved', savedCount],
+          ['active', '✅ Active', activeCount],
+          ['past', '📋 Past', pastCount],
+        ] as [TeamTabId, string, number][]).map(([id, label, count]) => (
+          <button key={id} onClick={() => setActiveSubTab(id)} style={{ flex: 1, padding: '14px 6px', background: 'none', border: 'none', borderBottom: activeSubTab === id ? '2.5px solid #7C5CFF' : '2.5px solid transparent', color: activeSubTab === id ? '#7C5CFF' : '#94A3B8', fontSize: 13, fontWeight: activeSubTab === id ? 700 : 500, cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, position: 'relative' }}>
             {label}
-            {count > 0 && <span style={{ fontSize: 10, background: activeSubTab === id ? '#7C5CFF' : '#E2E8F0', color: activeSubTab === id ? '#fff' : '#94A3B8', borderRadius: 50, padding: '1px 6px', fontWeight: 700 }}>{count}</span>}
+            {count > 0 && (
+              <span style={{ fontSize: 10, background: activeSubTab === id ? '#7C5CFF' : '#E2E8F0', color: activeSubTab === id ? '#fff' : '#94A3B8', borderRadius: 50, padding: '1px 6px', fontWeight: 700 }}>{count}</span>
+            )}
+            {/* Red dot on Saved tab when action required */}
+            {id === 'saved' && actionRequired > 0 && activeSubTab !== 'saved' && (
+              <div style={{ position: 'absolute', top: 8, right: '30%', width: 8, height: 8, borderRadius: '50%', background: '#EF4444', border: '1.5px solid #fff' }} />
+            )}
           </button>
         ))}
       </div>
@@ -231,14 +292,15 @@ export function TeamTab({ onNavigate }: Props) {
       <div style={{ padding: '16px' }}>
         {error && <div style={{ background: '#FEF2F2', border: '1px solid #FECACA', borderRadius: 12, padding: '12px 14px', color: '#DC2626', fontSize: 13, marginBottom: 14 }}>{error}</div>}
 
+        {/* Empty states */}
         {displayList.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '60px 20px' }}>
             <div style={{ fontSize: 56, marginBottom: 16 }}>{activeSubTab === 'saved' ? '💜' : activeSubTab === 'active' ? '✅' : '📋'}</div>
             <div style={{ fontSize: 18, fontWeight: 700, color: '#0F172A', marginBottom: 8 }}>
-              {activeSubTab === 'saved' ? 'No saved caregivers yet' : activeSubTab === 'active' ? 'No active caregivers yet' : 'No past caregivers yet'}
+              {activeSubTab === 'saved' ? 'No pending agreements' : activeSubTab === 'active' ? 'No active caregivers yet' : 'No past caregivers yet'}
             </div>
             <div style={{ fontSize: 14, color: '#475569', marginBottom: 24, lineHeight: 1.6 }}>
-              {activeSubTab === 'saved' ? 'Browse and hire a caregiver to add them to your team' : activeSubTab === 'active' ? 'Hired caregivers will appear here once they start' : 'Caregivers who have completed shifts will appear here'}
+              {activeSubTab === 'saved' ? 'Hire agreements you send will appear here while awaiting signatures' : activeSubTab === 'active' ? 'Caregivers with signed agreements will appear here' : 'Caregivers who have completed shifts will appear here'}
             </div>
             <button onClick={() => onNavigate('findcare')} style={{ background: 'linear-gradient(135deg,#7C5CFF,#4A90E2)', color: '#fff', border: 'none', borderRadius: 12, padding: '12px 24px', fontSize: 14, fontWeight: 700, cursor: 'pointer' }}>Find a Caregiver →</button>
           </div>
@@ -258,7 +320,6 @@ export function TeamTab({ onNavigate }: Props) {
               // Status badge config
               const statusConfig: Record<string, { label: string; bg: string; color: string; borderColor: string }> = {
                 'pending_caregiver': { label: '⏳ Awaiting caregiver signature', bg: '#FEF9C3', color: '#92400E', borderColor: '#FDE68A' },
-                'pending_agreement': { label: '⏳ Awaiting caregiver signature', bg: '#FEF9C3', color: '#92400E', borderColor: '#FDE68A' },
                 'pending_client': { label: '✍️ Your signature required', bg: '#EDE9FE', color: '#5B21B6', borderColor: '#DDD6FE' },
                 'active': { label: '✅ Active', bg: '#F0FDF4', color: '#166534', borderColor: '#BBF7D0' },
                 'declined': { label: '❌ Declined', bg: '#FEF2F2', color: '#991B1B', borderColor: '#FECACA' },
@@ -268,7 +329,7 @@ export function TeamTab({ onNavigate }: Props) {
               return (
                 <div key={id} style={{ background: '#fff', borderRadius: 18, border: '1.5px solid #E2E8F0', overflow: 'hidden', marginBottom: 14, boxShadow: '0 2px 12px rgba(15,23,42,0.05)' }}>
                   {/* Status bar */}
-                  <div style={{ height: 3, background: status === 'active' ? '#22C55E' : status === 'pending_client' ? '#7C5CFF' : status === 'declined' ? '#EF4444' : 'linear-gradient(90deg,#F59E0B,#FDE68A)' }} />
+                  <div style={{ height: 3, background: status === 'active' ? '#22C55E' : status === 'pending_client' ? '#7C5CFF' : status === 'declined' ? '#EF4444' : '#F59E0B' }} />
                   <div style={{ padding: '16px' }}>
                     <div style={{ display: 'flex', gap: 14, alignItems: 'flex-start' }}>
                       <div style={{ width: 56, height: 56, borderRadius: '50%', background: 'linear-gradient(135deg,#7C5CFF,#4A90E2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, fontWeight: 800, color: '#fff', flexShrink: 0, border: '2px solid rgba(124,92,255,0.3)' }}>{initials}</div>
@@ -299,14 +360,26 @@ export function TeamTab({ onNavigate }: Props) {
                             </button>
                           )}
 
-                          {/* Set Schedule — for active */}
+                          {/* Set Schedule + Print Agreement — for active */}
                           {status === 'active' && (
-                            <button
-                              onClick={() => openSchedule(m)}
-                              style={{ width: '100%', padding: '11px', background: 'linear-gradient(135deg,#7C5CFF,#4A90E2)', border: 'none', borderRadius: 10, color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
-                            >
-                              📅 Set Care Schedule
-                            </button>
+                            <>
+                              <button
+                                onClick={() => openSchedule(m)}
+                                style={{ width: '100%', padding: '11px', background: 'linear-gradient(135deg,#7C5CFF,#4A90E2)', border: 'none', borderRadius: 10, color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
+                              >
+                                📅 Set Care Schedule
+                              </button>
+                              {m.agreement_token && (
+                                <a
+                                  href={`${PRINT_BASE}?token=${m.agreement_token}&format=html`}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  style={{ width: '100%', padding: '10px', background: '#F0FDF4', border: '1px solid #BBF7D0', borderRadius: 10, color: '#166534', fontSize: 13, fontWeight: 700, textDecoration: 'none', textAlign: 'center', display: 'block' }}
+                                >
+                                  🖨️ View / Print Signed Agreement
+                                </a>
+                              )}
+                            </>
                           )}
 
                           <div style={{ display: 'flex', gap: 8 }}>
@@ -447,10 +520,20 @@ export function TeamTab({ onNavigate }: Props) {
                 <div style={{ textAlign: 'center', padding: '32px 16px' }}>
                   <div style={{ fontSize: 56, marginBottom: 16 }}>🎉</div>
                   <div style={{ fontSize: 20, fontWeight: 800, color: '#0F172A', marginBottom: 8 }}>Agreement Active!</div>
-                  <div style={{ fontSize: 14, color: '#475569', lineHeight: 1.6 }}>
+                  <div style={{ fontSize: 14, color: '#475569', lineHeight: 1.6, marginBottom: 20 }}>
                     Your agreement with <strong>{memberName(countersignTarget)}</strong> is now fully signed and active.
                     A copy has been emailed to both of you.
                   </div>
+                  {signedAgreementToken && (
+                    <a
+                      href={`${PRINT_BASE}?token=${signedAgreementToken}&format=html`}
+                      target="_blank"
+                      rel="noreferrer"
+                      style={{ display: 'inline-block', padding: '12px 24px', background: '#22C55E', color: '#fff', borderRadius: 10, fontSize: 14, fontWeight: 700, textDecoration: 'none' }}
+                    >
+                      🖨️ View & Print Signed Agreement
+                    </a>
+                  )}
                 </div>
               ) : (
                 <>

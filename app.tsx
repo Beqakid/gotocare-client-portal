@@ -5,6 +5,8 @@ import { getToken, clearSession } from './utils/storage';
 import { LoginScreen } from './components/LoginScreen';
 import { BottomNav } from './components/BottomNav';
 
+const API = 'https://gotocare-original.jjioji.workers.dev/api';
+
 // Code-split tabs — each tab loads on first visit then cached
 const HomeTab     = lazy(() => import('./components/HomeTab').then(m => ({ default: m.HomeTab })));
 const FindCareTab = lazy(() => import('./components/FindCareTab').then(m => ({ default: m.FindCareTab })));
@@ -34,11 +36,36 @@ function App() {
   const [loggedIn, setLoggedIn] = useState(!!existingToken);
   const [isGuest, setIsGuest] = useState(false);
   const [activeTab, setActiveTab] = useState<TabId>(getInitialTab());
+  const [teamBadge, setTeamBadge] = useState(0);
   const sessionRestored = useRef(!!existingToken);
+
+  // ── Poll for pending hire agreements (client needs to sign) ──────────
+  useEffect(() => {
+    if (!loggedIn) { setTeamBadge(0); return; }
+
+    async function checkPending() {
+      const token = getToken();
+      if (!token) return;
+      try {
+        const res = await fetch(`${API}/pending-client-agreements?clientToken=${token}`);
+        if (!res.ok) return;
+        const data = await res.json();
+        if (data.success && Array.isArray(data.agreements)) {
+          setTeamBadge(data.agreements.length);
+        }
+      } catch (_) {}
+    }
+
+    checkPending();
+    const interval = setInterval(checkPending, 60000);
+    return () => clearInterval(interval);
+  }, [loggedIn]);
 
   // ── Navigate to tab (with browser history) ───────────────────────────
   function navigateToTab(tab: TabId) {
     setActiveTab(tab);
+    // Clear badge when user visits Team tab
+    if (tab === 'team') setTeamBadge(0);
     const url = new URL(window.location.href);
     url.searchParams.delete('booking_unlocked');
     url.searchParams.delete('subscription');
@@ -80,6 +107,7 @@ function App() {
     setLoggedIn(false);
     setIsGuest(false);
     setActiveTab('home');
+    setTeamBadge(0);
   }
 
   // Show auth screen unless logged in or guest
@@ -136,14 +164,14 @@ function App() {
         <Suspense fallback={<TabSpinner />}>
           {activeTab === 'home'     && <HomeTab onNavigate={navigateToTab} />}
           {activeTab === 'findcare' && <FindCareTab />}
-          {activeTab === 'team'     && <TeamTab onNavigate={navigateToTab} />}
+          {activeTab === 'team'     && <TeamTab onNavigate={navigateToTab} onBadgeChange={setTeamBadge} />}
           {activeTab === 'bookings' && <BookingsTab onNavigate={navigateToTab} />}
           {activeTab === 'profile'  && <ProfileTab onNavigate={navigateToTab} onSignOut={handleSignOut} />}
         </Suspense>
       </div>
 
       {/* Bottom navigation — fixed to bottom */}
-      <BottomNav active={activeTab} onChange={navigateToTab} />
+      <BottomNav active={activeTab} onChange={navigateToTab} teamBadge={teamBadge} />
     </div>
   );
 }
