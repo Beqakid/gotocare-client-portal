@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useMemo, useState, useRef, useCallback } from 'react';
 import { Caregiver, CARE_CATEGORIES } from '../types';
 import { searchCaregivers, bookInterview, hireCaregiver } from '../utils/api';
 import { getToken, getEmail, getName, setEmail as storeEmail, getLastLocation, setLastLocation, getLastCareTypes, setLastCareTypes, getShortlistLocal, setShortlistLocal, setBookingStatus } from '../utils/storage';
@@ -38,6 +38,106 @@ function caregiverSpecialty(cg: Caregiver): string {
 
 function caregiverInitials(cg: Caregiver): string {
   return caregiverName(cg).split(' ').map(part => part[0]).join('').toUpperCase().slice(0, 2) || 'CG';
+}
+
+function parseCareText(value: unknown): string[] {
+  if (!value) return [];
+  if (Array.isArray(value)) {
+    return value.flatMap(item => parseCareText(item));
+  }
+  if (typeof value === 'object') {
+    return parseCareText((value as { name?: string }).name || '');
+  }
+  return String(value)
+    .split(/[,|/]/)
+    .map(part => part.trim().toLowerCase())
+    .filter(Boolean);
+}
+
+function caregiverMatchTerms(cg: Caregiver): string[] {
+  return Array.from(new Set([
+    ...parseCareText(cg.specializations),
+    ...parseCareText(cg.care_types),
+    ...parseCareText(cg.skills),
+    ...parseCareText(cg.certifications),
+    ...parseCareText(cg.bio),
+  ]));
+}
+
+function needMatchCount(cg: Caregiver, selectedNeeds: string[]): number {
+  if (!selectedNeeds.length) return 0;
+  const terms = caregiverMatchTerms(cg).join(' ');
+  return selectedNeeds.filter(need => {
+    const normalized = need.toLowerCase();
+    const importantWords = normalized.split(/\s+/).filter(word => word.length > 3);
+    return terms.includes(normalized) || importantWords.some(word => terms.includes(word));
+  }).length;
+}
+
+function caregiverDecisionScore(cg: Caregiver, selectedNeeds: string[], index: number): number {
+  const backendScore = typeof cg.matchScore === 'number' ? cg.matchScore : null;
+  const matchedNeeds = needMatchCount(cg, selectedNeeds);
+  const needRatio = selectedNeeds.length ? matchedNeeds / selectedNeeds.length : 0.45;
+  const rating = Number(cg.rating || 0);
+  const ratingScore = rating ? Math.min(rating / 5, 1) : 0.75;
+  const expScore = Math.min(caregiverExperience(cg) / 8, 1);
+  const rate = caregiverRate(cg);
+  const rateScore = rate <= 25 ? 1 : rate <= 35 ? 0.82 : rate <= 45 ? 0.64 : 0.48;
+  const certScore = parseCareText(cg.certifications).length ? 1 : 0.68;
+  const dataScore = backendScore ? backendScore / 100 : 0.78 - index * 0.015;
+
+  const score =
+    needRatio * 34 +
+    ratingScore * 18 +
+    expScore * 16 +
+    rateScore * 12 +
+    certScore * 8 +
+    dataScore * 12;
+
+  return Math.max(72, Math.min(99, Math.round(score)));
+}
+
+function caregiverDecisionLabel(cg: Caregiver, selectedNeeds: string[], index: number): string {
+  if (index === 0) return 'Best overall';
+  if (needMatchCount(cg, selectedNeeds) > 0) return 'Strong needs fit';
+  if (caregiverExperience(cg) >= 6) return 'Most experienced';
+  if (caregiverRate(cg) <= 25) return 'Lower rate';
+  if (Number(cg.rating || 0) >= 4.8) return 'Highly rated';
+  return 'Good option';
+}
+
+function caregiverDecisionReasons(cg: Caregiver, selectedNeeds: string[], location: string): string[] {
+  const reasons: string[] = [];
+  const matchedNeeds = needMatchCount(cg, selectedNeeds);
+
+  if (selectedNeeds.length && matchedNeeds > 0) {
+    reasons.push(`Matches ${matchedNeeds} of ${selectedNeeds.length} selected needs`);
+  } else if (selectedNeeds.length) {
+    reasons.push('Closest available profile for your needs');
+  } else {
+    reasons.push('Strong overall care profile');
+  }
+
+  const exp = caregiverExperience(cg);
+  if (exp >= 1) reasons.push(`${exp} years of care experience`);
+
+  const rating = Number(cg.rating || 0);
+  if (rating) reasons.push(`${rating.toFixed(1)} family rating`);
+
+  if (caregiverRate(cg)) reasons.push(`Fits at $${caregiverRate(cg)}/hr`);
+  if (cg.city || location) reasons.push(`Near ${cg.city || location}`);
+
+  return reasons.slice(0, 3);
+}
+
+function rankedCaregivers(caregivers: Caregiver[], selectedNeeds: string[]) {
+  return caregivers
+    .map((cg, index) => ({
+      caregiver: cg,
+      originalIndex: index,
+      score: caregiverDecisionScore(cg, selectedNeeds, index),
+    }))
+    .sort((a, b) => b.score - a.score || a.originalIndex - b.originalIndex);
 }
 
 export function FindCareTab() {
@@ -795,6 +895,9 @@ function ModernMatches({
   onCloseAgreement: () => void;
   onAgreementSuccess: (caregiverId: number | string) => void;
 }) {
+  const ranked = useMemo(() => rankedCaregivers(caregivers, selectedNeeds), [caregivers, selectedNeeds]);
+  const best = ranked[0];
+
   if (!caregivers.length) return (
     <div style={{ minHeight: '100dvh', padding: '56px 24px 110px', textAlign: 'center', background: '#F6F8FB', color: '#0F172A' }}>
       <div style={{ width: 64, height: 64, borderRadius: 18, background: '#EEF4FF', color: '#315DDF', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 18px', fontSize: 22, fontWeight: 900 }}>0</div>
@@ -813,13 +916,30 @@ function ModernMatches({
           <button onClick={onShortlist} style={{ background: shortlist.length ? '#EEF4FF' : '#F8FAFC', border: '1px solid #D8E1EC', borderRadius: 8, padding: '9px 12px', color: shortlist.length ? '#315DDF' : '#64748B', fontSize: 13, fontWeight: 850, cursor: 'pointer' }}>Saved {shortlist.length}</button>
         </div>
         <h1 style={{ margin: 0, fontSize: 24, fontWeight: 900, letterSpacing: 0 }}>Caregiver matches</h1>
-        <div style={{ fontSize: 13, color: '#526173', lineHeight: 1.45, marginTop: 6 }}>{caregivers.length} caregiver{caregivers.length === 1 ? '' : 's'} near {location || 'your area'}. Compare trust, rate, and fit before interviewing.</div>
+        <div style={{ fontSize: 13, color: '#526173', lineHeight: 1.45, marginTop: 6 }}>{caregivers.length} caregiver{caregivers.length === 1 ? '' : 's'} near {location || 'your area'}. Carehia ranked the strongest fit first.</div>
       </div>
       <div style={{ padding: 16 }}>
-        {caregivers.map((person, index) => {
+        {best && (
+          <BestMatchCard
+            person={best.caregiver}
+            score={best.score}
+            reasons={caregiverDecisionReasons(best.caregiver, selectedNeeds, location)}
+            saved={shortlist.some(s => s.id === best.caregiver.id)}
+            onInterview={onInterview}
+            onHire={onHire}
+            onSave={onSave}
+            onProfile={onProfile}
+          />
+        )}
+
+        <div style={{ fontSize: 12, fontWeight: 900, color: '#64748B', textTransform: 'uppercase', margin: '18px 0 10px', letterSpacing: 0 }}>
+          Ranked options
+        </div>
+
+        {ranked.map(({ caregiver: person, score }, index) => {
           const saved = shortlist.some(s => s.id === person.id);
           const avatarUrl = caregiverAvatar(person);
-          const match = person.matchScore ? Math.round(person.matchScore) : Math.max(78, 94 - index * 3);
+          const label = caregiverDecisionLabel(person, selectedNeeds, index);
           return (
             <article key={person.id || index} style={{ background: '#FFFFFF', border: '1px solid #E3E8F0', borderRadius: 8, padding: 15, marginBottom: 12, boxShadow: '0 6px 22px rgba(15,23,42,0.05)' }}>
               <div style={{ display: 'flex', gap: 13, alignItems: 'flex-start' }}>
@@ -836,10 +956,11 @@ function ModernMatches({
                     </div>
                     <div style={{ textAlign: 'right', flexShrink: 0 }}>
                       <div style={{ fontSize: 17, fontWeight: 900, color: '#0F172A' }}>${caregiverRate(person)}<span style={{ fontSize: 12, color: '#64748B', fontWeight: 700 }}>/hr</span></div>
-                      <div style={{ fontSize: 11, color: '#087A3D', fontWeight: 850 }}>{match}% match</div>
+                      <div style={{ fontSize: 11, color: '#087A3D', fontWeight: 850 }}>{score}% match</div>
                     </div>
                   </div>
                   <div style={{ display: 'flex', gap: 7, flexWrap: 'wrap', marginTop: 10 }}>
+                    <MatchChip label={label} />
                     <MatchChip label={`${caregiverRating(person)} rating`} />
                     <MatchChip label={`${caregiverExperience(person)} yrs exp`} />
                     <MatchChip label={person.city || 'Nearby'} />
@@ -870,6 +991,76 @@ function ModernMatches({
         />
       )}
     </div>
+  );
+}
+
+function BestMatchCard({
+  person,
+  score,
+  reasons,
+  saved,
+  onInterview,
+  onHire,
+  onSave,
+  onProfile,
+}: {
+  person: Caregiver;
+  score: number;
+  reasons: string[];
+  saved: boolean;
+  onInterview: (cg: Caregiver) => void;
+  onHire: (cg: Caregiver) => void;
+  onSave: (cg: Caregiver) => void;
+  onProfile: (cg: Caregiver) => void;
+}) {
+  const avatarUrl = caregiverAvatar(person);
+
+  return (
+    <section style={{ background: '#122033', borderRadius: 10, padding: 16, color: '#FFFFFF', boxShadow: '0 16px 36px rgba(15,23,42,0.18)' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'center', marginBottom: 14 }}>
+        <div>
+          <div style={{ color: '#A7F3D0', fontSize: 11, fontWeight: 900, textTransform: 'uppercase', letterSpacing: 0 }}>Best match for you</div>
+          <div style={{ marginTop: 4, fontSize: 21, lineHeight: 1.1, fontWeight: 900 }}>{caregiverName(person)}</div>
+        </div>
+        <div style={{ width: 68, height: 68, borderRadius: 20, background: '#FFFFFF', color: '#122033', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', flex: '0 0 auto' }}>
+          <div style={{ fontSize: 22, fontWeight: 950, lineHeight: 1 }}>{score}%</div>
+          <div style={{ fontSize: 10, fontWeight: 900, color: '#526173', marginTop: 3 }}>match</div>
+        </div>
+      </div>
+
+      <div style={{ display: 'flex', gap: 13, alignItems: 'center', marginBottom: 14 }}>
+        {avatarUrl && avatarUrl.startsWith('http') ? (
+          <img src={avatarUrl} alt={caregiverName(person)} style={{ width: 58, height: 58, borderRadius: 16, objectFit: 'cover', border: '1px solid rgba(255,255,255,0.18)' }} />
+        ) : (
+          <div style={{ width: 58, height: 58, borderRadius: 16, background: 'rgba(255,255,255,0.12)', color: '#FFFFFF', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 17, fontWeight: 900, flexShrink: 0 }}>{caregiverInitials(person)}</div>
+        )}
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.72)', lineHeight: 1.35 }}>{caregiverSpecialty(person)}</div>
+          <div style={{ marginTop: 7, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            <span style={{ color: '#A7F3D0', fontSize: 12, fontWeight: 900 }}>${caregiverRate(person)}/hr</span>
+            <span style={{ color: '#E0E7FF', fontSize: 12, fontWeight: 800 }}>{caregiverRating(person)} rating</span>
+            <span style={{ color: '#E0E7FF', fontSize: 12, fontWeight: 800 }}>{caregiverExperience(person)} yrs exp</span>
+          </div>
+        </div>
+      </div>
+
+      <div style={{ display: 'grid', gap: 8, marginBottom: 14 }}>
+        {reasons.map(reason => (
+          <div key={reason} style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 8, padding: '9px 10px', color: '#F8FAFC', fontSize: 12, fontWeight: 800, lineHeight: 1.35 }}>
+            {reason}
+          </div>
+        ))}
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+        <button onClick={() => onInterview(person)} style={{ padding: '13px 10px', background: '#FFFFFF', border: 'none', borderRadius: 8, color: '#122033', fontSize: 13, fontWeight: 950, cursor: 'pointer' }}>Interview best match</button>
+        <button onClick={() => onHire(person)} style={{ padding: '13px 10px', background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.18)', borderRadius: 8, color: '#FFFFFF', fontSize: 13, fontWeight: 900, cursor: 'pointer' }}>Hire</button>
+      </div>
+      <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+        <button onClick={() => onSave(person)} style={{ flex: 1, padding: '10px', background: saved ? '#EAFBF2' : 'rgba(255,255,255,0.06)', border: `1px solid ${saved ? '#B7E8CA' : 'rgba(255,255,255,0.16)'}`, borderRadius: 8, color: saved ? '#087A3D' : '#E0E7FF', fontSize: 12, fontWeight: 850, cursor: 'pointer' }}>{saved ? 'Saved' : 'Save'}</button>
+        <button onClick={() => onProfile(person)} style={{ flex: 1, padding: '10px', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.16)', borderRadius: 8, color: '#E0E7FF', fontSize: 12, fontWeight: 850, cursor: 'pointer' }}>Why this match?</button>
+      </div>
+    </section>
   );
 }
 
