@@ -16,6 +16,30 @@ function caregiverAvatar(cg: Caregiver): string {
   return cg.avatar || cg.photo_url || '';
 }
 
+function caregiverRate(cg: Caregiver): number {
+  return cg.hourlyRate || cg.hourly_rate || 28;
+}
+
+function caregiverExperience(cg: Caregiver): number {
+  return cg.yearsExp || cg.years_experience || 3;
+}
+
+function caregiverRating(cg: Caregiver): string {
+  const rating = cg.rating || '4.8';
+  return Number(rating).toFixed(1);
+}
+
+function caregiverSpecialty(cg: Caregiver): string {
+  const value = cg.specializations || cg.care_types || cg.skills;
+  if (Array.isArray(value)) return value.slice(0, 3).join(', ') || 'Home Care';
+  if (typeof value === 'string') return value.split(',').slice(0, 3).map(s => s.trim()).filter(Boolean).join(', ') || 'Home Care';
+  return 'Home Care';
+}
+
+function caregiverInitials(cg: Caregiver): string {
+  return caregiverName(cg).split(' ').map(part => part[0]).join('').toUpperCase().slice(0, 2) || 'CG';
+}
+
 export function FindCareTab() {
   // ── State ────────────────────────────────────────────────────────────
   const [screen, setScreen] = useState<Screen>('dispatch');
@@ -241,6 +265,45 @@ export function FindCareTab() {
   const cg = caregivers[currentIdx];
   const isShortlisted = cg ? shortlist.some(s => s.id === cg.id) : false;
   const isLast = currentIdx === caregivers.length - 1;
+
+  if (screen === 'dispatch') return (
+    <ModernCareSearch
+      selectedNeeds={selectedNeeds}
+      openCards={openCards}
+      location={location}
+      urgency={urgency}
+      loading={loading}
+      loadingText={loadingText}
+      toast={toast}
+      onToggleNeed={toggleNeed}
+      onToggleCard={toggleCard}
+      onLocationChange={setLocation}
+      onUrgencyChange={setUrgency}
+      onGps={handleGps}
+      onFind={handleFind}
+    />
+  );
+
+  if (screen === 'swiper') return (
+    <ModernMatches
+      caregivers={caregivers}
+      shortlist={shortlist}
+      location={location}
+      toast={toast}
+      onBack={() => setScreen('dispatch')}
+      onShortlist={() => setScreen('shortlist')}
+      onSave={toggleShortlist}
+      onInterview={startInterview}
+      onHire={directHire}
+      onProfile={setProfileCg}
+      profileCg={profileCg}
+      onCloseProfile={() => setProfileCg(null)}
+      agreementCg={agreementCg}
+      selectedNeeds={selectedNeeds}
+      onCloseAgreement={() => setAgreementCg(null)}
+      onAgreementSuccess={onAgreementSuccess}
+    />
+  );
 
   // ── DISPATCH SCREEN ───────────────────────────────────────────────────
   if (screen === 'dispatch') return (
@@ -568,6 +631,239 @@ export function FindCareTab() {
 }
 
 // ── Shared utility components ─────────────────────────────────────────
+function ModernCareSearch({
+  selectedNeeds,
+  openCards,
+  location,
+  urgency,
+  loading,
+  loadingText,
+  toast,
+  onToggleNeed,
+  onToggleCard,
+  onLocationChange,
+  onUrgencyChange,
+  onGps,
+  onFind,
+}: {
+  selectedNeeds: string[];
+  openCards: Set<number>;
+  location: string;
+  urgency: string;
+  loading: boolean;
+  loadingText: string;
+  toast: string;
+  onToggleNeed: (need: string) => void;
+  onToggleCard: (id: number) => void;
+  onLocationChange: (value: string) => void;
+  onUrgencyChange: (value: string) => void;
+  onGps: () => void;
+  onFind: () => void;
+}) {
+  return (
+    <div style={{ minHeight: '100dvh', paddingBottom: 'calc(90px + env(safe-area-inset-bottom,0px))', background: '#F6F8FB', color: '#0F172A' }}>
+      {loading && <LoadingOverlay text={loadingText} />}
+      {toast && <Toast msg={toast} />}
+      <div style={{ background: '#FFFFFF', borderBottom: '1px solid #E3E8F0', padding: '42px 18px 18px' }}>
+        <div style={{ fontSize: 12, fontWeight: 850, color: '#315DDF', textTransform: 'uppercase', letterSpacing: 0.6, marginBottom: 8 }}>Find care</div>
+        <h1 style={{ margin: 0, fontSize: 27, lineHeight: 1.08, fontWeight: 900, letterSpacing: 0, color: '#0F172A' }}>Tell us what kind of help you need.</h1>
+        <div style={{ fontSize: 14, color: '#526173', lineHeight: 1.5, marginTop: 10 }}>Carehia will use your needs, timing, and location to show caregivers who are easier to compare and interview.</div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, marginTop: 16 }}>
+          <TrustMetric label="Verified" value="Profiles" />
+          <TrustMetric label="Free" value="Interviews" />
+          <TrustMetric label="Direct" value="Hiring" />
+        </div>
+      </div>
+      <div style={{ padding: 16 }}>
+        <section style={{ background: '#FFFFFF', border: '1px solid #E3E8F0', borderRadius: 8, overflow: 'hidden', marginBottom: 14, boxShadow: '0 6px 22px rgba(15,23,42,0.05)' }}>
+          <div style={{ padding: '15px 16px', borderBottom: '1px solid #EEF2F7' }}>
+            <div style={{ fontSize: 15, fontWeight: 900, color: '#0F172A' }}>1. What care is needed?</div>
+            <div style={{ fontSize: 12, color: '#64748B', marginTop: 3 }}>Choose one or more. You can refine later.</div>
+          </div>
+          {CARE_CATEGORIES.map(cat => {
+            const count = cat.needs.filter(n => selectedNeeds.includes(n)).length;
+            const isOpen = openCards.has(cat.id) || count > 0;
+            return (
+              <div key={cat.id} style={{ borderBottom: '1px solid #F1F5F9' }}>
+                <button onClick={() => onToggleCard(cat.id)} style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 11, padding: '14px 16px', cursor: 'pointer', background: '#FFFFFF', border: 'none', textAlign: 'left' }}>
+                  <span style={{ width: 34, height: 34, borderRadius: 8, background: '#EEF4FF', color: '#315DDF', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 900 }}>{cat.title.slice(0, 2).toUpperCase()}</span>
+                  <span style={{ flex: 1, minWidth: 0 }}>
+                    <span style={{ display: 'block', fontSize: 14, fontWeight: 850, color: '#0F172A' }}>{cat.title}</span>
+                    <span style={{ display: 'block', fontSize: 12, color: '#64748B', marginTop: 2 }}>{count ? `${count} selected` : `${cat.needs.length} care options`}</span>
+                  </span>
+                  {count > 0 && <span style={{ background: '#DBEAFE', color: '#1D4ED8', fontSize: 11, fontWeight: 850, borderRadius: 999, padding: '5px 8px' }}>{count}</span>}
+                  <span style={{ color: '#94A3B8', fontSize: 16 }}>{isOpen ? '-' : '+'}</span>
+                </button>
+                {isOpen && (
+                  <div style={{ padding: '0 14px 14px' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                      {cat.needs.map(need => {
+                        const selected = selectedNeeds.includes(need);
+                        return (
+                          <button key={need} onClick={() => onToggleNeed(need)} style={{ minHeight: 44, padding: '9px 10px', borderRadius: 8, border: selected ? '1.5px solid #315DDF' : '1px solid #D8E1EC', background: selected ? '#EEF4FF' : '#FFFFFF', color: selected ? '#1D4ED8' : '#334155', fontSize: 12, fontWeight: selected ? 850 : 650, cursor: 'pointer', textAlign: 'left', lineHeight: 1.25 }}>
+                            {need}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </section>
+        <section style={{ background: '#FFFFFF', border: '1px solid #E3E8F0', borderRadius: 8, padding: 16, marginBottom: 14, boxShadow: '0 6px 22px rgba(15,23,42,0.05)' }}>
+          <div style={{ fontSize: 15, fontWeight: 900, color: '#0F172A', marginBottom: 4 }}>2. Location and timing</div>
+          <div style={{ fontSize: 12, color: '#64748B', marginBottom: 12 }}>This helps rank nearby caregivers with the right availability.</div>
+          <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
+            <input type="text" placeholder="City or zip code" value={location} onChange={e => onLocationChange(e.target.value)} style={{ flex: 1, minWidth: 0, padding: '13px 14px', borderRadius: 8, border: '1px solid #CBD5E1', background: '#FFFFFF', color: '#0F172A', fontSize: 14, outline: 'none' }} />
+            <button onClick={onGps} style={{ width: 48, borderRadius: 8, border: '1px solid #CBD5E1', background: '#F8FAFC', color: '#315DDF', fontSize: 12, fontWeight: 850, cursor: 'pointer' }} title="Use my location">GPS</button>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+            {[{ v: 'today', l: 'Today' }, { v: 'week', l: 'This week' }, { v: 'month', l: 'This month' }, { v: 'flexible', l: 'Flexible' }].map(({ v, l }) => (
+              <button key={v} onClick={() => onUrgencyChange(v)} style={{ padding: '11px 10px', borderRadius: 8, border: `1.5px solid ${urgency === v ? '#315DDF' : '#D8E1EC'}`, background: urgency === v ? '#EEF4FF' : '#FFFFFF', color: urgency === v ? '#1D4ED8' : '#475569', fontSize: 13, fontWeight: 850, cursor: 'pointer' }}>{l}</button>
+            ))}
+          </div>
+        </section>
+        {selectedNeeds.length > 0 && (
+          <div style={{ display: 'flex', gap: 7, overflowX: 'auto', paddingBottom: 12, scrollbarWidth: 'none' }}>
+            {selectedNeeds.map(n => <span key={n} style={{ flexShrink: 0, background: '#EAFBF2', color: '#087A3D', fontSize: 12, fontWeight: 800, padding: '7px 10px', borderRadius: 999, border: '1px solid #B7E8CA' }}>{n}</span>)}
+          </div>
+        )}
+        <button onClick={onFind} style={{ width: '100%', padding: '15px 16px', borderRadius: 8, border: 'none', background: '#315DDF', color: '#fff', fontSize: 15, fontWeight: 900, cursor: 'pointer', boxShadow: '0 8px 20px rgba(49,93,223,0.22)' }}>
+          {selectedNeeds.length > 0 ? `Show caregiver matches (${selectedNeeds.length})` : 'Show caregiver matches'}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function ModernMatches({
+  caregivers,
+  shortlist,
+  location,
+  toast,
+  onBack,
+  onShortlist,
+  onSave,
+  onInterview,
+  onHire,
+  onProfile,
+  profileCg,
+  onCloseProfile,
+  agreementCg,
+  selectedNeeds,
+  onCloseAgreement,
+  onAgreementSuccess,
+}: {
+  caregivers: Caregiver[];
+  shortlist: Caregiver[];
+  location: string;
+  toast: string;
+  onBack: () => void;
+  onShortlist: () => void;
+  onSave: (cg: Caregiver) => void;
+  onInterview: (cg: Caregiver) => void;
+  onHire: (cg: Caregiver) => void;
+  onProfile: (cg: Caregiver) => void;
+  profileCg: Caregiver | null;
+  onCloseProfile: () => void;
+  agreementCg: Caregiver | null;
+  selectedNeeds: string[];
+  onCloseAgreement: () => void;
+  onAgreementSuccess: (caregiverId: number | string) => void;
+}) {
+  if (!caregivers.length) return (
+    <div style={{ minHeight: '100dvh', padding: '56px 24px 110px', textAlign: 'center', background: '#F6F8FB', color: '#0F172A' }}>
+      <div style={{ width: 64, height: 64, borderRadius: 18, background: '#EEF4FF', color: '#315DDF', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 18px', fontSize: 22, fontWeight: 900 }}>0</div>
+      <div style={{ fontSize: 21, fontWeight: 900, marginBottom: 8 }}>No caregivers found yet</div>
+      <div style={{ fontSize: 14, color: '#526173', marginBottom: 24, lineHeight: 1.55 }}>Try a nearby city, broader care need, or flexible timing.</div>
+      <button onClick={onBack} style={{ background: '#315DDF', color: '#fff', border: 'none', borderRadius: 8, padding: '13px 22px', fontSize: 14, fontWeight: 850, cursor: 'pointer' }}>Adjust search</button>
+    </div>
+  );
+
+  return (
+    <div style={{ minHeight: '100dvh', background: '#F6F8FB', paddingBottom: 'calc(92px + env(safe-area-inset-bottom,0px))', color: '#0F172A' }}>
+      {toast && <Toast msg={toast} />}
+      <div style={{ background: '#FFFFFF', borderBottom: '1px solid #E3E8F0', padding: '42px 16px 16px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginBottom: 14 }}>
+          <button onClick={onBack} style={{ background: '#F8FAFC', border: '1px solid #D8E1EC', borderRadius: 8, padding: '9px 12px', color: '#334155', fontSize: 13, fontWeight: 850, cursor: 'pointer' }}>Refine</button>
+          <button onClick={onShortlist} style={{ background: shortlist.length ? '#EEF4FF' : '#F8FAFC', border: '1px solid #D8E1EC', borderRadius: 8, padding: '9px 12px', color: shortlist.length ? '#315DDF' : '#64748B', fontSize: 13, fontWeight: 850, cursor: 'pointer' }}>Saved {shortlist.length}</button>
+        </div>
+        <h1 style={{ margin: 0, fontSize: 24, fontWeight: 900, letterSpacing: 0 }}>Caregiver matches</h1>
+        <div style={{ fontSize: 13, color: '#526173', lineHeight: 1.45, marginTop: 6 }}>{caregivers.length} caregiver{caregivers.length === 1 ? '' : 's'} near {location || 'your area'}. Compare trust, rate, and fit before interviewing.</div>
+      </div>
+      <div style={{ padding: 16 }}>
+        {caregivers.map((person, index) => {
+          const saved = shortlist.some(s => s.id === person.id);
+          const avatarUrl = caregiverAvatar(person);
+          const match = person.matchScore ? Math.round(person.matchScore) : Math.max(78, 94 - index * 3);
+          return (
+            <article key={person.id || index} style={{ background: '#FFFFFF', border: '1px solid #E3E8F0', borderRadius: 8, padding: 15, marginBottom: 12, boxShadow: '0 6px 22px rgba(15,23,42,0.05)' }}>
+              <div style={{ display: 'flex', gap: 13, alignItems: 'flex-start' }}>
+                {avatarUrl && avatarUrl.startsWith('http') ? (
+                  <img src={avatarUrl} alt={caregiverName(person)} style={{ width: 58, height: 58, borderRadius: 16, objectFit: 'cover', border: '1px solid #D8E1EC' }} />
+                ) : (
+                  <div style={{ width: 58, height: 58, borderRadius: 16, background: '#EEF4FF', color: '#315DDF', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 17, fontWeight: 900, flexShrink: 0 }}>{caregiverInitials(person)}</div>
+                )}
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, alignItems: 'flex-start' }}>
+                    <div style={{ minWidth: 0 }}>
+                      <div style={{ fontSize: 17, fontWeight: 900, color: '#0F172A', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{caregiverName(person)}</div>
+                      <div style={{ fontSize: 12, color: '#64748B', marginTop: 3 }}>{caregiverSpecialty(person)}</div>
+                    </div>
+                    <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                      <div style={{ fontSize: 17, fontWeight: 900, color: '#0F172A' }}>${caregiverRate(person)}<span style={{ fontSize: 12, color: '#64748B', fontWeight: 700 }}>/hr</span></div>
+                      <div style={{ fontSize: 11, color: '#087A3D', fontWeight: 850 }}>{match}% match</div>
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', gap: 7, flexWrap: 'wrap', marginTop: 10 }}>
+                    <MatchChip label={`${caregiverRating(person)} rating`} />
+                    <MatchChip label={`${caregiverExperience(person)} yrs exp`} />
+                    <MatchChip label={person.city || 'Nearby'} />
+                  </div>
+                </div>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginTop: 14 }}>
+                <button onClick={() => onInterview(person)} style={{ padding: '12px 10px', background: '#315DDF', border: 'none', borderRadius: 8, color: '#fff', fontSize: 13, fontWeight: 900, cursor: 'pointer' }}>Interview</button>
+                <button onClick={() => onHire(person)} style={{ padding: '12px 10px', background: '#F8FAFC', border: '1px solid #D8E1EC', borderRadius: 8, color: '#0F172A', fontSize: 13, fontWeight: 900, cursor: 'pointer' }}>Hire</button>
+              </div>
+              <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+                <button onClick={() => onSave(person)} style={{ flex: 1, padding: '10px', background: saved ? '#EAFBF2' : '#FFFFFF', border: `1px solid ${saved ? '#B7E8CA' : '#D8E1EC'}`, borderRadius: 8, color: saved ? '#087A3D' : '#334155', fontSize: 12, fontWeight: 850, cursor: 'pointer' }}>{saved ? 'Saved' : 'Save for later'}</button>
+                <button onClick={() => onProfile(person)} style={{ flex: 1, padding: '10px', background: '#FFFFFF', border: '1px solid #D8E1EC', borderRadius: 8, color: '#315DDF', fontSize: 12, fontWeight: 850, cursor: 'pointer' }}>View profile</button>
+              </div>
+            </article>
+          );
+        })}
+      </div>
+      <CaregiverSheet cg={profileCg} onClose={onCloseProfile} onHire={onHire} onInterview={onInterview} />
+      {agreementCg && (
+        <HireAgreementModal
+          cg={agreementCg}
+          selectedCareTypes={selectedNeeds}
+          clientName={getName() || ''}
+          clientToken={getToken() || ''}
+          onClose={onCloseAgreement}
+          onSuccess={onAgreementSuccess}
+        />
+      )}
+    </div>
+  );
+}
+
+function TrustMetric({ label, value }: { label: string; value: string }) {
+  return (
+    <div style={{ background: '#F8FAFC', border: '1px solid #E3E8F0', borderRadius: 8, padding: '10px 8px' }}>
+      <div style={{ fontSize: 11, fontWeight: 900, color: '#0F172A' }}>{label}</div>
+      <div style={{ fontSize: 11, color: '#64748B', marginTop: 2 }}>{value}</div>
+    </div>
+  );
+}
+
+function MatchChip({ label }: { label: string }) {
+  return <span style={{ background: '#F8FAFC', border: '1px solid #E3E8F0', borderRadius: 999, padding: '5px 8px', fontSize: 11, color: '#475569', fontWeight: 800 }}>{label}</span>;
+}
+
 function LoadingOverlay({ text }: { text: string }) {
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 999, background: 'rgba(15,23,42,0.7)', backdropFilter: 'blur(4px)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 16 }}>
