@@ -51,7 +51,7 @@ function timeLabel(value?: string): string {
 }
 
 function dateLabel(value?: string): string {
-  if (!value) return 'Date pending';
+  if (!value) return 'Date not set';
   try {
     return new Date(value + 'T12:00:00').toLocaleDateString('en-US', {
       weekday: 'short',
@@ -65,6 +65,15 @@ function dateLabel(value?: string): string {
 
 function money(n: number): string {
   return '$' + n.toLocaleString('en-US');
+}
+
+function bookingScheduleLabel(booking: Booking): string {
+  const rawDate = booking.requested_date || booking.preferred_date;
+  const rawTime = booking.requested_time || booking.preferred_time;
+  if (!rawDate && !rawTime) return 'Interview details pending';
+  if (!rawDate) return timeLabel(rawTime);
+  if (!rawTime) return dateLabel(rawDate);
+  return `${dateLabel(rawDate)} at ${timeLabel(rawTime)}`;
 }
 
 export function HomeTab({ onNavigate }: Props) {
@@ -244,7 +253,7 @@ export function HomeTab({ onNavigate }: Props) {
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
           <MetricCard label="Care team" value={team.length ? String(team.length) : 'None yet'} sub={team.length ? 'Active caregivers' : 'Ready to build'} />
-          <MetricCard label="Next booking" value={upcoming ? dateLabel(upcoming.requested_date || upcoming.preferred_date) : 'Open'} sub={upcoming ? timeLabel(upcoming.requested_time || upcoming.preferred_time) : 'Schedule care'} />
+          <MetricCard label="Next booking" value={upcoming ? (upcoming.requested_date || upcoming.preferred_date ? dateLabel(upcoming.requested_date || upcoming.preferred_date) : 'Pending') : 'Open'} sub={upcoming ? bookingScheduleLabel(upcoming) : 'Schedule care'} />
         </div>
       </section>
 
@@ -270,7 +279,7 @@ export function HomeTab({ onNavigate }: Props) {
                 {onsiteActive ? onsiteName : upcoming ? `${upcoming.caregiver_name || upcoming.caregiverName || 'Caregiver'} requested` : 'No visit active'}
               </div>
               <div style={{ fontSize: 13, color: onsiteActive ? '#0F7A42' : '#526173', marginTop: 4 }}>
-                {onsiteActive ? `Live visit timer: ${clockStr}` : upcoming ? `${dateLabel(upcoming.requested_date || upcoming.preferred_date)} at ${timeLabel(upcoming.requested_time || upcoming.preferred_time)}` : 'Find care or confirm your next booking.'}
+                {onsiteActive ? `Live visit timer: ${clockStr}` : upcoming ? bookingScheduleLabel(upcoming) : 'Find care or confirm your next booking.'}
               </div>
             </div>
             <div style={{ fontSize: 24, color: onsiteActive ? '#10B981' : '#94A3B8' }}>{onsiteActive ? 'Live' : 'View'}</div>
@@ -319,7 +328,7 @@ export function HomeTab({ onNavigate }: Props) {
             <WorkflowButton title="Find trusted care" body={`${shortlistCount} saved matches`} action="Search" onClick={() => onNavigate('findcare')} />
             <WorkflowButton title="Manage hires" body={`${pendingAgreements.length} pending agreements`} action="Team" onClick={() => onNavigate('team')} />
             <WorkflowButton title="Track interviews" body={`${bookings.length} total requests`} action="Bookings" onClick={() => onNavigate('bookings')} />
-            <WorkflowButton title="Plan spending" body={team.length ? `${money(careBudget)}/hr if all active` : 'No active rates yet'} action="Profile" onClick={() => onNavigate('profile')} />
+            <WorkflowButton title="Plan spending" body={team.length ? `${money(careBudget)}/hr combined team rate` : 'No active rates yet'} action="Profile" onClick={() => onNavigate('profile')} />
           </div>
         </section>
 
