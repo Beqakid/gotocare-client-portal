@@ -305,6 +305,28 @@ export function FindCareTab() {
     />
   );
 
+  if (screen === 'booking' && bookingCg) return (
+    <ModernInterviewBooking
+      caregiver={bookingCg}
+      dates={getDates()}
+      selectedDate={selectedDate}
+      selectedTime={selectedTime}
+      interviewType={interviewType}
+      bookEmail={bookEmail}
+      bookNotes={bookNotes}
+      loading={loading}
+      loadingText={loadingText}
+      toast={toast}
+      onBack={() => setScreen('swiper')}
+      onSelectDate={setSelectedDate}
+      onSelectTime={setSelectedTime}
+      onInterviewType={setInterviewType}
+      onEmail={setBookEmail}
+      onNotes={setBookNotes}
+      onSubmit={submitInterview}
+    />
+  );
+
   // ── DISPATCH SCREEN ───────────────────────────────────────────────────
   if (screen === 'dispatch') return (
     <div style={{ padding: '24px 16px', minHeight: '100dvh', paddingBottom: 'calc(80px + env(safe-area-inset-bottom,0px))', background: 'linear-gradient(160deg,#1a1a2e 0%,#2d1b69 40%,#1e3a5f 100%)' }}>
@@ -862,6 +884,120 @@ function TrustMetric({ label, value }: { label: string; value: string }) {
 
 function MatchChip({ label }: { label: string }) {
   return <span style={{ background: '#F8FAFC', border: '1px solid #E3E8F0', borderRadius: 999, padding: '5px 8px', fontSize: 11, color: '#475569', fontWeight: 800 }}>{label}</span>;
+}
+
+function ModernInterviewBooking({
+  caregiver,
+  dates,
+  selectedDate,
+  selectedTime,
+  interviewType,
+  bookEmail,
+  bookNotes,
+  loading,
+  loadingText,
+  toast,
+  onBack,
+  onSelectDate,
+  onSelectTime,
+  onInterviewType,
+  onEmail,
+  onNotes,
+  onSubmit,
+}: {
+  caregiver: Caregiver;
+  dates: { iso: string; day: string; num: number; mon: string }[];
+  selectedDate: string | null;
+  selectedTime: string | null;
+  interviewType: 'video' | 'inperson';
+  bookEmail: string;
+  bookNotes: string;
+  loading: boolean;
+  loadingText: string;
+  toast: string;
+  onBack: () => void;
+  onSelectDate: (value: string) => void;
+  onSelectTime: (value: string) => void;
+  onInterviewType: (value: 'video' | 'inperson') => void;
+  onEmail: (value: string) => void;
+  onNotes: (value: string) => void;
+  onSubmit: () => void;
+}) {
+  return (
+    <div style={{ minHeight: '100dvh', background: '#F6F8FB', paddingBottom: 'calc(92px + env(safe-area-inset-bottom,0px))', color: '#0F172A' }}>
+      {loading && <LoadingOverlay text={loadingText} />}
+      {toast && <Toast msg={toast} />}
+      <div style={{ background: '#FFFFFF', borderBottom: '1px solid #E3E8F0', padding: '42px 16px 16px' }}>
+        <button onClick={onBack} style={{ background: '#F8FAFC', border: '1px solid #D8E1EC', borderRadius: 8, padding: '9px 12px', color: '#334155', fontSize: 13, fontWeight: 850, cursor: 'pointer', marginBottom: 14 }}>Back</button>
+        <h1 style={{ margin: 0, fontSize: 24, fontWeight: 900 }}>Schedule interview</h1>
+        <div style={{ fontSize: 13, color: '#526173', lineHeight: 1.45, marginTop: 6 }}>Choose a free interview time with {caregiverName(caregiver)}. You can hire after the conversation feels right.</div>
+      </div>
+
+      <div style={{ padding: 16 }}>
+        <section style={{ background: '#FFFFFF', border: '1px solid #E3E8F0', borderRadius: 8, padding: 15, marginBottom: 14, boxShadow: '0 6px 22px rgba(15,23,42,0.05)' }}>
+          <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+            <div style={{ width: 52, height: 52, borderRadius: 14, background: '#EEF4FF', color: '#315DDF', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, fontWeight: 900 }}>{caregiverInitials(caregiver)}</div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: 16, fontWeight: 900, color: '#0F172A' }}>{caregiverName(caregiver)}</div>
+              <div style={{ fontSize: 12, color: '#64748B', marginTop: 3 }}>{caregiverSpecialty(caregiver)}</div>
+            </div>
+            <div style={{ textAlign: 'right', flexShrink: 0 }}>
+              <div style={{ fontSize: 16, fontWeight: 900 }}>${caregiverRate(caregiver)}/hr</div>
+              <div style={{ fontSize: 11, color: '#087A3D', fontWeight: 850 }}>{caregiverRating(caregiver)} rating</div>
+            </div>
+          </div>
+        </section>
+
+        <FormPanel title="1. Pick a date">
+          <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 2, scrollbarWidth: 'none' }}>
+            {dates.map(d => (
+              <button key={d.iso} onClick={() => onSelectDate(d.iso)} style={{ flex: '0 0 74px', padding: '10px 8px', borderRadius: 8, border: selectedDate === d.iso ? '1.5px solid #315DDF' : '1px solid #D8E1EC', background: selectedDate === d.iso ? '#EEF4FF' : '#FFFFFF', cursor: 'pointer', textAlign: 'center' }}>
+                <div style={{ fontSize: 11, color: selectedDate === d.iso ? '#1D4ED8' : '#64748B', fontWeight: 900 }}>{d.day}</div>
+                <div style={{ fontSize: 22, color: '#0F172A', fontWeight: 900, lineHeight: 1.1, marginTop: 4 }}>{d.num}</div>
+                <div style={{ fontSize: 11, color: '#64748B', marginTop: 2 }}>{d.mon}</div>
+              </button>
+            ))}
+          </div>
+        </FormPanel>
+
+        <FormPanel title="2. Preferred time">
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
+            {[{ v: 'morning', l: 'Morning', s: '9-11' }, { v: 'afternoon', l: 'Afternoon', s: '12-3' }, { v: 'evening', l: 'Evening', s: '4-7' }].map(({ v, l, s }) => (
+              <button key={v} onClick={() => onSelectTime(v)} style={{ padding: '11px 8px', borderRadius: 8, border: selectedTime === v ? '1.5px solid #315DDF' : '1px solid #D8E1EC', background: selectedTime === v ? '#EEF4FF' : '#FFFFFF', color: selectedTime === v ? '#1D4ED8' : '#334155', cursor: 'pointer' }}>
+                <div style={{ fontSize: 12, fontWeight: 900 }}>{l}</div>
+                <div style={{ fontSize: 11, color: '#64748B', marginTop: 2 }}>{s}</div>
+              </button>
+            ))}
+          </div>
+        </FormPanel>
+
+        <FormPanel title="3. Interview format">
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+            {[{ v: 'video' as const, l: 'Video call' }, { v: 'inperson' as const, l: 'In person' }].map(({ v, l }) => (
+              <button key={v} onClick={() => onInterviewType(v)} style={{ padding: 12, borderRadius: 8, border: interviewType === v ? '1.5px solid #315DDF' : '1px solid #D8E1EC', background: interviewType === v ? '#EEF4FF' : '#FFFFFF', color: interviewType === v ? '#1D4ED8' : '#334155', fontSize: 13, fontWeight: 900, cursor: 'pointer' }}>{l}</button>
+            ))}
+          </div>
+        </FormPanel>
+
+        <FormPanel title="4. Confirmation details">
+          <input type="email" placeholder="you@example.com" value={bookEmail} onChange={e => onEmail(e.target.value)} style={{ width: '100%', padding: '13px 14px', borderRadius: 8, border: '1px solid #CBD5E1', background: '#FFFFFF', color: '#0F172A', fontSize: 14, outline: 'none', marginBottom: 10, boxSizing: 'border-box' }} />
+          <textarea placeholder="Questions or care details to share" value={bookNotes} onChange={e => onNotes(e.target.value)} rows={3} style={{ width: '100%', padding: '13px 14px', borderRadius: 8, border: '1px solid #CBD5E1', background: '#FFFFFF', color: '#0F172A', fontSize: 14, outline: 'none', resize: 'none', boxSizing: 'border-box', fontFamily: 'inherit' }} />
+        </FormPanel>
+
+        <div style={{ background: '#EAFBF2', border: '1px solid #B7E8CA', borderRadius: 8, padding: 12, color: '#087A3D', fontSize: 12, fontWeight: 850, marginBottom: 12, textAlign: 'center' }}>Interview requests are free. You only pay when care is arranged.</div>
+        <button onClick={onSubmit} style={{ width: '100%', padding: 15, border: 'none', borderRadius: 8, background: '#315DDF', color: '#fff', fontSize: 15, fontWeight: 900, cursor: 'pointer', boxShadow: '0 8px 20px rgba(49,93,223,0.22)' }}>Send interview request</button>
+      </div>
+    </div>
+  );
+}
+
+function FormPanel({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <section style={{ background: '#FFFFFF', border: '1px solid #E3E8F0', borderRadius: 8, padding: 15, marginBottom: 14 }}>
+      <div style={{ fontSize: 14, fontWeight: 900, color: '#0F172A', marginBottom: 10 }}>{title}</div>
+      {children}
+    </section>
+  );
 }
 
 function LoadingOverlay({ text }: { text: string }) {
