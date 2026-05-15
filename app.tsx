@@ -18,6 +18,9 @@ const ProfileTab  = lazy(() => import('./components/ProfileTab').then(m => ({ de
 function getInitialTab(): TabId {
   const params = new URLSearchParams(window.location.search);
   if (params.get('booking_unlocked') || params.get('subscription')) return 'bookings';
+  const hash = window.location.hash.replace('#', '') as TabId;
+  const validTabs: TabId[] = ['home', 'findcare', 'team', 'bookings', 'profile'];
+  if (hash && validTabs.includes(hash)) return hash;
   return 'home';
 }
 
@@ -117,7 +120,7 @@ function App() {
 
   return (
     <div style={{
-      background: '#F8FAFC',
+      background: '#F6F8FB',
       height: '100dvh',
       display: 'flex',
       flexDirection: 'column',
@@ -134,7 +137,7 @@ function App() {
           --color-success: #22C55E;
           --color-warning: #F59E0B;
           --color-error: #EF4444;
-          --color-bg: #F8FAFC;
+          --color-bg: #F6F8FB;
           --color-card: #FFFFFF;
           --color-text-primary: #0F172A;
           --color-text-secondary: #475569;

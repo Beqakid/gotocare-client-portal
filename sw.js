@@ -1,11 +1,11 @@
-// Carehia Client Portal Service Worker v5
-const CACHE_NAME = 'carehia-client-v5';
+// Carehia Client Portal Service Worker v6
+const CACHE_NAME = 'carehia-client-v6';
 
 // Always network-first for HTML + JS bundles
 const NETWORK_FIRST = ['/index.html', '/', '/dist/'];
 
 self.addEventListener('install', event => {
-  console.log('[SW] Installing v5');
+  console.log('[SW] Installing v6');
   self.skipWaiting();
   event.waitUntil(
     caches.open(CACHE_NAME).then(cache => {
@@ -15,7 +15,7 @@ self.addEventListener('install', event => {
 });
 
 self.addEventListener('activate', event => {
-  console.log('[SW] Activating v5');
+  console.log('[SW] Activating v6');
   event.waitUntil(
     caches.keys().then(keys => {
       return Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k)));

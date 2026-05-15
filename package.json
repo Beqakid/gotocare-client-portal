@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "build": "esbuild app.tsx --bundle --splitting --format=esm --outdir=dist --minify --target=es2020",
-    "dev": "esbuild app.tsx --bundle --splitting --format=esm --outdir=dist --sourcemap --watch"
+    "dev": "esbuild app.tsx --bundle --splitting --format=esm --outdir=dist --sourcemap --servedir=. --target=es2020"
   },
   "dependencies": {
     "react": "^18.3.1",

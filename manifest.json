@@ -2,7 +2,7 @@
   "name": "Carehia",
   "short_name": "Carehia",
   "description": "Find trusted home caregivers near you",
-  "start_url": "/",
+  "start_url": "/#home",
   "display": "standalone",
   "background_color": "#2d1b69",
   "theme_color": "#7C5CFF",
