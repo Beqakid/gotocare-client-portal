@@ -130,6 +130,30 @@ function caregiverDecisionReasons(cg: Caregiver, selectedNeeds: string[], locati
   return reasons.slice(0, 3);
 }
 
+function caregiverNeedFit(cg: Caregiver, selectedNeeds: string[]): string {
+  const matchedNeeds = needMatchCount(cg, selectedNeeds);
+  if (!selectedNeeds.length) return 'Strong general profile';
+  if (matchedNeeds === selectedNeeds.length) return 'Matches every selected need';
+  if (matchedNeeds > 0) return `${matchedNeeds} of ${selectedNeeds.length} needs match`;
+  return 'Closest available profile';
+}
+
+function caregiverRateFit(cg: Caregiver): string {
+  const rate = caregiverRate(cg);
+  if (rate <= 25) return 'Lower hourly rate';
+  if (rate <= 35) return 'Market-rate care';
+  return 'Premium rate';
+}
+
+function caregiverTrustFit(cg: Caregiver): string {
+  const rating = Number(cg.rating || 0);
+  const experience = caregiverExperience(cg);
+  if (rating >= 4.8 && experience >= 5) return 'Highly rated veteran';
+  if (rating >= 4.8) return 'Highly rated';
+  if (experience >= 5) return 'Experienced caregiver';
+  return 'Verified profile';
+}
+
 function rankedCaregivers(caregivers: Caregiver[], selectedNeeds: string[]) {
   return caregivers
     .map((cg, index) => ({
@@ -972,6 +996,7 @@ function ModernMatches({
             person={best.caregiver}
             score={best.score}
             reasons={caregiverDecisionReasons(best.caregiver, selectedNeeds, location)}
+            selectedNeeds={selectedNeeds}
             saved={shortlist.some(s => s.id === best.caregiver.id)}
             onInterview={onInterview}
             onHire={onHire}
@@ -980,14 +1005,19 @@ function ModernMatches({
           />
         )}
 
-        <div style={{ fontSize: 12, fontWeight: 900, color: '#64748B', textTransform: 'uppercase', margin: '18px 0 10px', letterSpacing: 0 }}>
-          Ranked options
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, margin: '18px 0 10px' }}>
+          <div style={{ fontSize: 12, fontWeight: 900, color: '#64748B', textTransform: 'uppercase', letterSpacing: 0 }}>
+            Other good options
+          </div>
+          <div style={{ fontSize: 11, color: '#94A3B8', fontWeight: 800 }}>
+            Ranked by fit
+          </div>
         </div>
 
-        {ranked.map(({ caregiver: person, score }, index) => {
+        {ranked.slice(1).map(({ caregiver: person, score }, index) => {
           const saved = shortlist.some(s => s.id === person.id);
           const avatarUrl = caregiverAvatar(person);
-          const label = caregiverDecisionLabel(person, selectedNeeds, index);
+          const label = caregiverDecisionLabel(person, selectedNeeds, index + 1);
           return (
             <article key={person.id || index} style={{ background: '#FFFFFF', border: '1px solid #E3E8F0', borderRadius: 8, padding: 15, marginBottom: 12, boxShadow: '0 6px 22px rgba(15,23,42,0.05)' }}>
               <div style={{ display: 'flex', gap: 13, alignItems: 'flex-start' }}>
@@ -1009,9 +1039,8 @@ function ModernMatches({
                   </div>
                   <div style={{ display: 'flex', gap: 7, flexWrap: 'wrap', marginTop: 10 }}>
                     <MatchChip label={label} />
+                    <MatchChip label={caregiverNeedFit(person, selectedNeeds)} />
                     <MatchChip label={`${caregiverRating(person)} rating`} />
-                    <MatchChip label={`${caregiverExperience(person)} yrs exp`} />
-                    <MatchChip label={person.city || 'Nearby'} />
                   </div>
                 </div>
               </div>
@@ -1046,6 +1075,7 @@ function BestMatchCard({
   person,
   score,
   reasons,
+  selectedNeeds,
   saved,
   onInterview,
   onHire,
@@ -1055,6 +1085,7 @@ function BestMatchCard({
   person: Caregiver;
   score: number;
   reasons: string[];
+  selectedNeeds: string[];
   saved: boolean;
   onInterview: (cg: Caregiver) => void;
   onHire: (cg: Caregiver) => void;
@@ -1062,18 +1093,26 @@ function BestMatchCard({
   onProfile: (cg: Caregiver) => void;
 }) {
   const avatarUrl = caregiverAvatar(person);
+  const scoreOffset = Math.max(0, Math.min(100, score));
 
   return (
     <section style={{ background: '#122033', borderRadius: 10, padding: 16, color: '#FFFFFF', boxShadow: '0 16px 36px rgba(15,23,42,0.18)' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'center', marginBottom: 14 }}>
-        <div>
-          <div style={{ color: '#A7F3D0', fontSize: 11, fontWeight: 900, textTransform: 'uppercase', letterSpacing: 0 }}>Best match for you</div>
-          <div style={{ marginTop: 4, fontSize: 21, lineHeight: 1.1, fontWeight: 900 }}>{caregiverName(person)}</div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'flex-start', marginBottom: 14 }}>
+        <div style={{ minWidth: 0 }}>
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: '#DCFCE7', color: '#087A3D', borderRadius: 999, padding: '6px 9px', fontSize: 11, fontWeight: 950 }}>
+            Best match
+          </div>
+          <div style={{ marginTop: 10, fontSize: 23, lineHeight: 1.08, fontWeight: 950 }}>{caregiverName(person)}</div>
+          <div style={{ color: '#CBD5E1', fontSize: 12, lineHeight: 1.35, marginTop: 6 }}>{caregiverSpecialty(person)}</div>
         </div>
-        <div style={{ width: 68, height: 68, borderRadius: 20, background: '#FFFFFF', color: '#122033', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', flex: '0 0 auto' }}>
-          <div style={{ fontSize: 22, fontWeight: 950, lineHeight: 1 }}>{score}%</div>
-          <div style={{ fontSize: 10, fontWeight: 900, color: '#526173', marginTop: 3 }}>match</div>
+        <div style={{ width: 78, height: 78, borderRadius: 22, background: '#FFFFFF', color: '#122033', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', flex: '0 0 auto' }}>
+          <div style={{ fontSize: 25, fontWeight: 950, lineHeight: 1 }}>{score}%</div>
+          <div style={{ fontSize: 10, fontWeight: 950, color: '#526173', marginTop: 3, textTransform: 'uppercase' }}>fit</div>
         </div>
+      </div>
+
+      <div style={{ height: 8, borderRadius: 999, background: 'rgba(255,255,255,0.14)', overflow: 'hidden', marginBottom: 14 }}>
+        <div style={{ width: `${scoreOffset}%`, height: '100%', borderRadius: 999, background: '#22C55E' }} />
       </div>
 
       <div style={{ display: 'flex', gap: 13, alignItems: 'center', marginBottom: 14 }}>
@@ -1083,21 +1122,28 @@ function BestMatchCard({
           <div style={{ width: 58, height: 58, borderRadius: 16, background: 'rgba(255,255,255,0.12)', color: '#FFFFFF', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 17, fontWeight: 900, flexShrink: 0 }}>{caregiverInitials(person)}</div>
         )}
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.72)', lineHeight: 1.35 }}>{caregiverSpecialty(person)}</div>
-          <div style={{ marginTop: 7, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-            <span style={{ color: '#A7F3D0', fontSize: 12, fontWeight: 900 }}>${caregiverRate(person)}/hr</span>
-            <span style={{ color: '#E0E7FF', fontSize: 12, fontWeight: 800 }}>{caregiverRating(person)} rating</span>
-            <span style={{ color: '#E0E7FF', fontSize: 12, fontWeight: 800 }}>{caregiverExperience(person)} yrs exp</span>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+            <DecisionMetric label="Rate" value={`$${caregiverRate(person)}/hr`} tone="#A7F3D0" />
+            <DecisionMetric label="Trust" value={`${caregiverRating(person)} rating`} tone="#E0E7FF" />
           </div>
         </div>
       </div>
 
-      <div style={{ display: 'grid', gap: 8, marginBottom: 14 }}>
-        {reasons.map(reason => (
-          <div key={reason} style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 8, padding: '9px 10px', color: '#F8FAFC', fontSize: 12, fontWeight: 800, lineHeight: 1.35 }}>
-            {reason}
-          </div>
-        ))}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, marginBottom: 14 }}>
+        <DecisionSignal label="Needs fit" value={caregiverNeedFit(person, selectedNeeds)} />
+        <DecisionSignal label="Price fit" value={caregiverRateFit(person)} />
+        <DecisionSignal label="Trust fit" value={caregiverTrustFit(person)} />
+      </div>
+
+      <div style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 8, padding: 12, color: '#F8FAFC', marginBottom: 14 }}>
+        <div style={{ fontSize: 12, fontWeight: 950, color: '#A7F3D0', marginBottom: 6 }}>Why this is the first choice</div>
+        <div style={{ display: 'grid', gap: 5 }}>
+          {reasons.slice(0, 3).map(reason => (
+            <div key={reason} style={{ fontSize: 12, fontWeight: 750, lineHeight: 1.35 }}>
+              {reason}
+            </div>
+          ))}
+        </div>
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
@@ -1129,6 +1175,24 @@ function ConfirmStep({ value, title, body }: { value: string; title: string; bod
         <div style={{ color: '#0F172A', fontSize: 13, fontWeight: 900 }}>{title}</div>
         <div style={{ color: '#64748B', fontSize: 12, lineHeight: 1.45, marginTop: 2 }}>{body}</div>
       </div>
+    </div>
+  );
+}
+
+function DecisionMetric({ label, value, tone }: { label: string; value: string; tone: string }) {
+  return (
+    <div style={{ minWidth: 0 }}>
+      <div style={{ color: 'rgba(255,255,255,0.52)', fontSize: 10, fontWeight: 950, textTransform: 'uppercase' }}>{label}</div>
+      <div style={{ color: tone, fontSize: 13, fontWeight: 950, marginTop: 3, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{value}</div>
+    </div>
+  );
+}
+
+function DecisionSignal({ label, value }: { label: string; value: string }) {
+  return (
+    <div style={{ minHeight: 74, border: '1px solid rgba(255,255,255,0.13)', background: 'rgba(255,255,255,0.07)', borderRadius: 8, padding: '10px 8px' }}>
+      <div style={{ color: 'rgba(255,255,255,0.52)', fontSize: 10, fontWeight: 950, textTransform: 'uppercase', lineHeight: 1.1 }}>{label}</div>
+      <div style={{ color: '#FFFFFF', fontSize: 12, fontWeight: 900, lineHeight: 1.25, marginTop: 6 }}>{value}</div>
     </div>
   );
 }
