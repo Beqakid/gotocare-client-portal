@@ -192,6 +192,7 @@ export function BookingsTab({ onNavigate }: Props) {
       </div>
 
       <div
+        className="carehia-segmented-tabs"
         style={{
           display: 'flex',
           gap: 8,

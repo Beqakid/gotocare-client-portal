@@ -304,7 +304,7 @@ export function TeamTab({ onNavigate, onBadgeChange }: Props) {
         )}
       </section>
 
-      <div style={{ display: 'flex', gap: 8, margin: '0 18px 16px', padding: 4, border: '1px solid #E3E8F0', borderRadius: 14, background: '#FFFFFF', boxShadow: '0 10px 28px rgba(15,23,42,0.05)' }}>
+      <div className="carehia-segmented-tabs" style={{ display: 'flex', gap: 8, margin: '0 18px 16px', padding: 4, border: '1px solid #E3E8F0', borderRadius: 14, background: '#FFFFFF', boxShadow: '0 10px 28px rgba(15,23,42,0.05)' }}>
         {([
           ['saved', 'Offers', pending.length],
           ['active', 'Active', activeList.length],

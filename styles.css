@@ -66,7 +66,130 @@ input, textarea, button, select {
   -webkit-appearance: none;
 }
 
+button,
+a,
+input,
+textarea,
+select {
+  touch-action: manipulation;
+}
+
+button {
+  min-height: 40px;
+}
+
+input,
+textarea,
+select {
+  font-size: 16px;
+}
+
 /* Safe-area padding for iOS */
 .safe-bottom {
   padding-bottom: env(safe-area-inset-bottom, 16px);
+}
+
+.carehia-bottom-nav {
+  min-height: calc(68px + env(safe-area-inset-bottom, 0px));
+}
+
+.carehia-bottom-tab {
+  min-height: 64px;
+}
+
+.carehia-segmented-tabs {
+  overflow-x: auto;
+  scroll-snap-type: x proximity;
+}
+
+.carehia-segmented-tabs > button {
+  scroll-snap-align: center;
+}
+
+@media (max-width: 430px) {
+  .carehia-bottom-nav {
+    min-height: calc(72px + env(safe-area-inset-bottom, 0px));
+  }
+
+  .carehia-bottom-tab {
+    min-height: 68px;
+    padding-left: 2px !important;
+    padding-right: 2px !important;
+  }
+
+  .carehia-bottom-tab svg {
+    width: 19px;
+    height: 19px;
+  }
+
+  .carehia-bottom-tab span {
+    font-size: 9px !important;
+    max-width: 58px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .carehia-journey {
+    padding: 12px !important;
+  }
+
+  .carehia-journey-header {
+    align-items: stretch !important;
+  }
+
+  .carehia-journey-cta {
+    min-width: 104px;
+    min-height: 44px;
+  }
+
+  .carehia-journey-steps {
+    gap: 4px !important;
+  }
+
+  .carehia-journey-label {
+    font-size: 9px !important;
+    line-height: 1.05 !important;
+  }
+
+  .carehia-journey-bar {
+    height: 6px !important;
+  }
+
+  .carehia-decision-signals {
+    grid-template-columns: 1fr !important;
+  }
+
+  .carehia-decision-signals > div {
+    min-height: auto !important;
+  }
+
+  .carehia-decision-metrics {
+    grid-template-columns: 1fr !important;
+  }
+
+  .carehia-primary-actions,
+  .carehia-secondary-actions {
+    grid-template-columns: 1fr !important;
+    flex-direction: column !important;
+  }
+
+  .carehia-primary-actions button,
+  .carehia-secondary-actions button {
+    width: 100%;
+    min-height: 48px;
+  }
+}
+
+@media (max-width: 360px) {
+  .carehia-journey-header {
+    flex-direction: column !important;
+  }
+
+  .carehia-journey-cta {
+    width: 100%;
+  }
+
+  .carehia-journey-label {
+    font-size: 8px !important;
+  }
 }

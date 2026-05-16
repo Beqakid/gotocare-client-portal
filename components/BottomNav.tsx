@@ -32,7 +32,7 @@ const TABS: { id: TabId; label: string; icon: React.ReactNode }[] = [
 
 export function BottomNav({ active, onChange, teamBadge = 0 }: Props) {
   return (
-    <nav style={{
+    <nav className="carehia-bottom-nav" style={{
       position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 100,
       background: '#FFFFFF', borderTop: '1px solid #E2E8F0',
       display: 'flex', alignItems: 'stretch',
@@ -42,6 +42,7 @@ export function BottomNav({ active, onChange, teamBadge = 0 }: Props) {
       {TABS.map(tab => (
         <button
           key={tab.id}
+          className="carehia-bottom-tab"
           onClick={() => onChange(tab.id)}
           style={{
             flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center',

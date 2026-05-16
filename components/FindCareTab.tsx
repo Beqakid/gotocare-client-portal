@@ -1096,7 +1096,7 @@ function BestMatchCard({
   const scoreOffset = Math.max(0, Math.min(100, score));
 
   return (
-    <section style={{ background: '#122033', borderRadius: 10, padding: 16, color: '#FFFFFF', boxShadow: '0 16px 36px rgba(15,23,42,0.18)' }}>
+    <section className="carehia-best-match-card" style={{ background: '#122033', borderRadius: 10, padding: 16, color: '#FFFFFF', boxShadow: '0 16px 36px rgba(15,23,42,0.18)' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'flex-start', marginBottom: 14 }}>
         <div style={{ minWidth: 0 }}>
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: '#DCFCE7', color: '#087A3D', borderRadius: 999, padding: '6px 9px', fontSize: 11, fontWeight: 950 }}>
@@ -1115,21 +1115,21 @@ function BestMatchCard({
         <div style={{ width: `${scoreOffset}%`, height: '100%', borderRadius: 999, background: '#22C55E' }} />
       </div>
 
-      <div style={{ display: 'flex', gap: 13, alignItems: 'center', marginBottom: 14 }}>
+      <div className="carehia-best-match-summary" style={{ display: 'flex', gap: 13, alignItems: 'center', marginBottom: 14 }}>
         {avatarUrl && avatarUrl.startsWith('http') ? (
           <img src={avatarUrl} alt={caregiverName(person)} style={{ width: 58, height: 58, borderRadius: 16, objectFit: 'cover', border: '1px solid rgba(255,255,255,0.18)' }} />
         ) : (
           <div style={{ width: 58, height: 58, borderRadius: 16, background: 'rgba(255,255,255,0.12)', color: '#FFFFFF', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 17, fontWeight: 900, flexShrink: 0 }}>{caregiverInitials(person)}</div>
         )}
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+          <div className="carehia-decision-metrics" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
             <DecisionMetric label="Rate" value={`$${caregiverRate(person)}/hr`} tone="#A7F3D0" />
             <DecisionMetric label="Trust" value={`${caregiverRating(person)} rating`} tone="#E0E7FF" />
           </div>
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, marginBottom: 14 }}>
+      <div className="carehia-decision-signals" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, marginBottom: 14 }}>
         <DecisionSignal label="Needs fit" value={caregiverNeedFit(person, selectedNeeds)} />
         <DecisionSignal label="Price fit" value={caregiverRateFit(person)} />
         <DecisionSignal label="Trust fit" value={caregiverTrustFit(person)} />
@@ -1146,11 +1146,11 @@ function BestMatchCard({
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+      <div className="carehia-primary-actions" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
         <button onClick={() => onInterview(person)} style={{ padding: '13px 10px', background: '#FFFFFF', border: 'none', borderRadius: 8, color: '#122033', fontSize: 13, fontWeight: 950, cursor: 'pointer' }}>Interview best match</button>
         <button onClick={() => onHire(person)} style={{ padding: '13px 10px', background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.18)', borderRadius: 8, color: '#FFFFFF', fontSize: 13, fontWeight: 900, cursor: 'pointer' }}>Hire</button>
       </div>
-      <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+      <div className="carehia-secondary-actions" style={{ display: 'flex', gap: 8, marginTop: 8 }}>
         <button onClick={() => onSave(person)} style={{ flex: 1, padding: '10px', background: saved ? '#EAFBF2' : 'rgba(255,255,255,0.06)', border: `1px solid ${saved ? '#B7E8CA' : 'rgba(255,255,255,0.16)'}`, borderRadius: 8, color: saved ? '#087A3D' : '#E0E7FF', fontSize: 12, fontWeight: 850, cursor: 'pointer' }}>{saved ? 'Saved' : 'Save'}</button>
         <button onClick={() => onProfile(person)} style={{ flex: 1, padding: '10px', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.16)', borderRadius: 8, color: '#E0E7FF', fontSize: 12, fontWeight: 850, cursor: 'pointer' }}>Why this match?</button>
       </div>
