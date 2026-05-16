@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { getMyBookings, getMyTeam, getOnsiteCaregiver } from '../utils/api';
 import { getEmail, getName, getShortlistLocal, getToken } from '../utils/storage';
 import { Caregiver, TabId } from '../types';
+import { CareJourney } from './CareJourney';
 
 interface Props {
   onNavigate: (tab: TabId) => void;
@@ -224,6 +225,12 @@ export function HomeTab({ onNavigate }: Props) {
   }, [onsiteActive, onsiteStart]);
 
   const careBudget = team.reduce((sum, member) => sum + (member.hourlyRate || member.hourly_rate || 28), 0);
+  const journeyStage = getJourneyStage({
+    pendingAgreements,
+    upcoming,
+    teamCount: team.length,
+    hasShortlist: shortlistCount > 0,
+  });
 
   return (
     <div style={{ background: '#F6F8FB', minHeight: '100dvh', paddingBottom: 92, color: '#122033' }}>
@@ -258,6 +265,8 @@ export function HomeTab({ onNavigate }: Props) {
       </section>
 
       <main style={{ padding: '16px' }}>
+        <CareJourney stage={journeyStage} onNavigate={onNavigate} />
+
         <section
           onClick={() => onNavigate(onsiteActive ? 'team' : team.length ? 'team' : 'findcare')}
           style={{
@@ -404,4 +413,23 @@ function WorkflowButton({ title, body, action, onClick }: { title: string; body:
       <span style={{ fontSize: 12, color: '#315DDF', fontWeight: 850 }}>{action}</span>
     </button>
   );
+}
+
+function getJourneyStage({
+  pendingAgreements,
+  upcoming,
+  teamCount,
+  hasShortlist,
+}: {
+  pendingAgreements: TeamMember[];
+  upcoming: Booking | null;
+  teamCount: number;
+  hasShortlist: boolean;
+}) {
+  if (pendingAgreements.some(member => member.status === 'pending_client')) return 'signature' as const;
+  if (pendingAgreements.length > 0) return 'offer' as const;
+  if (teamCount > 0) return 'schedule' as const;
+  if (upcoming) return 'interview' as const;
+  if (hasShortlist) return 'interview' as const;
+  return 'search' as const;
 }

@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { getMyBookings, cancelBooking } from '../utils/api';
 import { getEmail, getToken } from '../utils/storage';
 import { TabId } from '../types';
+import { CareJourney } from './CareJourney';
 
 interface Booking {
   id: number;
@@ -183,7 +184,10 @@ export function BookingsTab({ onNavigate }: Props) {
         </div>
 
         {!loading && !error && bookings.length > 0 && (
-          <NextStepPanel nextStep={nextStep} onNavigate={onNavigate} />
+          <>
+            <CareJourney stage={getJourneyStage(bookings)} onNavigate={onNavigate} compact />
+            <NextStepPanel nextStep={nextStep} onNavigate={onNavigate} />
+          </>
         )}
       </div>
 
@@ -608,8 +612,8 @@ function matchesFilter(booking: Booking, filter: BookingFilter) {
 function getNextStep(bookings: Booking[]) {
   if (bookings.some(b => b.status === 'accepted' || b.status === 'hired')) {
     return {
-      title: 'Confirmed care is ready',
-      body: 'Open your care team to review caregiver details and prepare for the next visit.',
+      title: 'Interview confirmed',
+      body: 'After the conversation feels right, send a hire offer and track signatures in your care team.',
       cta: 'View team',
       tab: 'team' as TabId,
     };
@@ -688,4 +692,11 @@ function getGuidanceCopy(status: string) {
   if (status === 'declined') return 'This request was not accepted. You can continue searching for another match.';
   if (status === 'cancelled') return 'This request was cancelled. Search again when you are ready.';
   return 'We will keep this booking updated as the caregiver responds.';
+}
+
+function getJourneyStage(bookings: Booking[]) {
+  if (bookings.some(b => b.status === 'hired')) return 'schedule' as const;
+  if (bookings.some(b => b.status === 'accepted')) return 'offer' as const;
+  if (bookings.some(b => b.status === 'pending')) return 'interview' as const;
+  return 'search' as const;
 }

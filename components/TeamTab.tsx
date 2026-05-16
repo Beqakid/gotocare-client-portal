@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { getMyTeam, removeFromTeam, saveCareSchedule } from '../utils/api';
 import { getToken } from '../utils/storage';
 import { TabId, TeamTabId } from '../types';
+import { CareJourney } from './CareJourney';
 
 const API = 'https://gotocare-original.jjioji.workers.dev/api';
 const PRINT_BASE = 'https://gotocare-original.jjioji.workers.dev/api/hire-agreement';
@@ -112,6 +113,7 @@ export function TeamTab({ onNavigate, onBadgeChange }: Props) {
   const activeList = [...hired, ...active];
   const displayList = activeSubTab === 'saved' ? pending : activeSubTab === 'active' ? activeList : past;
   const actionRequired = pending.filter(m => memberStatus(m) === 'pending_client').length;
+  const unscheduledActive = activeList.filter(member => !scheduleMap[memberEmail(member)]).length;
 
   async function handleRemove(m: TeamMember) {
     const token = getToken();
@@ -288,6 +290,18 @@ export function TeamTab({ onNavigate, onBadgeChange }: Props) {
             </div>
           </button>
         )}
+
+        {!actionRequired && unscheduledActive > 0 && (
+          <button
+            onClick={() => setActiveSubTab('active')}
+            style={{ width: '100%', marginTop: 14, border: '1px solid #BBF7D0', borderRadius: 18, background: '#F0FDF4', padding: 15, textAlign: 'left', cursor: 'pointer' }}
+          >
+            <div style={{ color: '#087A3D', fontSize: 14, fontWeight: 900 }}>Schedule needed</div>
+            <div style={{ marginTop: 4, color: '#166534', fontSize: 13, lineHeight: 1.45 }}>
+              {unscheduledActive} active caregiver{unscheduledActive === 1 ? '' : 's'} need a weekly care schedule.
+            </div>
+          </button>
+        )}
       </section>
 
       <div style={{ display: 'flex', gap: 8, margin: '0 18px 16px', padding: 4, border: '1px solid #E3E8F0', borderRadius: 14, background: '#FFFFFF', boxShadow: '0 10px 28px rgba(15,23,42,0.05)' }}>
@@ -311,6 +325,7 @@ export function TeamTab({ onNavigate, onBadgeChange }: Props) {
 
       <main style={{ padding: '0 18px 18px' }}>
         {error && <ErrorBanner message={error} />}
+        <CareJourney stage={getJourneyStage({ pending, actionRequired, activeCount: activeList.length, unscheduledActive })} onNavigate={onNavigate} compact />
 
         {displayList.length === 0 ? (
           <EmptyState tab={activeSubTab} onFindCare={() => onNavigate('findcare')} />
@@ -790,6 +805,24 @@ function memberDate(m: TeamMember): string {
 
 function memberStatus(m: TeamMember): string {
   return m.status || 'active';
+}
+
+function getJourneyStage({
+  pending,
+  actionRequired,
+  activeCount,
+  unscheduledActive,
+}: {
+  pending: TeamMember[];
+  actionRequired: number;
+  activeCount: number;
+  unscheduledActive: number;
+}) {
+  if (actionRequired > 0) return 'signature' as const;
+  if (pending.length > 0) return 'offer' as const;
+  if (activeCount > 0 && unscheduledActive === 0) return 'active' as const;
+  if (activeCount > 0) return 'schedule' as const;
+  return 'search' as const;
 }
 
 function initials(value: string): string {

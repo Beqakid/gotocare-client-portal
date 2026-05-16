@@ -1,5 +1,5 @@
 import React, { useMemo, useState, useRef, useCallback } from 'react';
-import { Caregiver, CARE_CATEGORIES } from '../types';
+import { Caregiver, CARE_CATEGORIES, TabId } from '../types';
 import { searchCaregivers, bookInterview, hireCaregiver } from '../utils/api';
 import { getToken, getEmail, getName, setEmail as storeEmail, getLastLocation, setLastLocation, getLastCareTypes, setLastCareTypes, getShortlistLocal, setShortlistLocal, setBookingStatus } from '../utils/storage';
 import { reverseGeocode, syncShortlist } from '../utils/api';
@@ -728,6 +728,53 @@ export function FindCareTab({ onNavigate }: { onNavigate?: (tab: TabId) => void 
   // ── CONFIRM SCREEN ────────────────────────────────────────────────────
   if (screen === 'confirm' && confirmData) {
     const { name, date, time, type, email } = confirmData;
+    const timeLabels: Record<string, string> = { morning: '9-11 AM', afternoon: '12-3 PM', evening: '4-7 PM' };
+    const typeLabels: Record<string, string> = { video: 'Video call', inperson: 'In person' };
+    const dateFormatted = new Date(date + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+    return (
+      <div style={{ minHeight: '100dvh', paddingBottom: 'calc(92px + env(safe-area-inset-bottom,0px))', background: '#F6F8FB', color: '#0F172A' }}>
+        <section style={{ background: '#FFFFFF', borderBottom: '1px solid #E3E8F0', padding: '44px 18px 18px', textAlign: 'center' }}>
+          <div style={{ width: 64, height: 64, borderRadius: 22, background: '#F0FDF4', color: '#087A3D', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px', fontSize: 22, fontWeight: 950 }}>OK</div>
+          <h1 style={{ margin: 0, fontSize: 25, lineHeight: 1.12, fontWeight: 950 }}>Interview request sent</h1>
+          <div style={{ margin: '8px auto 0', maxWidth: 340, color: '#64748B', fontSize: 14, lineHeight: 1.5 }}>
+            {name} has been notified. You can track the request in Bookings and continue comparing caregivers while you wait.
+          </div>
+        </section>
+
+        <main style={{ padding: 16 }}>
+          <section style={{ background: '#FFFFFF', border: '1px solid #E3E8F0', borderRadius: 8, padding: 16, marginBottom: 14, boxShadow: '0 8px 24px rgba(15,23,42,0.05)' }}>
+            <div style={{ color: '#0F172A', fontSize: 15, fontWeight: 900, marginBottom: 10 }}>Request details</div>
+            {[['Caregiver', name], ['Date', dateFormatted], ['Time', timeLabels[time] || time], ['Format', typeLabels[type] || type], ['Email', email], ['Cost', 'Free interview']].map(([label, value]) => (
+              <div key={label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 14, padding: '8px 0', borderTop: '1px solid #EEF2F7' }}>
+                <span style={{ fontSize: 12, color: '#64748B', fontWeight: 800 }}>{label}</span>
+                <span style={{ fontSize: 12, fontWeight: 850, color: label === 'Cost' ? '#087A3D' : '#0F172A', textAlign: 'right', maxWidth: '62%' }}>{value}</span>
+              </div>
+            ))}
+          </section>
+
+          <section style={{ background: '#FFFFFF', border: '1px solid #E3E8F0', borderRadius: 8, padding: 16, marginBottom: 14 }}>
+            <div style={{ color: '#0F172A', fontSize: 15, fontWeight: 900, marginBottom: 12 }}>What happens next</div>
+            <ConfirmStep value="1" title="Caregiver confirms" body="You will see the interview move from pending to confirmed in Bookings." />
+            <ConfirmStep value="2" title="Interview and decide" body="If it feels right, send a hire offer from Find Care or your saved match." />
+            <ConfirmStep value="3" title="Activate the team" body="Once signatures are complete, set the weekly schedule from Team." />
+          </section>
+
+          <button onClick={() => onNavigate ? onNavigate('bookings') : setScreen('shortlist')} style={{ width: '100%', padding: 15, background: '#315DDF', border: 'none', borderRadius: 8, color: '#fff', fontSize: 15, fontWeight: 900, cursor: 'pointer', marginBottom: 10, boxShadow: '0 8px 20px rgba(49,93,223,0.22)' }}>
+            Track in Bookings
+          </button>
+          <button onClick={() => setScreen('shortlist')} style={{ width: '100%', padding: 14, background: '#FFFFFF', border: '1px solid #D8E1EC', borderRadius: 8, color: '#315DDF', fontSize: 14, fontWeight: 850, cursor: 'pointer', marginBottom: 10 }}>
+            Compare saved caregivers
+          </button>
+          <button onClick={() => setScreen('dispatch')} style={{ width: '100%', padding: 14, background: 'transparent', border: 'none', color: '#64748B', fontSize: 14, fontWeight: 800, cursor: 'pointer' }}>
+            Start a new search
+          </button>
+        </main>
+      </div>
+    );
+  }
+
+  if (false && screen === 'confirm' && confirmData) {
+    const { name, date, time, type, email } = confirmData;
     const timeLabels: Record<string, string> = { morning: '9 – 11 AM', afternoon: '12 – 3 PM', evening: '4 – 7 PM' };
     const typeLabels: Record<string, string> = { video: '📹 Video Call', inperson: '🏠 In Person' };
     const dateFormatted = new Date(date + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
@@ -1070,6 +1117,18 @@ function TrustMetric({ label, value }: { label: string; value: string }) {
     <div style={{ background: '#F8FAFC', border: '1px solid #E3E8F0', borderRadius: 8, padding: '10px 8px' }}>
       <div style={{ fontSize: 11, fontWeight: 900, color: '#0F172A' }}>{label}</div>
       <div style={{ fontSize: 11, color: '#64748B', marginTop: 2 }}>{value}</div>
+    </div>
+  );
+}
+
+function ConfirmStep({ value, title, body }: { value: string; title: string; body: string }) {
+  return (
+    <div style={{ display: 'flex', gap: 11, alignItems: 'flex-start', padding: '10px 0', borderTop: '1px solid #EEF2F7' }}>
+      <div style={{ width: 26, height: 26, borderRadius: 999, background: '#EEF4FF', color: '#315DDF', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 950, flex: '0 0 auto' }}>{value}</div>
+      <div style={{ minWidth: 0 }}>
+        <div style={{ color: '#0F172A', fontSize: 13, fontWeight: 900 }}>{title}</div>
+        <div style={{ color: '#64748B', fontSize: 12, lineHeight: 1.45, marginTop: 2 }}>{body}</div>
+      </div>
     </div>
   );
 }
