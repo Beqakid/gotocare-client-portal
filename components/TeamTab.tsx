@@ -1,9 +1,11 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { getMyTeam, removeFromTeam, saveCareSchedule } from '../utils/api';
 import { getToken } from '../utils/storage';
 import { TabId, TeamTabId } from '../types';
 
 const API = 'https://gotocare-original.jjioji.workers.dev/api';
+const PRINT_BASE = 'https://gotocare-original.jjioji.workers.dev/api/hire-agreement';
+const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
 interface TeamMember {
   id?: number;
@@ -21,7 +23,6 @@ interface TeamMember {
   hired_at?: string;
   status?: string;
   agreement_token?: string;
-  photoUrl?: string;
 }
 
 interface Props {
@@ -29,46 +30,26 @@ interface Props {
   onBadgeChange?: (count: number) => void;
 }
 
-function memberName(m: TeamMember): string {
-  return m.name || m.caregiver_name || 'Caregiver';
+interface ScheduleRecord {
+  caregiver_email?: string;
+  days?: string;
+  start_time?: string;
+  end_time?: string;
+  care_type?: string;
 }
-function memberEmail(m: TeamMember): string {
-  return m.email || m.caregiver_email || '';
-}
-function memberRate(m: TeamMember): number {
-  return m.hourlyRate || m.hourly_rate || m.caregiver_rate || 28;
-}
-function memberSpecialty(m: TeamMember): string {
-  return m.specialty || m.care_type || 'Home Care';
-}
-function memberDate(m: TeamMember): string {
-  const raw = m.hiredAt || m.hired_at || '';
-  if (!raw) return '';
-  try {
-    return new Date(raw).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-  } catch { return raw; }
-}
-function memberStatus(m: TeamMember): string {
-  return m.status || 'active';
-}
-
-const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-
-const PRINT_BASE = 'https://gotocare-original.jjioji.workers.dev/api/hire-agreement';
 
 export function TeamTab({ onNavigate, onBadgeChange }: Props) {
   const [activeSubTab, setActiveSubTab] = useState<TeamTabId>('active');
-  const [hired, setHired] = useState<TeamMember[]>([]);   // fully signed — Active tab
-  const [active, setActive] = useState<TeamMember[]>([]);  // accepted bookings — Active tab
+  const [hired, setHired] = useState<TeamMember[]>([]);
+  const [active, setActive] = useState<TeamMember[]>([]);
   const [past, setPast] = useState<TeamMember[]>([]);
-  const [pending, setPending] = useState<TeamMember[]>([]); // awaiting signatures — Saved tab
+  const [pending, setPending] = useState<TeamMember[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [removing, setRemoving] = useState<number | null>(null);
 
-  // Schedule modal state
   const [scheduleTarget, setScheduleTarget] = useState<TeamMember | null>(null);
-  const [scheduleMap, setScheduleMap] = useState<Record<string, any>>({});
+  const [scheduleMap, setScheduleMap] = useState<Record<string, ScheduleRecord>>({});
   const [scheduleDays, setScheduleDays] = useState<string[]>([]);
   const [scheduleStart, setScheduleStart] = useState('09:00');
   const [scheduleEnd, setScheduleEnd] = useState('17:00');
@@ -77,7 +58,6 @@ export function TeamTab({ onNavigate, onBadgeChange }: Props) {
   const [savingSchedule, setSavingSchedule] = useState(false);
   const [scheduleSuccess, setScheduleSuccess] = useState(false);
 
-  // Countersign modal state
   const [countersignTarget, setCountersignTarget] = useState<TeamMember | null>(null);
   const [countersignSig, setCountersignSig] = useState('');
   const [countersignLoading, setCountersignLoading] = useState(false);
@@ -87,80 +67,101 @@ export function TeamTab({ onNavigate, onBadgeChange }: Props) {
 
   const load = useCallback(async () => {
     const token = getToken();
-    if (!token) { setLoading(false); return; }
+    if (!token) {
+      setLoading(false);
+      return;
+    }
+
     try {
       const d = await getMyTeam(token);
       if (d.success) {
         setHired((d.hired || []) as TeamMember[]);
         setActive((d.active || []) as TeamMember[]);
         setPast((d.past || []) as TeamMember[]);
-        const pendingList = (d.pending || []) as TeamMember[];
+        const pendingList = ((d as any).pending || []) as TeamMember[];
         setPending(pendingList);
-        // Bubble up pending_client count for badge
-        const needsAction = pendingList.filter((m: TeamMember) => m.status === 'pending_client').length;
-        if (onBadgeChange) onBadgeChange(needsAction);
+        onBadgeChange?.(pendingList.filter(m => memberStatus(m) === 'pending_client').length);
         setError('');
-        // Also fetch care schedules for this client to display inline
-        try {
-          const sr = await fetch(`${API}/care-schedule?clientToken=${token}`);
-          const sd = await sr.json();
-          if (sd.success && Array.isArray(sd.schedules)) {
-            const map: Record<string, any> = {};
-            for (const s of sd.schedules) { if (s.caregiver_email) map[s.caregiver_email] = s; }
-            setScheduleMap(map);
-          }
-        } catch (_) {}
       }
-    } catch { setError('Could not load your care team.'); }
-    finally { setLoading(false); }
+
+      try {
+        const res = await fetch(`${API}/care-schedule?clientToken=${encodeURIComponent(token)}`);
+        const data = await res.json();
+        if (data.success && Array.isArray(data.schedules)) {
+          const map: Record<string, ScheduleRecord> = {};
+          data.schedules.forEach((item: ScheduleRecord) => {
+            if (item.caregiver_email) map[item.caregiver_email] = item;
+          });
+          setScheduleMap(map);
+        }
+      } catch {}
+    } catch {
+      setError('Could not load your care team.');
+    } finally {
+      setLoading(false);
+    }
   }, [onBadgeChange]);
 
   useEffect(() => { load(); }, [load]);
 
-  // Auto-switch to Saved tab if there are pending_client items on load
   useEffect(() => {
-    const needsAction = pending.filter(m => m.status === 'pending_client').length;
-    if (needsAction > 0 && activeSubTab === 'active') {
-      setActiveSubTab('saved');
-    }
+    const needsAction = pending.filter(m => memberStatus(m) === 'pending_client').length;
+    if (needsAction > 0 && activeSubTab === 'active') setActiveSubTab('saved');
   }, [pending]);
+
+  const activeList = [...hired, ...active];
+  const displayList = activeSubTab === 'saved' ? pending : activeSubTab === 'active' ? activeList : past;
+  const actionRequired = pending.filter(m => memberStatus(m) === 'pending_client').length;
 
   async function handleRemove(m: TeamMember) {
     const token = getToken();
     const id = m.caregiver_id || m.id;
     if (!token || !id) return;
     if (!confirm(`Remove ${memberName(m)} from your Care Team?`)) return;
+
     setRemoving(id);
     try {
       await removeFromTeam(token, id);
-      load();
-    } catch { alert('Could not remove caregiver. Please try again.'); }
-    finally { setRemoving(null); }
+      await load();
+    } catch {
+      alert('Could not remove caregiver. Please try again.');
+    } finally {
+      setRemoving(null);
+    }
   }
 
   function openSchedule(m: TeamMember) {
+    const existing = scheduleMap[memberEmail(m)];
     setScheduleTarget(m);
-    setScheduleDays([]);
-    setScheduleStart('09:00');
-    setScheduleEnd('17:00');
+    setScheduleDays(existing?.days ? existing.days.split(',').map(d => d.trim()).filter(Boolean) : []);
+    setScheduleStart(existing?.start_time || '09:00');
+    setScheduleEnd(existing?.end_time || '17:00');
     setScheduleNotes('');
     setScheduleRecurring(true);
     setScheduleSuccess(false);
   }
 
   function toggleDay(day: string) {
-    setScheduleDays(prev =>
-      prev.includes(day) ? prev.filter(d => d !== day) : [...prev, day]
-    );
+    setScheduleDays(prev => prev.includes(day) ? prev.filter(d => d !== day) : [...prev, day]);
   }
 
   async function handleSaveSchedule() {
     if (!scheduleTarget) return;
     const token = getToken();
     const email = memberEmail(scheduleTarget);
-    if (!token || !email) { alert('Missing caregiver contact info.'); return; }
-    if (scheduleDays.length === 0) { alert('Please select at least one day.'); return; }
-    if (scheduleStart >= scheduleEnd) { alert('End time must be after start time.'); return; }
+    if (!token || !email) {
+      alert('Missing caregiver contact info.');
+      return;
+    }
+    if (scheduleDays.length === 0) {
+      alert('Please select at least one day.');
+      return;
+    }
+    if (scheduleStart >= scheduleEnd) {
+      alert('End time must be after start time.');
+      return;
+    }
+
     setSavingSchedule(true);
     try {
       const d = await saveCareSchedule({
@@ -173,14 +174,22 @@ export function TeamTab({ onNavigate, onBadgeChange }: Props) {
         notes: scheduleNotes,
         isRecurring: scheduleRecurring,
       });
+
       if (d.success) {
         setScheduleSuccess(true);
-        setTimeout(() => { setScheduleTarget(null); setScheduleSuccess(false); }, 2200);
+        await load();
+        setTimeout(() => {
+          setScheduleTarget(null);
+          setScheduleSuccess(false);
+        }, 1700);
       } else {
         alert('Could not save schedule. Please try again.');
       }
-    } catch { alert('Network error. Please try again.'); }
-    finally { setSavingSchedule(false); }
+    } catch {
+      alert('Network error. Please try again.');
+    } finally {
+      setSavingSchedule(false);
+    }
   }
 
   function openCountersign(m: TeamMember) {
@@ -192,13 +201,14 @@ export function TeamTab({ onNavigate, onBadgeChange }: Props) {
   }
 
   async function handleCountersign() {
-    if (!countersignTarget || !countersignTarget.agreement_token) return;
+    if (!countersignTarget?.agreement_token) return;
     const token = getToken();
     if (!token) return;
-    if (!countersignSig.trim() || countersignSig.trim().length < 3) {
+    if (countersignSig.trim().length < 3) {
       setCountersignError('Please enter your full legal name to sign.');
       return;
     }
+
     setCountersignLoading(true);
     setCountersignError('');
     try {
@@ -215,442 +225,634 @@ export function TeamTab({ onNavigate, onBadgeChange }: Props) {
       if (data.success) {
         setSignedAgreementToken(data.agreementToken || countersignTarget.agreement_token || '');
         setCountersignSuccess(true);
-        // Refresh team data and switch to Active tab
         await load();
         setTimeout(() => {
           setCountersignTarget(null);
           setCountersignSuccess(false);
-          setActiveSubTab('active'); // Move to Active tab — caregiver is now on the team
-        }, 3500);
+          setActiveSubTab('active');
+        }, 2500);
       } else {
         setCountersignError(data.error || 'Something went wrong. Please try again.');
       }
     } catch {
-      setCountersignError('Network error — please try again.');
+      setCountersignError('Network error. Please try again.');
+    } finally {
+      setCountersignLoading(false);
     }
-    setCountersignLoading(false);
   }
 
-  // Tab display logic:
-  // 💜 Saved → pending agreements (pending_caregiver + pending_client)
-  // ✅ Active → fully signed hires (hired) + accepted bookings (active)
-  // 📋 Past → removed/completed
-  const activeList = [...hired, ...active];
-  const displayList = activeSubTab === 'saved' ? pending : activeSubTab === 'active' ? activeList : past;
-
-  // Counts for tab badges
-  const savedCount = pending.length;
-  const activeCount = activeList.length;
-  const pastCount = past.length;
-
-  // Pending_client count — needs user action
-  const actionRequired = pending.filter(m => m.status === 'pending_client').length;
-
-  if (loading) return <TabShell><LoadingCard /></TabShell>;
+  if (loading) return <TeamShell><LoadingCard /></TeamShell>;
 
   const token = getToken();
-  if (!token) return (
-    <TabShell>
-      <GuestCTA label="Sign in to manage your Care Team" onFindCare={() => onNavigate('findcare')} />
-    </TabShell>
-  );
+  if (!token) {
+    return (
+      <TeamShell>
+        <GuestCTA onFindCare={() => onNavigate('findcare')} />
+      </TeamShell>
+    );
+  }
 
   return (
-    <div style={{ background: '#F8FAFC', minHeight: '100dvh', paddingBottom: 90 }}>
-      {/* Header */}
-      <div style={{ background: 'linear-gradient(160deg,#1a1a2e 0%,#2d1b69 55%,#1e3a5f 100%)', padding: '52px 20px 24px' }}>
-        <div style={{ fontSize: 22, fontWeight: 800, color: '#fff', marginBottom: 4 }}>My Care Team</div>
-        <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.6)' }}>{activeList.length} active caregiver{activeList.length !== 1 ? 's' : ''}</div>
-      </div>
-
-      {/* Action required banner — shows when caregiver has signed and client hasn't yet */}
-      {actionRequired > 0 && (
-        <div
-          onClick={() => setActiveSubTab('saved')}
-          style={{ background: 'linear-gradient(135deg,#7C5CFF,#4A90E2)', margin: '12px 16px 0', borderRadius: 14, padding: '14px 16px', display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer', boxShadow: '0 4px 16px rgba(124,92,255,0.3)' }}
-        >
-          <div style={{ fontSize: 28 }}>✍️</div>
-          <div style={{ flex: 1 }}>
-            <div style={{ fontSize: 14, fontWeight: 800, color: '#fff' }}>Action Required</div>
-            <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.8)', marginTop: 2 }}>
-              {actionRequired} caregiver{actionRequired > 1 ? 's have' : ' has'} signed — your countersignature needed
+    <div style={{ background: '#F6F8FB', minHeight: '100dvh', paddingBottom: 92, color: '#0F172A' }}>
+      <section style={{ padding: '28px 18px 14px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', gap: 14, alignItems: 'flex-start' }}>
+          <div>
+            <h1 style={{ margin: 0, fontSize: 26, lineHeight: 1.12, fontWeight: 900 }}>Care Team</h1>
+            <div style={{ marginTop: 7, color: '#64748B', fontSize: 14, lineHeight: 1.45 }}>
+              Manage hire offers, active caregivers, and weekly schedules.
             </div>
           </div>
-          <div style={{ color: 'rgba(255,255,255,0.7)', fontSize: 18 }}>›</div>
-        </div>
-      )}
-
-      {/* Sub-tabs */}
-      <div style={{ display: 'flex', background: '#fff', borderBottom: '1px solid #E2E8F0', overflow: 'hidden', marginTop: 12 }}>
-        {([
-          ['saved', '💜 Saved', savedCount],
-          ['active', '✅ Active', activeCount],
-          ['past', '📋 Past', pastCount],
-        ] as [TeamTabId, string, number][]).map(([id, label, count]) => (
-          <button key={id} onClick={() => setActiveSubTab(id)} style={{ flex: 1, padding: '14px 6px', background: 'none', border: 'none', borderBottom: activeSubTab === id ? '2.5px solid #7C5CFF' : '2.5px solid transparent', color: activeSubTab === id ? '#7C5CFF' : '#94A3B8', fontSize: 13, fontWeight: activeSubTab === id ? 700 : 500, cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, position: 'relative' }}>
-            {label}
-            {count > 0 && (
-              <span style={{ fontSize: 10, background: activeSubTab === id ? '#7C5CFF' : '#E2E8F0', color: activeSubTab === id ? '#fff' : '#94A3B8', borderRadius: 50, padding: '1px 6px', fontWeight: 700 }}>{count}</span>
-            )}
-            {/* Red dot on Saved tab when action required */}
-            {id === 'saved' && actionRequired > 0 && activeSubTab !== 'saved' && (
-              <div style={{ position: 'absolute', top: 8, right: '30%', width: 8, height: 8, borderRadius: '50%', background: '#EF4444', border: '1.5px solid #fff' }} />
-            )}
+          <button
+            onClick={() => onNavigate('findcare')}
+            aria-label="Find another caregiver"
+            style={{ width: 44, height: 44, borderRadius: 14, border: '1px solid #CAD5E2', background: '#FFFFFF', color: '#315DDF', fontSize: 24, fontWeight: 600, cursor: 'pointer', boxShadow: '0 8px 24px rgba(15,23,42,0.07)' }}
+          >
+            +
           </button>
-        ))}
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10, marginTop: 20 }}>
+          <MetricCard label="Offers" value={pending.length} color="#B45309" />
+          <MetricCard label="Active" value={activeList.length} color="#087A3D" />
+          <MetricCard label="Past" value={past.length} color="#315DDF" />
+        </div>
+
+        {actionRequired > 0 && (
+          <button
+            onClick={() => setActiveSubTab('saved')}
+            style={{ width: '100%', marginTop: 14, border: '1px solid #FED7AA', borderRadius: 18, background: '#FFF7ED', padding: 15, textAlign: 'left', cursor: 'pointer' }}
+          >
+            <div style={{ color: '#9A3412', fontSize: 14, fontWeight: 900 }}>Signature needed</div>
+            <div style={{ marginTop: 4, color: '#B45309', fontSize: 13, lineHeight: 1.45 }}>
+              {actionRequired} agreement{actionRequired === 1 ? '' : 's'} can be activated after your countersignature.
+            </div>
+          </button>
+        )}
+      </section>
+
+      <div style={{ display: 'flex', gap: 8, margin: '0 18px 16px', padding: 4, border: '1px solid #E3E8F0', borderRadius: 14, background: '#FFFFFF', boxShadow: '0 10px 28px rgba(15,23,42,0.05)' }}>
+        {([
+          ['saved', 'Offers', pending.length],
+          ['active', 'Active', activeList.length],
+          ['past', 'Past', past.length],
+        ] as [TeamTabId, string, number][]).map(([id, label, count]) => {
+          const selected = activeSubTab === id;
+          return (
+            <button
+              key={id}
+              onClick={() => setActiveSubTab(id)}
+              style={{ flex: 1, minHeight: 40, border: 'none', borderRadius: 11, background: selected ? '#315DDF' : 'transparent', color: selected ? '#FFFFFF' : '#64748B', fontSize: 13, fontWeight: 850, cursor: 'pointer' }}
+            >
+              {label}{count ? ` ${count}` : ''}
+            </button>
+          );
+        })}
       </div>
 
-      <div style={{ padding: '16px' }}>
-        {error && <div style={{ background: '#FEF2F2', border: '1px solid #FECACA', borderRadius: 12, padding: '12px 14px', color: '#DC2626', fontSize: 13, marginBottom: 14 }}>{error}</div>}
+      <main style={{ padding: '0 18px 18px' }}>
+        {error && <ErrorBanner message={error} />}
 
-        {/* Empty states */}
         {displayList.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '60px 20px' }}>
-            <div style={{ fontSize: 56, marginBottom: 16 }}>{activeSubTab === 'saved' ? '💜' : activeSubTab === 'active' ? '✅' : '📋'}</div>
-            <div style={{ fontSize: 18, fontWeight: 700, color: '#0F172A', marginBottom: 8 }}>
-              {activeSubTab === 'saved' ? 'No pending agreements' : activeSubTab === 'active' ? 'No active caregivers yet' : 'No past caregivers yet'}
-            </div>
-            <div style={{ fontSize: 14, color: '#475569', marginBottom: 24, lineHeight: 1.6 }}>
-              {activeSubTab === 'saved' ? 'Hire agreements you send will appear here while awaiting signatures' : activeSubTab === 'active' ? 'Caregivers with signed agreements will appear here' : 'Caregivers who have completed shifts will appear here'}
-            </div>
-            <button onClick={() => onNavigate('findcare')} style={{ background: 'linear-gradient(135deg,#7C5CFF,#4A90E2)', color: '#fff', border: 'none', borderRadius: 12, padding: '12px 24px', fontSize: 14, fontWeight: 700, cursor: 'pointer' }}>Find a Caregiver →</button>
-          </div>
+          <EmptyState tab={activeSubTab} onFindCare={() => onNavigate('findcare')} />
         ) : (
           <>
-            {displayList.map((m, i) => {
-              const name = memberName(m);
-              const specialty = memberSpecialty(m);
-              const rate = memberRate(m);
-              const date = memberDate(m);
-              const email = memberEmail(m);
-              const id = m.caregiver_id || m.id || i;
-              const status = memberStatus(m);
-              const initials = name.split(' ').map((w: string) => w[0]).join('').toUpperCase().slice(0, 2);
-              const removingId = m.caregiver_id || m.id;
-
-              // Status badge config
-              const statusConfig: Record<string, { label: string; bg: string; color: string; borderColor: string }> = {
-                'pending_caregiver': { label: '⏳ Awaiting caregiver signature', bg: '#FEF9C3', color: '#92400E', borderColor: '#FDE68A' },
-                'pending_client': { label: '✍️ Your signature required', bg: '#EDE9FE', color: '#5B21B6', borderColor: '#DDD6FE' },
-                'active': { label: '✅ Active', bg: '#F0FDF4', color: '#166534', borderColor: '#BBF7D0' },
-                'declined': { label: '❌ Declined', bg: '#FEF2F2', color: '#991B1B', borderColor: '#FECACA' },
-              };
-              const sc = statusConfig[status] || statusConfig['active'];
-
-              return (
-                <div key={id} style={{ background: '#fff', borderRadius: 18, border: '1.5px solid #E2E8F0', overflow: 'hidden', marginBottom: 14, boxShadow: '0 2px 12px rgba(15,23,42,0.05)' }}>
-                  {/* Status bar */}
-                  <div style={{ height: 3, background: status === 'active' ? '#22C55E' : status === 'pending_client' ? '#7C5CFF' : status === 'declined' ? '#EF4444' : '#F59E0B' }} />
-                  <div style={{ padding: '16px' }}>
-                    <div style={{ display: 'flex', gap: 14, alignItems: 'flex-start' }}>
-                      <div style={{ width: 56, height: 56, borderRadius: '50%', background: 'linear-gradient(135deg,#7C5CFF,#4A90E2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, fontWeight: 800, color: '#fff', flexShrink: 0, border: '2px solid rgba(124,92,255,0.3)' }}>{initials}</div>
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ fontSize: 16, fontWeight: 800, color: '#0F172A', marginBottom: 4 }}>{name}</div>
-
-                        {/* Status badge */}
-                        <div style={{ display: 'inline-flex', alignItems: 'center', background: sc.bg, border: `1px solid ${sc.borderColor}`, borderRadius: 20, padding: '3px 10px', fontSize: 12, fontWeight: 700, color: sc.color, marginBottom: 8 }}>
-                          {sc.label}
-                        </div>
-
-                        <div style={{ fontSize: 13, color: '#475569', marginBottom: 2 }}>{specialty}</div>
-                        <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-                          <span style={{ fontSize: 13, fontWeight: 600, color: '#22C55E' }}>${rate}/hr</span>
-                          {date && <span style={{ fontSize: 12, color: '#94A3B8' }}>Since {date}</span>}
-                        </div>
-
-                        {/* Action buttons */}
-                        <div style={{ marginTop: 12, display: 'flex', flexDirection: 'column', gap: 8 }}>
-
-                          {/* ✍️ Countersign button — only for pending_client */}
-                          {status === 'pending_client' && m.agreement_token && (
-                            <button
-                              onClick={() => openCountersign(m)}
-                              style={{ width: '100%', padding: '12px', background: 'linear-gradient(135deg,#7C5CFF,#4A90E2)', border: 'none', borderRadius: 10, color: '#fff', fontSize: 14, fontWeight: 700, cursor: 'pointer', boxShadow: '0 4px 12px rgba(124,92,255,0.35)' }}
-                            >
-                              ✍️ Sign Agreement — Activate Hire
-                            </button>
-                          )}
-
-                          {/* Set Schedule + Print Agreement — for active */}
-                          {status === 'active' && (
-                            <>
-                              <button
-                                onClick={() => openSchedule(m)}
-                                style={{ width: '100%', padding: '11px', background: 'linear-gradient(135deg,#7C5CFF,#4A90E2)', border: 'none', borderRadius: 10, color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
-                              >
-                              {/* Inline schedule display — auto-populated from hire agreement */}
-                              {scheduleMap[email] && (() => {
-                                const sched = scheduleMap[email];
-                                const dayStr = sched.days ? sched.days.split(',').join(' · ') : '';
-                                return (
-                                  <div style={{ background: 'linear-gradient(135deg,rgba(124,92,255,0.06),rgba(74,144,226,0.04))', border: '1.5px solid rgba(124,92,255,0.2)', borderRadius: 12, padding: '10px 14px', marginBottom: 8 }}>
-                                    <div style={{ fontSize: 11, fontWeight: 700, color: '#7C5CFF', marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Confirmed Schedule</div>
-                                    <div style={{ fontSize: 13, color: '#0F172A', fontWeight: 600 }}>
-                                      {dayStr || 'Days TBD'}
-                                    </div>
-                                    <div style={{ fontSize: 12, color: '#475569', marginTop: 2 }}>
-                                      {sched.start_time} – {sched.end_time}
-                                      {sched.care_type ? ` · ${sched.care_type}` : ''}
-                                    </div>
-                                  </div>
-                                );
-                              })()}
-                                📅 Set Care Schedule
-                              </button>
-                              {m.agreement_token && (
-                                <a
-                                  href={`${PRINT_BASE}?token=${m.agreement_token}&format=html`}
-                                  target="_blank"
-                                  rel="noreferrer"
-                                  style={{ width: '100%', padding: '10px', background: '#F0FDF4', border: '1px solid #BBF7D0', borderRadius: 10, color: '#166534', fontSize: 13, fontWeight: 700, textDecoration: 'none', textAlign: 'center', display: 'block' }}
-                                >
-                                  🖨️ View / Print Signed Agreement
-                                </a>
-                              )}
-                            </>
-                          )}
-
-                          <div style={{ display: 'flex', gap: 8 }}>
-                            {email && (
-                              <a
-                                href={`mailto:${email}`}
-                                style={{ flex: 1, padding: '10px', background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: 10, color: '#7C5CFF', fontSize: 13, fontWeight: 700, textDecoration: 'none', textAlign: 'center', display: 'block' }}
-                              >
-                                ✉️ Message
-                              </a>
-                            )}
-                            {status !== 'declined' && (
-                              <button
-                                onClick={() => handleRemove(m)}
-                                disabled={removing === removingId}
-                                style={{ flex: email ? '0 0 auto' : 1, padding: '10px 14px', background: 'none', border: '1px solid #FECACA', borderRadius: 10, color: '#DC2626', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}
-                              >
-                                {removing === removingId ? '⏳...' : '✕ Remove'}
-                              </button>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-
-            <button onClick={() => onNavigate('findcare')} style={{ width: '100%', padding: '14px', background: 'linear-gradient(135deg,rgba(124,92,255,0.08),rgba(74,144,226,0.08))', border: '1.5px dashed #C4B5FD', borderRadius: 16, color: '#7C5CFF', fontSize: 14, fontWeight: 700, cursor: 'pointer', marginTop: 4 }}>+ Add Another Caregiver</button>
+            {displayList.map((member, index) => (
+              <TeamMemberCard
+                key={member.caregiver_id || member.id || index}
+                member={member}
+                schedule={scheduleMap[memberEmail(member)]}
+                removing={removing === (member.caregiver_id || member.id)}
+                onCountersign={openCountersign}
+                onSchedule={openSchedule}
+                onRemove={handleRemove}
+              />
+            ))}
+            <button
+              onClick={() => onNavigate('findcare')}
+              style={{ width: '100%', minHeight: 52, marginTop: 4, border: '1px dashed #A9B8D0', borderRadius: 16, background: '#FFFFFF', color: '#315DDF', fontSize: 14, fontWeight: 850, cursor: 'pointer' }}
+            >
+              Add another caregiver
+            </button>
           </>
         )}
-      </div>
+      </main>
 
-      {/* ── Schedule Modal ── */}
       {scheduleTarget && (
-        <div
-          onClick={() => { if (!savingSchedule) setScheduleTarget(null); }}
-          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)', zIndex: 9000, display: 'flex', alignItems: 'flex-end' }}
-        >
-          <div
-            onClick={e => e.stopPropagation()}
-            style={{ width: '100%', background: '#fff', borderRadius: '24px 24px 0 0', padding: '0 0 32px', maxHeight: '92dvh', overflowY: 'auto' }}
-          >
-            <div style={{ textAlign: 'center', padding: '12px 0 0' }}>
-              <div style={{ width: 40, height: 4, borderRadius: 2, background: '#E2E8F0', display: 'inline-block' }} />
-            </div>
-            <div style={{ padding: '16px 20px 0' }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
-                <div>
-                  <div style={{ fontSize: 18, fontWeight: 800, color: '#0F172A' }}>Set Care Schedule</div>
-                  <div style={{ fontSize: 13, color: '#7C5CFF', fontWeight: 600, marginTop: 2 }}>with {memberName(scheduleTarget)}</div>
-                </div>
-                <button onClick={() => setScheduleTarget(null)} style={{ background: '#F1F5F9', border: 'none', borderRadius: 50, width: 32, height: 32, cursor: 'pointer', fontSize: 16, color: '#64748B', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
-              </div>
-
-              {scheduleSuccess ? (
-                <div style={{ textAlign: 'center', padding: '40px 20px' }}>
-                  <div style={{ fontSize: 56, marginBottom: 12 }}>🎉</div>
-                  <div style={{ fontSize: 18, fontWeight: 800, color: '#0F172A', marginBottom: 6 }}>Schedule Saved!</div>
-                  <div style={{ fontSize: 14, color: '#475569' }}>Your care schedule with {memberName(scheduleTarget)} has been set.</div>
-                </div>
-              ) : (
-                <>
-                  <div style={{ marginBottom: 20 }}>
-                    <div style={{ fontSize: 13, fontWeight: 700, color: '#0F172A', marginBottom: 10 }}>Days of Care</div>
-                    <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                      {DAYS.map(day => (
-                        <button key={day} onClick={() => toggleDay(day)} style={{ padding: '8px 14px', borderRadius: 50, border: scheduleDays.includes(day) ? 'none' : '1.5px solid #E2E8F0', background: scheduleDays.includes(day) ? 'linear-gradient(135deg,#7C5CFF,#4A90E2)' : '#F8FAFC', color: scheduleDays.includes(day) ? '#fff' : '#475569', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
-                          {day}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                  <div style={{ marginBottom: 20 }}>
-                    <div style={{ fontSize: 13, fontWeight: 700, color: '#0F172A', marginBottom: 10 }}>Care Hours</div>
-                    <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
-                      <div style={{ flex: 1 }}>
-                        <label style={{ fontSize: 11, color: '#94A3B8', fontWeight: 600, display: 'block', marginBottom: 4 }}>START TIME</label>
-                        <input type="time" value={scheduleStart} onChange={e => setScheduleStart(e.target.value)} style={{ width: '100%', padding: '12px', border: '1.5px solid #E2E8F0', borderRadius: 10, fontSize: 15, fontWeight: 600, color: '#0F172A', background: '#F8FAFC', boxSizing: 'border-box' }} />
-                      </div>
-                      <div style={{ fontSize: 14, color: '#94A3B8', fontWeight: 600, marginTop: 16 }}>to</div>
-                      <div style={{ flex: 1 }}>
-                        <label style={{ fontSize: 11, color: '#94A3B8', fontWeight: 600, display: 'block', marginBottom: 4 }}>END TIME</label>
-                        <input type="time" value={scheduleEnd} onChange={e => setScheduleEnd(e.target.value)} style={{ width: '100%', padding: '12px', border: '1.5px solid #E2E8F0', borderRadius: 10, fontSize: 15, fontWeight: 600, color: '#0F172A', background: '#F8FAFC', boxSizing: 'border-box' }} />
-                      </div>
-                    </div>
-                  </div>
-                  <div style={{ marginBottom: 20, display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: '#F8FAFC', border: '1.5px solid #E2E8F0', borderRadius: 12, padding: '14px 16px' }}>
-                    <div>
-                      <div style={{ fontSize: 14, fontWeight: 700, color: '#0F172A' }}>Recurring Schedule</div>
-                      <div style={{ fontSize: 12, color: '#94A3B8', marginTop: 2 }}>Repeat weekly on selected days</div>
-                    </div>
-                    <button onClick={() => setScheduleRecurring(r => !r)} style={{ width: 48, height: 28, borderRadius: 14, background: scheduleRecurring ? 'linear-gradient(135deg,#7C5CFF,#4A90E2)' : '#E2E8F0', border: 'none', cursor: 'pointer', position: 'relative', flexShrink: 0 }}>
-                      <div style={{ width: 20, height: 20, borderRadius: '50%', background: '#fff', position: 'absolute', top: 4, left: scheduleRecurring ? 24 : 4, boxShadow: '0 1px 4px rgba(0,0,0,0.2)' }} />
-                    </button>
-                  </div>
-                  <div style={{ marginBottom: 24 }}>
-                    <div style={{ fontSize: 13, fontWeight: 700, color: '#0F172A', marginBottom: 8 }}>Notes (optional)</div>
-                    <textarea value={scheduleNotes} onChange={e => setScheduleNotes(e.target.value)} placeholder="Any special instructions for the caregiver..." rows={3} style={{ width: '100%', padding: '12px', border: '1.5px solid #E2E8F0', borderRadius: 12, fontSize: 14, color: '#0F172A', background: '#F8FAFC', resize: 'none', boxSizing: 'border-box', fontFamily: 'inherit' }} />
-                  </div>
-                  <button onClick={handleSaveSchedule} disabled={savingSchedule || scheduleDays.length === 0} style={{ width: '100%', padding: '16px', background: scheduleDays.length === 0 ? '#E2E8F0' : 'linear-gradient(135deg,#7C5CFF,#4A90E2)', border: 'none', borderRadius: 14, color: scheduleDays.length === 0 ? '#94A3B8' : '#fff', fontSize: 15, fontWeight: 800, cursor: scheduleDays.length === 0 ? 'not-allowed' : 'pointer', boxShadow: scheduleDays.length > 0 ? '0 4px 16px rgba(124,92,255,0.3)' : 'none' }}>
-                    {savingSchedule ? '⏳ Saving Schedule...' : '📅 Confirm Schedule'}
-                  </button>
-                </>
-              )}
-            </div>
-          </div>
-        </div>
+        <ScheduleModal
+          target={scheduleTarget}
+          days={scheduleDays}
+          start={scheduleStart}
+          end={scheduleEnd}
+          notes={scheduleNotes}
+          recurring={scheduleRecurring}
+          saving={savingSchedule}
+          success={scheduleSuccess}
+          onClose={() => !savingSchedule && setScheduleTarget(null)}
+          onToggleDay={toggleDay}
+          onStart={setScheduleStart}
+          onEnd={setScheduleEnd}
+          onNotes={setScheduleNotes}
+          onRecurring={() => setScheduleRecurring(v => !v)}
+          onSave={handleSaveSchedule}
+        />
       )}
 
-      {/* ── Countersign Modal ── */}
       {countersignTarget && (
-        <div
-          onClick={() => { if (!countersignLoading) setCountersignTarget(null); }}
-          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', zIndex: 9100, display: 'flex', alignItems: 'flex-end' }}
-        >
-          <div
-            onClick={e => e.stopPropagation()}
-            style={{ width: '100%', background: '#fff', borderRadius: '24px 24px 0 0', padding: '0 0 40px', maxHeight: '85dvh', overflowY: 'auto' }}
-          >
-            <div style={{ textAlign: 'center', padding: '12px 0 0' }}>
-              <div style={{ width: 40, height: 4, borderRadius: 2, background: '#E2E8F0', display: 'inline-block' }} />
-            </div>
-
-            <div style={{ padding: '16px 20px 0' }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
-                <div>
-                  <div style={{ fontSize: 18, fontWeight: 800, color: '#0F172A' }}>✍️ Countersign Agreement</div>
-                  <div style={{ fontSize: 13, color: '#7C5CFF', fontWeight: 600, marginTop: 2 }}>with {memberName(countersignTarget)}</div>
-                </div>
-                {!countersignLoading && (
-                  <button onClick={() => setCountersignTarget(null)} style={{ background: '#F1F5F9', border: 'none', borderRadius: 50, width: 32, height: 32, cursor: 'pointer', fontSize: 16, color: '#64748B', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
-                )}
-              </div>
-
-              {countersignSuccess ? (
-                <div style={{ textAlign: 'center', padding: '32px 16px' }}>
-                  <div style={{ fontSize: 56, marginBottom: 16 }}>🎉</div>
-                  <div style={{ fontSize: 20, fontWeight: 800, color: '#0F172A', marginBottom: 8 }}>Agreement Active!</div>
-                  <div style={{ fontSize: 14, color: '#475569', lineHeight: 1.6, marginBottom: 20 }}>
-                    Your agreement with <strong>{memberName(countersignTarget)}</strong> is now fully signed and active.
-                    A copy has been emailed to both of you.
-                  </div>
-                  {signedAgreementToken && (
-                    <a
-                      href={`${PRINT_BASE}?token=${signedAgreementToken}&format=html`}
-                      target="_blank"
-                      rel="noreferrer"
-                      style={{ display: 'inline-block', padding: '12px 24px', background: '#22C55E', color: '#fff', borderRadius: 10, fontSize: 14, fontWeight: 700, textDecoration: 'none' }}
-                    >
-                      🖨️ View & Print Signed Agreement
-                    </a>
-                  )}
-                </div>
-              ) : (
-                <>
-                  {/* Info box */}
-                  <div style={{ background: '#EFF6FF', borderRadius: 12, padding: '14px 16px', marginBottom: 20, border: '1px solid #BFDBFE' }}>
-                    <div style={{ fontSize: 13, fontWeight: 700, color: '#1D4ED8', marginBottom: 6 }}>{memberName(countersignTarget)} has signed!</div>
-                    <div style={{ fontSize: 13, color: '#1E3A8A', lineHeight: 1.5 }}>
-                      Your caregiver has reviewed and signed the hire agreement.
-                      Sign below to activate the arrangement. Both of you will receive a copy by email.
-                    </div>
-                  </div>
-
-                  {/* Agreement summary */}
-                  <div style={{ background: '#F0EDFF', borderRadius: 12, padding: '14px 16px', marginBottom: 20 }}>
-                    <div style={{ fontSize: 13, fontWeight: 700, color: '#7C5CFF', marginBottom: 8 }}>Agreement Summary</div>
-                    <div style={{ fontSize: 13, color: '#475569', lineHeight: 1.7 }}>
-                      <div><strong>Caregiver:</strong> {memberName(countersignTarget)}</div>
-                      <div><strong>Rate:</strong> <span style={{ color: '#7C5CFF', fontWeight: 700 }}>${memberRate(countersignTarget)}/hr</span></div>
-                      <div><strong>Services:</strong> {memberSpecialty(countersignTarget)}</div>
-                    </div>
-                  </div>
-
-                  {/* Signature field */}
-                  <div style={{ marginBottom: 16 }}>
-                    <label style={{ fontSize: 14, fontWeight: 700, color: '#0F172A', display: 'block', marginBottom: 8 }}>
-                      Type your full legal name to sign
-                    </label>
-                    <input
-                      type="text"
-                      value={countersignSig}
-                      onChange={e => setCountersignSig(e.target.value)}
-                      placeholder="Your Full Name"
-                      style={{ width: '100%', padding: '14px 16px', borderRadius: 12, border: '2px solid #7C5CFF', fontSize: 16, fontFamily: '"Georgia", serif', fontStyle: 'italic', color: '#0F172A', boxSizing: 'border-box', background: '#FAFAFA' }}
-                    />
-                    <div style={{ fontSize: 11, color: '#94A3B8', marginTop: 6 }}>
-                      By typing your name, you confirm this serves as your digital countersignature.
-                    </div>
-                  </div>
-
-                  {/* Legal notice */}
-                  <div style={{ background: '#FEF9C3', borderRadius: 10, padding: '12px 14px', marginBottom: 16, border: '1px solid #FDE68A' }}>
-                    <div style={{ fontSize: 12, color: '#92400E', lineHeight: 1.6 }}>
-                      <strong>Legal notice:</strong> By countersigning, you confirm you have read and agreed to all terms. This agreement is legally binding. A copy will be emailed to both parties.
-                    </div>
-                  </div>
-
-                  {countersignError && (
-                    <div style={{ background: '#FEE2E2', borderRadius: 10, padding: '10px 14px', marginBottom: 16, color: '#991B1B', fontSize: 13 }}>
-                      {countersignError}
-                    </div>
-                  )}
-
-                  <button
-                    onClick={handleCountersign}
-                    disabled={countersignLoading || countersignSig.trim().length < 3}
-                    style={{ width: '100%', padding: '15px', background: countersignSig.trim().length >= 3 ? 'linear-gradient(135deg,#7C5CFF,#4A90E2)' : '#E2E8F0', border: 'none', borderRadius: 12, color: countersignSig.trim().length >= 3 ? '#fff' : '#94A3B8', fontSize: 15, fontWeight: 800, cursor: countersignSig.trim().length >= 3 ? 'pointer' : 'not-allowed', boxShadow: countersignSig.trim().length >= 3 ? '0 4px 16px rgba(124,92,255,0.3)' : 'none' }}
-                  >
-                    {countersignLoading ? '⏳ Activating Agreement...' : '✅ Countersign & Activate'}
-                  </button>
-                </>
-              )}
-            </div>
-          </div>
-        </div>
+        <CountersignModal
+          target={countersignTarget}
+          value={countersignSig}
+          error={countersignError}
+          loading={countersignLoading}
+          success={countersignSuccess}
+          signedAgreementToken={signedAgreementToken}
+          onChange={setCountersignSig}
+          onClose={() => !countersignLoading && setCountersignTarget(null)}
+          onSubmit={handleCountersign}
+        />
       )}
     </div>
   );
 }
 
-function TabShell({ children }: { children: React.ReactNode }) {
-  return <div style={{ background: '#F8FAFC', minHeight: '100dvh', paddingBottom: 90 }}>{children}</div>;
+function TeamMemberCard({
+  member,
+  schedule,
+  removing,
+  onCountersign,
+  onSchedule,
+  onRemove,
+}: {
+  member: TeamMember;
+  schedule?: ScheduleRecord;
+  removing: boolean;
+  onCountersign: (member: TeamMember) => void;
+  onSchedule: (member: TeamMember) => void;
+  onRemove: (member: TeamMember) => void;
+}) {
+  const status = memberStatus(member);
+  const statusInfo = getStatusInfo(status);
+  const name = memberName(member);
+  const email = memberEmail(member);
+  const canSchedule = status === 'active';
+  const canCountersign = status === 'pending_client' && Boolean(member.agreement_token);
+
+  return (
+    <article style={{ background: '#FFFFFF', border: '1px solid #E3E8F0', borderRadius: 18, overflow: 'hidden', marginBottom: 14, boxShadow: '0 14px 32px rgba(15,23,42,0.06)' }}>
+      <div style={{ height: 4, background: statusInfo.tone }} />
+      <div style={{ padding: 16 }}>
+        <div style={{ display: 'flex', gap: 13, alignItems: 'flex-start' }}>
+          <div style={{ width: 54, height: 54, borderRadius: 16, background: '#EAF0FF', color: '#315DDF', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 17, fontWeight: 900, flex: '0 0 auto' }}>
+            {initials(name)}
+          </div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, alignItems: 'flex-start' }}>
+              <div>
+                <div style={{ color: '#0F172A', fontSize: 17, fontWeight: 900, lineHeight: 1.25 }}>{name}</div>
+                <div style={{ color: '#64748B', fontSize: 13, marginTop: 4 }}>{memberSpecialty(member)}</div>
+              </div>
+              <span style={{ border: `1px solid ${statusInfo.border}`, background: statusInfo.bg, color: statusInfo.color, borderRadius: 999, padding: '5px 9px', fontSize: 11, fontWeight: 900, whiteSpace: 'nowrap' }}>
+                {statusInfo.label}
+              </span>
+            </div>
+            <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginTop: 9 }}>
+              <span style={{ color: '#087A3D', fontSize: 13, fontWeight: 850 }}>${memberRate(member)}/hr</span>
+              {memberDate(member) && <span style={{ color: '#94A3B8', fontSize: 12, fontWeight: 750 }}>Since {memberDate(member)}</span>}
+            </div>
+          </div>
+        </div>
+
+        <div style={{ marginTop: 14, border: '1px solid #E3E8F0', borderRadius: 14, background: '#F8FAFC', padding: 13 }}>
+          <div style={{ color: '#0F172A', fontSize: 13, fontWeight: 900 }}>{statusInfo.title}</div>
+          <div style={{ color: '#64748B', fontSize: 12, lineHeight: 1.45, marginTop: 4 }}>{statusInfo.body}</div>
+        </div>
+
+        {schedule && (
+          <div style={{ marginTop: 12, border: '1px solid #BBF7D0', borderRadius: 14, background: '#F0FDF4', padding: 13 }}>
+            <div style={{ color: '#087A3D', fontSize: 12, fontWeight: 900, textTransform: 'uppercase' }}>Confirmed schedule</div>
+            <div style={{ color: '#0F172A', fontSize: 14, fontWeight: 900, marginTop: 6 }}>{schedule.days ? schedule.days.split(',').join(', ') : 'Days TBD'}</div>
+            <div style={{ color: '#475569', fontSize: 12, marginTop: 3 }}>
+              {schedule.start_time || 'Start TBD'} - {schedule.end_time || 'End TBD'}{schedule.care_type ? ` - ${schedule.care_type}` : ''}
+            </div>
+          </div>
+        )}
+
+        <div style={{ display: 'grid', gridTemplateColumns: canCountersign || canSchedule ? '1fr 1fr' : '1fr', gap: 9, marginTop: 14 }}>
+          {canCountersign && (
+            <button onClick={() => onCountersign(member)} style={primaryButtonStyle}>
+              Sign agreement
+            </button>
+          )}
+          {canSchedule && (
+            <button onClick={() => onSchedule(member)} style={primaryButtonStyle}>
+              {schedule ? 'Edit schedule' : 'Set schedule'}
+            </button>
+          )}
+          {member.agreement_token && status === 'active' && (
+            <a href={`${PRINT_BASE}?token=${member.agreement_token}&format=html`} target="_blank" rel="noreferrer" style={{ ...secondaryButtonStyle, textDecoration: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              View agreement
+            </a>
+          )}
+          {email && (
+            <a href={`mailto:${email}`} style={{ ...secondaryButtonStyle, textDecoration: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              Message
+            </a>
+          )}
+        </div>
+
+        {status !== 'declined' && (
+          <button
+            onClick={() => onRemove(member)}
+            disabled={removing}
+            style={{ width: '100%', marginTop: 9, minHeight: 42, border: '1px solid #FECACA', borderRadius: 13, background: '#FEF2F2', color: '#B91C1C', fontSize: 13, fontWeight: 800, cursor: removing ? 'wait' : 'pointer', opacity: removing ? 0.7 : 1 }}
+          >
+            {removing ? 'Removing...' : 'Remove caregiver'}
+          </button>
+        )}
+      </div>
+    </article>
+  );
+}
+
+function ScheduleModal({
+  target,
+  days,
+  start,
+  end,
+  notes,
+  recurring,
+  saving,
+  success,
+  onClose,
+  onToggleDay,
+  onStart,
+  onEnd,
+  onNotes,
+  onRecurring,
+  onSave,
+}: {
+  target: TeamMember;
+  days: string[];
+  start: string;
+  end: string;
+  notes: string;
+  recurring: boolean;
+  saving: boolean;
+  success: boolean;
+  onClose: () => void;
+  onToggleDay: (day: string) => void;
+  onStart: (value: string) => void;
+  onEnd: (value: string) => void;
+  onNotes: (value: string) => void;
+  onRecurring: () => void;
+  onSave: () => void;
+}) {
+  return (
+    <div onClick={onClose} style={modalOverlayStyle}>
+      <div onClick={e => e.stopPropagation()} style={modalSheetStyle}>
+        <SheetHandle />
+        <div style={{ padding: '16px 20px 32px' }}>
+          <SheetHeader title="Care schedule" subtitle={`with ${memberName(target)}`} onClose={onClose} />
+          {success ? (
+            <SuccessState title="Schedule saved" body={`Your weekly schedule with ${memberName(target)} is ready.`} />
+          ) : (
+            <>
+              <FormBlock title="Days of care">
+                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                  {DAYS.map(day => (
+                    <button key={day} onClick={() => onToggleDay(day)} style={{ padding: '10px 14px', borderRadius: 999, border: `1.5px solid ${days.includes(day) ? '#315DDF' : '#D8E1EC'}`, background: days.includes(day) ? '#EEF4FF' : '#FFFFFF', color: days.includes(day) ? '#315DDF' : '#475569', fontSize: 13, fontWeight: 850, cursor: 'pointer' }}>
+                      {day}
+                    </button>
+                  ))}
+                </div>
+              </FormBlock>
+
+              <FormBlock title="Care hours">
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                  <LabeledTime label="Start" value={start} onChange={onStart} />
+                  <LabeledTime label="End" value={end} onChange={onEnd} />
+                </div>
+              </FormBlock>
+
+              <button onClick={onRecurring} style={{ width: '100%', border: '1px solid #E3E8F0', background: '#F8FAFC', borderRadius: 14, padding: 14, display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', marginBottom: 14 }}>
+                <span style={{ textAlign: 'left' }}>
+                  <span style={{ display: 'block', color: '#0F172A', fontSize: 14, fontWeight: 850 }}>Recurring weekly</span>
+                  <span style={{ display: 'block', color: '#64748B', fontSize: 12, marginTop: 3 }}>Repeat on selected days</span>
+                </span>
+                <span style={{ width: 48, height: 28, borderRadius: 999, background: recurring ? '#315DDF' : '#CBD5E1', position: 'relative' }}>
+                  <span style={{ position: 'absolute', top: 4, left: recurring ? 24 : 4, width: 20, height: 20, borderRadius: '50%', background: '#FFFFFF', transition: 'left 0.18s ease' }} />
+                </span>
+              </button>
+
+              <FormBlock title="Notes">
+                <textarea value={notes} onChange={e => onNotes(e.target.value)} placeholder="Access notes, care preferences, or reminders" rows={3} style={textareaStyle} />
+              </FormBlock>
+
+              <button onClick={onSave} disabled={saving || days.length === 0} style={{ ...primaryButtonStyle, width: '100%', minHeight: 52, opacity: saving || days.length === 0 ? 0.6 : 1, cursor: saving || days.length === 0 ? 'not-allowed' : 'pointer' }}>
+                {saving ? 'Saving...' : 'Confirm schedule'}
+              </button>
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function CountersignModal({
+  target,
+  value,
+  error,
+  loading,
+  success,
+  signedAgreementToken,
+  onChange,
+  onClose,
+  onSubmit,
+}: {
+  target: TeamMember;
+  value: string;
+  error: string;
+  loading: boolean;
+  success: boolean;
+  signedAgreementToken: string;
+  onChange: (value: string) => void;
+  onClose: () => void;
+  onSubmit: () => void;
+}) {
+  return (
+    <div onClick={onClose} style={modalOverlayStyle}>
+      <div onClick={e => e.stopPropagation()} style={modalSheetStyle}>
+        <SheetHandle />
+        <div style={{ padding: '16px 20px 32px' }}>
+          <SheetHeader title="Activate hire" subtitle={`with ${memberName(target)}`} onClose={onClose} />
+          {success ? (
+            <SuccessState title="Agreement active" body="The hire is active. Both parties will receive a copy." action={signedAgreementToken ? <a href={`${PRINT_BASE}?token=${signedAgreementToken}&format=html`} target="_blank" rel="noreferrer" style={{ color: '#315DDF', fontWeight: 850 }}>View signed agreement</a> : null} />
+          ) : (
+            <>
+              <div style={{ border: '1px solid #BBF7D0', background: '#F0FDF4', borderRadius: 16, padding: 14, marginBottom: 14 }}>
+                <div style={{ color: '#087A3D', fontSize: 14, fontWeight: 900 }}>{memberName(target)} has signed</div>
+                <div style={{ color: '#166534', fontSize: 13, lineHeight: 1.45, marginTop: 5 }}>Type your full legal name to countersign and activate the arrangement.</div>
+              </div>
+              <div style={{ border: '1px solid #E3E8F0', background: '#F8FAFC', borderRadius: 16, padding: 14, marginBottom: 14 }}>
+                <DetailRow label="Caregiver" value={memberName(target)} />
+                <DetailRow label="Rate" value={`$${memberRate(target)}/hr`} />
+                <DetailRow label="Service" value={memberSpecialty(target)} />
+              </div>
+              <FormBlock title="Digital signature">
+                <input value={value} onChange={e => onChange(e.target.value)} placeholder="Your full legal name" style={textInputStyle} />
+                <div style={{ color: '#64748B', fontSize: 12, lineHeight: 1.45, marginTop: 8 }}>By signing, you agree to the care terms and activate this caregiver relationship.</div>
+              </FormBlock>
+              {error && <ErrorBanner message={error} />}
+              <button onClick={onSubmit} disabled={loading || value.trim().length < 3} style={{ ...primaryButtonStyle, width: '100%', minHeight: 52, opacity: loading || value.trim().length < 3 ? 0.6 : 1 }}>
+                {loading ? 'Activating...' : 'Countersign and activate'}
+              </button>
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function MetricCard({ label, value, color }: { label: string; value: number; color: string }) {
+  return (
+    <div style={{ border: '1px solid #E3E8F0', borderRadius: 16, background: '#FFFFFF', padding: '13px 10px', boxShadow: '0 10px 28px rgba(15,23,42,0.05)' }}>
+      <div style={{ color, fontSize: 22, lineHeight: 1, fontWeight: 900 }}>{value}</div>
+      <div style={{ marginTop: 6, color: '#64748B', fontSize: 12, fontWeight: 750 }}>{label}</div>
+    </div>
+  );
+}
+
+function EmptyState({ tab, onFindCare }: { tab: TeamTabId; onFindCare: () => void }) {
+  const copy = {
+    saved: ['No pending offers', 'Hire offers will appear here while signatures are in progress.'],
+    active: ['No active caregivers yet', 'Once an agreement is active, you can schedule recurring care here.'],
+    past: ['No past caregivers yet', 'Completed or removed caregiver relationships will appear here.'],
+  }[tab];
+
+  return (
+    <div style={{ border: '1px solid #E3E8F0', borderRadius: 20, background: '#FFFFFF', padding: '34px 20px', textAlign: 'center', boxShadow: '0 12px 30px rgba(15,23,42,0.05)' }}>
+      <div style={{ width: 58, height: 58, borderRadius: 18, margin: '0 auto 16px', background: '#EAF0FF', color: '#315DDF', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 26, fontWeight: 700 }}>+</div>
+      <div style={{ color: '#0F172A', fontSize: 18, fontWeight: 900 }}>{copy[0]}</div>
+      <div style={{ color: '#64748B', fontSize: 14, lineHeight: 1.55, margin: '8px auto 22px', maxWidth: 320 }}>{copy[1]}</div>
+      <button onClick={onFindCare} style={{ ...primaryButtonStyle, padding: '13px 18px' }}>Find a caregiver</button>
+    </div>
+  );
 }
 
 function LoadingCard() {
   return (
     <div style={{ padding: 40, textAlign: 'center' }}>
-      <div style={{ width: 36, height: 36, border: '3px solid #E2E8F0', borderTop: '3px solid #7C5CFF', borderRadius: '50%', margin: '0 auto 16px', animation: 'spin 1s linear infinite' }} />
-      <div style={{ color: '#94A3B8', fontSize: 14 }}>Loading your team...</div>
+      <div style={{ width: 36, height: 36, border: '3px solid #E3E8F0', borderTop: '3px solid #315DDF', borderRadius: '50%', margin: '0 auto 16px', animation: 'spin 1s linear infinite' }} />
+      <div style={{ color: '#64748B', fontSize: 14, fontWeight: 700 }}>Loading your care team...</div>
     </div>
   );
 }
 
-function GuestCTA({ label, onFindCare }: { label: string; onFindCare: () => void }) {
+function GuestCTA({ onFindCare }: { onFindCare: () => void }) {
   return (
     <div style={{ padding: '80px 24px', textAlign: 'center' }}>
-      <div style={{ fontSize: 64, marginBottom: 20 }}>💜</div>
-      <div style={{ fontSize: 18, fontWeight: 700, color: '#0F172A', marginBottom: 8 }}>Your Care Team</div>
-      <div style={{ fontSize: 14, color: '#475569', marginBottom: 28, lineHeight: 1.7 }}>{label}</div>
-      <button onClick={onFindCare} style={{ background: 'linear-gradient(135deg,#7C5CFF,#4A90E2)', color: '#fff', border: 'none', borderRadius: 12, padding: '14px 28px', fontSize: 15, fontWeight: 700, cursor: 'pointer' }}>Find a Caregiver →</button>
+      <div style={{ width: 72, height: 72, borderRadius: 22, background: '#EAF0FF', color: '#315DDF', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 26, fontWeight: 900, margin: '0 auto 18px' }}>CT</div>
+      <div style={{ fontSize: 20, fontWeight: 900, color: '#0F172A', marginBottom: 8 }}>Build your care team</div>
+      <div style={{ fontSize: 14, color: '#64748B', marginBottom: 26, lineHeight: 1.6 }}>Sign in to manage hire offers, active caregivers, and schedules.</div>
+      <button onClick={onFindCare} style={{ ...primaryButtonStyle, padding: '14px 22px' }}>Find a caregiver</button>
     </div>
   );
 }
+
+function TeamShell({ children }: { children: React.ReactNode }) {
+  return <div style={{ background: '#F6F8FB', minHeight: '100dvh', paddingBottom: 92 }}>{children}</div>;
+}
+
+function SheetHeader({ title, subtitle, onClose }: { title: string; subtitle: string; onClose: () => void }) {
+  return (
+    <div style={{ display: 'flex', justifyContent: 'space-between', gap: 14, alignItems: 'flex-start', marginBottom: 18 }}>
+      <div>
+        <div style={{ color: '#0F172A', fontSize: 21, fontWeight: 900 }}>{title}</div>
+        <div style={{ color: '#64748B', fontSize: 13, marginTop: 4 }}>{subtitle}</div>
+      </div>
+      <button onClick={onClose} aria-label="Close" style={{ width: 36, height: 36, borderRadius: 999, border: 'none', background: '#F1F5F9', color: '#475569', fontSize: 18, cursor: 'pointer' }}>x</button>
+    </div>
+  );
+}
+
+function SheetHandle() {
+  return <div style={{ width: 40, height: 4, borderRadius: 999, background: '#D8E1EC', margin: '12px auto 6px' }} />;
+}
+
+function FormBlock({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <div style={{ marginBottom: 14 }}>
+      <div style={{ color: '#0F172A', fontSize: 13, fontWeight: 900, marginBottom: 9 }}>{title}</div>
+      {children}
+    </div>
+  );
+}
+
+function LabeledTime({ label, value, onChange }: { label: string; value: string; onChange: (value: string) => void }) {
+  return (
+    <label style={{ display: 'block' }}>
+      <span style={{ display: 'block', color: '#64748B', fontSize: 11, fontWeight: 850, marginBottom: 5 }}>{label}</span>
+      <input type="time" value={value} onChange={e => onChange(e.target.value)} style={textInputStyle} />
+    </label>
+  );
+}
+
+function SuccessState({ title, body, action }: { title: string; body: string; action?: React.ReactNode }) {
+  return (
+    <div style={{ textAlign: 'center', padding: '30px 16px' }}>
+      <div style={{ width: 64, height: 64, borderRadius: 20, background: '#F0FDF4', color: '#087A3D', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px', fontSize: 28, fontWeight: 900 }}>OK</div>
+      <div style={{ color: '#0F172A', fontSize: 20, fontWeight: 900 }}>{title}</div>
+      <div style={{ color: '#64748B', fontSize: 14, lineHeight: 1.55, marginTop: 8 }}>{body}</div>
+      {action && <div style={{ marginTop: 18 }}>{action}</div>}
+    </div>
+  );
+}
+
+function DetailRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, padding: '5px 0' }}>
+      <span style={{ color: '#64748B', fontSize: 12, fontWeight: 750 }}>{label}</span>
+      <span style={{ color: '#0F172A', fontSize: 12, fontWeight: 850, textAlign: 'right' }}>{value}</span>
+    </div>
+  );
+}
+
+function ErrorBanner({ message }: { message: string }) {
+  return <div style={{ background: '#FEF2F2', border: '1px solid #FECACA', borderRadius: 14, padding: 13, color: '#B91C1C', fontSize: 13, fontWeight: 750, marginBottom: 14 }}>{message}</div>;
+}
+
+function getStatusInfo(status: string) {
+  const statusMap: Record<string, { label: string; tone: string; border: string; bg: string; color: string; title: string; body: string }> = {
+    pending_caregiver: {
+      label: 'Awaiting caregiver',
+      tone: '#F59E0B',
+      border: '#FED7AA',
+      bg: '#FFF7ED',
+      color: '#B45309',
+      title: 'Offer sent',
+      body: 'The caregiver needs to review and sign before you can activate the hire.',
+    },
+    pending_client: {
+      label: 'Signature needed',
+      tone: '#315DDF',
+      border: '#C7D2FE',
+      bg: '#EEF2FF',
+      color: '#315DDF',
+      title: 'Ready to activate',
+      body: 'The caregiver has signed. Countersign to move them into your active care team.',
+    },
+    active: {
+      label: 'Active',
+      tone: '#10B981',
+      border: '#BBF7D0',
+      bg: '#F0FDF4',
+      color: '#087A3D',
+      title: 'Active care relationship',
+      body: 'Set or update the recurring schedule so everyone knows when care is planned.',
+    },
+    declined: {
+      label: 'Declined',
+      tone: '#94A3B8',
+      border: '#E2E8F0',
+      bg: '#F8FAFC',
+      color: '#475569',
+      title: 'Offer closed',
+      body: 'This agreement is no longer active.',
+    },
+  };
+  return statusMap[status] || statusMap.active;
+}
+
+function memberName(m: TeamMember): string {
+  return m.name || m.caregiver_name || 'Caregiver';
+}
+
+function memberEmail(m: TeamMember): string {
+  return m.email || m.caregiver_email || '';
+}
+
+function memberRate(m: TeamMember): number {
+  return m.hourlyRate || m.hourly_rate || m.caregiver_rate || 28;
+}
+
+function memberSpecialty(m: TeamMember): string {
+  return m.specialty || m.care_type || 'Home Care';
+}
+
+function memberDate(m: TeamMember): string {
+  const raw = m.hiredAt || m.hired_at || '';
+  if (!raw) return '';
+  const date = new Date(raw);
+  if (Number.isNaN(date.getTime())) return raw;
+  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+}
+
+function memberStatus(m: TeamMember): string {
+  return m.status || 'active';
+}
+
+function initials(value: string): string {
+  return value ? value.trim().split(/\s+/).map(part => part[0]).join('').toUpperCase().slice(0, 2) : 'CG';
+}
+
+const modalOverlayStyle: React.CSSProperties = {
+  position: 'fixed',
+  inset: 0,
+  background: 'rgba(15,23,42,0.52)',
+  zIndex: 9000,
+  display: 'flex',
+  alignItems: 'flex-end',
+  justifyContent: 'center',
+};
+
+const modalSheetStyle: React.CSSProperties = {
+  width: '100%',
+  maxWidth: 560,
+  maxHeight: '92dvh',
+  overflowY: 'auto',
+  background: '#FFFFFF',
+  borderRadius: '24px 24px 0 0',
+};
+
+const primaryButtonStyle: React.CSSProperties = {
+  border: 'none',
+  borderRadius: 13,
+  background: '#315DDF',
+  color: '#FFFFFF',
+  padding: '12px 14px',
+  fontSize: 13,
+  fontWeight: 900,
+  cursor: 'pointer',
+};
+
+const secondaryButtonStyle: React.CSSProperties = {
+  minHeight: 44,
+  border: '1px solid #D8E1EC',
+  borderRadius: 13,
+  background: '#F8FAFC',
+  color: '#315DDF',
+  fontSize: 13,
+  fontWeight: 850,
+  cursor: 'pointer',
+};
+
+const textInputStyle: React.CSSProperties = {
+  width: '100%',
+  minHeight: 46,
+  border: '1px solid #CBD5E1',
+  borderRadius: 12,
+  padding: '12px 13px',
+  background: '#FFFFFF',
+  color: '#0F172A',
+  fontSize: 14,
+  fontWeight: 750,
+};
+
+const textareaStyle: React.CSSProperties = {
+  ...textInputStyle,
+  minHeight: 96,
+  resize: 'none',
+  fontFamily: 'inherit',
+  fontWeight: 500,
+};

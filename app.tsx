@@ -166,7 +166,7 @@ function App() {
       } as React.CSSProperties}>
         <Suspense fallback={<TabSpinner />}>
           {activeTab === 'home'     && <HomeTab onNavigate={navigateToTab} />}
-          {activeTab === 'findcare' && <FindCareTab />}
+          {activeTab === 'findcare' && <FindCareTab onNavigate={navigateToTab} />}
           {activeTab === 'team'     && <TeamTab onNavigate={navigateToTab} onBadgeChange={setTeamBadge} />}
           {activeTab === 'bookings' && <BookingsTab onNavigate={navigateToTab} />}
           {activeTab === 'profile'  && <ProfileTab onNavigate={navigateToTab} onSignOut={handleSignOut} />}

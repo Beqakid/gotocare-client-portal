@@ -140,7 +140,7 @@ function rankedCaregivers(caregivers: Caregiver[], selectedNeeds: string[]) {
     .sort((a, b) => b.score - a.score || a.originalIndex - b.originalIndex);
 }
 
-export function FindCareTab() {
+export function FindCareTab({ onNavigate }: { onNavigate?: (tab: TabId) => void }) {
   // ── State ────────────────────────────────────────────────────────────
   const [screen, setScreen] = useState<Screen>('dispatch');
   const [selectedNeeds, setSelectedNeeds] = useState<string[]>(() => getLastCareTypes());
@@ -316,8 +316,9 @@ export function FindCareTab() {
   function onAgreementSuccess(caregiverId: number | string) {
     setBookingStatus(caregiverId, { status: 'pending_agreement', hired: false });
     setShortlist(prev => { const next = prev.filter(s => s.id !== caregiverId); persistShortlist(next); return next; });
-    showToast('Agreement sent! Track status in My Team.');
-    setScreen('shortlist');
+    showToast('Agreement sent. Track status in Care Team.');
+    if (onNavigate) onNavigate('team');
+    else setScreen('shortlist');
   }
 
   // ── Booking (interview) ───────────────────────────────────────────────
