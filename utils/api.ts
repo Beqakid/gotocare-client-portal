@@ -53,12 +53,42 @@ export async function bookInterview(payload: {
   preferredTime: string;
   interviewType: string;
   notes: string;
+  durationMinutes?: number;
 }) {
   return request('/book-interview', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
   }).catch(() => ({})); // Non-fatal — confirmation still shows
+}
+
+export async function getInterviewSlots(caregiverId: number | string, date: string, durationMinutes = 30) {
+  const params = new URLSearchParams({
+    caregiverId: String(caregiverId),
+    date,
+    duration: String(durationMinutes),
+  });
+  return request<{
+    success: boolean;
+    slots: { value: string; label: string; startTime: string; endTime: string; durationMinutes: number }[];
+  }>(`/interview-slots?${params}`);
+}
+
+export async function createInterviewBooking(payload: {
+  caregiverId: number | string;
+  clientEmail: string;
+  careNeeds: string;
+  preferredDate: string;
+  preferredTime: string;
+  interviewType: string;
+  notes: string;
+  durationMinutes?: number;
+}) {
+  return request('/book-interview', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
 }
 
 export async function hireCaregiver(token: string, caregiverId: number | string, bookingId: number | null) {

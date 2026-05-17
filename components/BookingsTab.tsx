@@ -34,6 +34,7 @@ interface Props {
 }
 
 type BookingFilter = 'all' | 'pending' | 'confirmed' | 'past';
+type BookingView = 'list' | 'day' | 'week' | 'month';
 
 const STATUS_CONFIG: Record<string, { label: string; tone: string; border: string; bg: string; color: string }> = {
   pending: {
@@ -86,12 +87,20 @@ const FILTERS: { value: BookingFilter; label: string }[] = [
   { value: 'past', label: 'Past' },
 ];
 
+const VIEWS: { value: BookingView; label: string }[] = [
+  { value: 'list', label: 'List' },
+  { value: 'day', label: 'Day' },
+  { value: 'week', label: 'Week' },
+  { value: 'month', label: 'Month' },
+];
+
 export function BookingsTab({ onNavigate }: Props) {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [cancelling, setCancelling] = useState<number | null>(null);
   const [filter, setFilter] = useState<BookingFilter>('all');
+  const [view, setView] = useState<BookingView>('list');
 
   const load = useCallback(async () => {
     const email = getEmail();
@@ -237,7 +246,15 @@ export function BookingsTab({ onNavigate }: Props) {
           <EmptyBookingsState filter={filter} onNavigate={onNavigate} hasBookings={bookings.length > 0} />
         )}
 
-        {!loading && !error && filteredBookings.map(b => (
+        {!loading && !error && filteredBookings.length > 0 && (
+          <ViewTabs value={view} onChange={setView} />
+        )}
+
+        {!loading && !error && filteredBookings.length > 0 && view !== 'list' && (
+          <BookingCalendarView bookings={filteredBookings} view={view} onCancel={handleCancel} cancelling={cancelling} />
+        )}
+
+        {!loading && !error && view === 'list' && filteredBookings.map(b => (
           <BookingCard
             key={getBookingId(b)}
             booking={b}
@@ -458,6 +475,108 @@ function BookingCard({
   );
 }
 
+function ViewTabs({ value, onChange }: { value: BookingView; onChange: (view: BookingView) => void }) {
+  return (
+    <div style={{ display: 'flex', gap: 7, padding: 4, border: '1px solid #E3E8F0', borderRadius: 14, background: '#FFFFFF', marginBottom: 14 }}>
+      {VIEWS.map(view => {
+        const selected = value === view.value;
+        return (
+          <button key={view.value} onClick={() => onChange(view.value)} style={{ flex: 1, minHeight: 36, border: 'none', borderRadius: 10, background: selected ? '#0F172A' : 'transparent', color: selected ? '#FFFFFF' : '#64748B', fontSize: 12, fontWeight: 850, cursor: 'pointer' }}>
+            {view.label}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+function BookingCalendarView({ bookings, view, onCancel, cancelling }: { bookings: Booking[]; view: BookingView; onCancel: (b: Booking) => void; cancelling: number | null }) {
+  const sorted = [...bookings].sort((a, b) => bookingStartMs(a) - bookingStartMs(b));
+  if (view === 'day') {
+    const grouped = groupBookingsByDay(sorted);
+    const firstDay = grouped[0];
+    return (
+      <CalendarPanel title={firstDay ? formatDate(firstDay.date, { weekday: 'long', month: 'long', day: 'numeric' }) : 'Today'}>
+        {firstDay ? firstDay.items.map(item => <CalendarBooking key={getBookingId(item)} booking={item} onCancel={onCancel} cancelling={cancelling === getBookingId(item)} />) : <CalendarEmpty />}
+      </CalendarPanel>
+    );
+  }
+
+  if (view === 'month') {
+    const days = groupBookingsByDay(sorted);
+    return (
+      <CalendarPanel title="Monthly overview">
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, minmax(0, 1fr))', gap: 6 }}>
+          {days.map(day => (
+            <div key={day.date} style={{ minHeight: 78, border: '1px solid #E3E8F0', borderRadius: 8, padding: 7, background: '#FFFFFF' }}>
+              <div style={{ color: '#64748B', fontSize: 11, fontWeight: 900 }}>{formatDate(day.date, { month: 'short', day: 'numeric' })}</div>
+              <div style={{ marginTop: 7, display: 'flex', flexDirection: 'column', gap: 5 }}>
+                {day.items.slice(0, 2).map(item => (
+                  <div key={getBookingId(item)} style={{ background: STATUS_CONFIG[item.status || 'pending']?.bg || '#F8FAFC', color: STATUS_CONFIG[item.status || 'pending']?.color || '#475569', borderRadius: 6, padding: '4px 5px', fontSize: 10, fontWeight: 850, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {getTimeOnly(item)} {getCaregiverName(item)}
+                  </div>
+                ))}
+                {day.items.length > 2 && <div style={{ color: '#94A3B8', fontSize: 10, fontWeight: 850 }}>+{day.items.length - 2} more</div>}
+              </div>
+            </div>
+          ))}
+        </div>
+      </CalendarPanel>
+    );
+  }
+
+  const weekDays = groupBookingsByDay(sorted).slice(0, 7);
+  return (
+    <CalendarPanel title="Weekly calendar">
+      <div style={{ display: 'grid', gap: 10 }}>
+        {weekDays.map(day => (
+          <div key={day.date} style={{ display: 'grid', gridTemplateColumns: '86px 1fr', gap: 10, alignItems: 'start' }}>
+            <div style={{ color: '#0F172A', fontSize: 12, fontWeight: 900, paddingTop: 8 }}>{formatDate(day.date, { weekday: 'short', month: 'short', day: 'numeric' })}</div>
+            <div style={{ display: 'grid', gap: 8 }}>
+              {day.items.map(item => <CalendarBooking key={getBookingId(item)} booking={item} onCancel={onCancel} cancelling={cancelling === getBookingId(item)} compact />)}
+            </div>
+          </div>
+        ))}
+      </div>
+    </CalendarPanel>
+  );
+}
+
+function CalendarPanel({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <section style={{ background: '#FFFFFF', border: '1px solid #E3E8F0', borderRadius: 16, padding: 14, marginBottom: 14, boxShadow: '0 12px 30px rgba(15,23,42,0.05)' }}>
+      <div style={{ color: '#0F172A', fontSize: 15, fontWeight: 900, marginBottom: 12 }}>{title}</div>
+      {children}
+    </section>
+  );
+}
+
+function CalendarBooking({ booking, onCancel, cancelling, compact }: { booking: Booking; onCancel: (b: Booking) => void; cancelling: boolean; compact?: boolean }) {
+  const status = booking.status || 'pending';
+  const statusCfg = STATUS_CONFIG[status] || STATUS_CONFIG.pending;
+  return (
+    <div style={{ border: `1px solid ${statusCfg.border}`, background: statusCfg.bg, borderRadius: 10, padding: compact ? 10 : 12 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, alignItems: 'flex-start' }}>
+        <div style={{ minWidth: 0 }}>
+          <div style={{ color: '#0F172A', fontSize: 13, fontWeight: 900 }}>{getTimeOnly(booking)}</div>
+          <div style={{ color: '#334155', fontSize: 12, fontWeight: 850, marginTop: 3 }}>{getCaregiverName(booking)}</div>
+          {!compact && <div style={{ color: '#64748B', fontSize: 11, marginTop: 3 }}>{getInterviewFormat(booking.interview_type)}</div>}
+        </div>
+        <span style={{ color: statusCfg.color, fontSize: 11, fontWeight: 900 }}>{statusCfg.label}</span>
+      </div>
+      {status === 'pending' && (
+        <button onClick={() => onCancel(booking)} disabled={cancelling} style={{ marginTop: 9, border: '1px solid #FECACA', background: '#FFFFFF', color: '#B91C1C', borderRadius: 8, padding: '7px 9px', fontSize: 11, fontWeight: 850, cursor: cancelling ? 'wait' : 'pointer' }}>
+          {cancelling ? 'Cancelling...' : 'Cancel'}
+        </button>
+      )}
+    </div>
+  );
+}
+
+function CalendarEmpty() {
+  return <div style={{ color: '#64748B', fontSize: 13 }}>No interviews on this day.</div>;
+}
+
 function MetricCard({ label, value, color }: { label: string; value: number; color: string }) {
   return (
     <div
@@ -655,16 +774,65 @@ function getInitials(name: string) {
     .slice(0, 2) || 'CG';
 }
 
+function bookingStartMs(booking: Booking) {
+  const date = booking.requested_date || booking.preferred_date || booking.created_at || '';
+  const minutes = getStartMinutes(booking.requested_time || booking.preferred_time || '');
+  const base = date.includes('T') ? new Date(date) : new Date(`${date || new Date().toISOString().split('T')[0]}T12:00:00`);
+  if (Number.isNaN(base.getTime())) return 0;
+  base.setHours(Math.floor(minutes / 60), minutes % 60, 0, 0);
+  return base.getTime();
+}
+
+function groupBookingsByDay(bookings: Booking[]) {
+  const map = new Map<string, Booking[]>();
+  bookings.forEach(booking => {
+    const raw = booking.requested_date || booking.preferred_date || booking.created_at || new Date().toISOString();
+    const key = raw.includes('T') ? raw.split('T')[0] : raw;
+    map.set(key, [...(map.get(key) || []), booking]);
+  });
+  return Array.from(map.entries())
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([date, items]) => ({ date, items: items.sort((a, b) => bookingStartMs(a) - bookingStartMs(b)) }));
+}
+
+function getStartMinutes(value: string) {
+  if (value === 'morning') return 9 * 60;
+  if (value === 'afternoon') return 12 * 60;
+  if (value === 'evening') return 16 * 60;
+  const match = String(value || '').match(/^(\d{1,2}):(\d{2})/);
+  return match ? parseInt(match[1]) * 60 + parseInt(match[2]) : 9 * 60;
+}
+
+function getTimeOnly(booking: Booking) {
+  const rawTime = booking.requested_time || booking.preferred_time || '';
+  return rawTime ? formatTimeRange(rawTime) : 'Time pending';
+}
+
 function getScheduleLabel(booking: Booking) {
   const rawDate = booking.requested_date || booking.preferred_date;
   const rawTime = booking.requested_time || booking.preferred_time;
   const date = rawDate ? formatDate(rawDate) : '';
-  const time = rawTime ? (TIME_LABELS[rawTime] || rawTime) : '';
+  const time = rawTime ? formatTimeRange(rawTime) : '';
 
   if (date && time) return `${date}, ${time}`;
   if (date) return date;
   if (time) return time;
   return 'Interview details pending';
+}
+
+function formatTimeRange(value: string) {
+  if (TIME_LABELS[value]) return TIME_LABELS[value];
+  const labelPart = (part: string) => {
+    const match = String(part || '').match(/^(\d{1,2}):(\d{2})$/);
+    if (!match) return part;
+    const hour24 = parseInt(match[1]);
+    const minute = match[2];
+    const suffix = hour24 >= 12 ? 'PM' : 'AM';
+    const hour12 = hour24 % 12 || 12;
+    return `${hour12}:${minute} ${suffix}`;
+  };
+  const parts = value.split('-');
+  return parts.length === 2 ? `${labelPart(parts[0])} - ${labelPart(parts[1])}` : value;
 }
 
 function getInterviewFormat(format?: string) {

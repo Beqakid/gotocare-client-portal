@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState, useRef, useCallback } from 'react';
 import { Caregiver, CARE_CATEGORIES, TabId } from '../types';
-import { searchCaregivers, bookInterview, hireCaregiver } from '../utils/api';
+import { searchCaregivers, createInterviewBooking, getInterviewSlots, hireCaregiver } from '../utils/api';
 import { getToken, getEmail, getName, setEmail as storeEmail, getLastLocation, setLastLocation, getLastCareTypes, setLastCareTypes, getShortlistLocal, setShortlistLocal, setBookingStatus } from '../utils/storage';
 import { reverseGeocode, syncShortlist } from '../utils/api';
 import { CaregiverSheet } from './CaregiverSheet';
@@ -8,6 +8,7 @@ import { HireAgreementModal } from './HireAgreementModal';
 
 type Screen = 'dispatch' | 'swiper' | 'shortlist' | 'booking' | 'confirm' | 'subscribe' | 'hire-status';
 const PENDING_HIRE_CAREGIVER_KEY = 'gc_pending_hire_caregiver';
+type InterviewSlot = { value: string; label: string; startTime: string; endTime: string; durationMinutes: number };
 
 function caregiverName(cg: Caregiver): string {
   return `${cg.firstName || cg.first_name || ''} ${cg.lastName || cg.last_name || ''}`.trim() || cg.name || 'Caregiver';
@@ -155,6 +156,23 @@ function caregiverTrustFit(cg: Caregiver): string {
   return 'Verified profile';
 }
 
+function formatInterviewTime(value: string): string {
+  const bucketLabels: Record<string, string> = { morning: '9-11 AM', afternoon: '12-3 PM', evening: '4-7 PM' };
+  if (bucketLabels[value]) return bucketLabels[value];
+  const labelPart = (part: string) => {
+    const match = part.match(/^(\d{1,2}):(\d{2})$/);
+    if (!match) return part;
+    const hour24 = parseInt(match[1]);
+    const minute = match[2];
+    const suffix = hour24 >= 12 ? 'PM' : 'AM';
+    const hour12 = hour24 % 12 || 12;
+    return `${hour12}:${minute} ${suffix}`;
+  };
+  const parts = value.split('-');
+  if (parts.length === 2) return `${labelPart(parts[0])} - ${labelPart(parts[1])}`;
+  return value;
+}
+
 function rankedCaregivers(caregivers: Caregiver[], selectedNeeds: string[]) {
   return caregivers
     .map((cg, index) => ({
@@ -212,12 +230,15 @@ export function FindCareTab({ onNavigate, onRequireAuth }: { onNavigate?: (tab: 
   // Booking form state
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
+  const [interviewDuration, setInterviewDuration] = useState<30 | 60>(30);
+  const [availableSlots, setAvailableSlots] = useState<InterviewSlot[]>([]);
+  const [slotsLoading, setSlotsLoading] = useState(false);
   const [interviewType, setInterviewType] = useState<'video' | 'inperson'>('video');
   const [bookEmail, setBookEmail] = useState(() => getEmail() || '');
   const [bookNotes, setBookNotes] = useState('');
 
   // Confirmation
-  const [confirmData, setConfirmData] = useState<{ name: string; date: string; time: string; type: string; email: string } | null>(null);
+  const [confirmData, setConfirmData] = useState<{ name: string; date: string; time: string; type: string; email: string; durationMinutes?: number } | null>(null);
 
   // Plan selection for subscribe
   const [selectedPlan, setSelectedPlan] = useState<'essential' | 'family' | 'premium'>('family');
@@ -237,6 +258,31 @@ export function FindCareTab({ onNavigate, onRequireAuth }: { onNavigate?: (tab: 
     setScreen('swiper');
     showToast(`Finish the hire offer for ${caregiverName(pendingCaregiver)}.`);
   }, []);
+
+  useEffect(() => {
+    if (screen !== 'booking' || !bookingCg || !selectedDate) {
+      setAvailableSlots([]);
+      setSlotsLoading(false);
+      return;
+    }
+    let cancelled = false;
+    setSlotsLoading(true);
+    setSelectedTime(null);
+    getInterviewSlots(bookingCg.id, selectedDate, interviewDuration)
+      .then(data => {
+        if (!cancelled) setAvailableSlots(data.slots || []);
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setAvailableSlots([]);
+          showToast('Could not load available interview times.');
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setSlotsLoading(false);
+      });
+    return () => { cancelled = true; };
+  }, [screen, bookingCg, selectedDate, interviewDuration]);
 
   // ── Care tile toggle ─────────────────────────────────────────────────
   function toggleNeed(need: string) {
@@ -410,6 +456,8 @@ export function FindCareTab({ onNavigate, onRequireAuth }: { onNavigate?: (tab: 
   function startInterview(cg: Caregiver) {
     setBookingCg(cg);
     setSelectedDate(null); setSelectedTime(null); setInterviewType('video');
+    setInterviewDuration(30);
+    setAvailableSlots([]);
     setBookEmail(getEmail() || '');
     setBookNotes('');
     setScreen('booking');
@@ -422,16 +470,16 @@ export function FindCareTab({ onNavigate, onRequireAuth }: { onNavigate?: (tab: 
     if (!bookEmail || !bookEmail.includes('@')) { showToast('⚠️ Please enter your email'); return; }
     setLoading(true); setLoadingText('Sending interview request…');
     try {
-      await bookInterview({
+      await createInterviewBooking({
         caregiverId: bookingCg.id, clientEmail: bookEmail,
         careNeeds: selectedNeeds.join(', ') || 'General Care',
         preferredDate: selectedDate, preferredTime: selectedTime,
-        interviewType, notes: bookNotes,
+        interviewType, notes: bookNotes, durationMinutes: interviewDuration,
       });
       storeEmail(bookEmail);
-      setBookingStatus(bookingCg.id, { status: 'pending', caregiverName: caregiverName(bookingCg), date: selectedDate, time: selectedTime, interviewType, bookedAt: new Date().toISOString() });
+      setBookingStatus(bookingCg.id, { status: 'pending', caregiverName: caregiverName(bookingCg), date: selectedDate, time: selectedTime, interviewType, durationMinutes: interviewDuration, bookedAt: new Date().toISOString() });
       setShortlist(prev => { const next = prev.filter(s => s.id !== bookingCg!.id); persistShortlist(next); return next; });
-      setConfirmData({ name: caregiverName(bookingCg), date: selectedDate, time: selectedTime, type: interviewType, email: bookEmail });
+      setConfirmData({ name: caregiverName(bookingCg), date: selectedDate, time: selectedTime, type: interviewType, email: bookEmail, durationMinutes: interviewDuration });
       setScreen('confirm');
     } catch { showToast('⚠️ Request failed. Please try again.'); }
     finally { setLoading(false); }
@@ -500,6 +548,9 @@ export function FindCareTab({ onNavigate, onRequireAuth }: { onNavigate?: (tab: 
       dates={getDates()}
       selectedDate={selectedDate}
       selectedTime={selectedTime}
+      interviewDuration={interviewDuration}
+      availableSlots={availableSlots}
+      slotsLoading={slotsLoading}
       interviewType={interviewType}
       bookEmail={bookEmail}
       bookNotes={bookNotes}
@@ -509,6 +560,7 @@ export function FindCareTab({ onNavigate, onRequireAuth }: { onNavigate?: (tab: 
       onBack={() => setScreen('swiper')}
       onSelectDate={setSelectedDate}
       onSelectTime={setSelectedTime}
+      onDurationChange={setInterviewDuration}
       onInterviewType={setInterviewType}
       onEmail={setBookEmail}
       onNotes={setBookNotes}
@@ -816,7 +868,6 @@ export function FindCareTab({ onNavigate, onRequireAuth }: { onNavigate?: (tab: 
   // ── CONFIRM SCREEN ────────────────────────────────────────────────────
   if (screen === 'confirm' && confirmData) {
     const { name, date, time, type, email } = confirmData;
-    const timeLabels: Record<string, string> = { morning: '9-11 AM', afternoon: '12-3 PM', evening: '4-7 PM' };
     const typeLabels: Record<string, string> = { video: 'Video call', inperson: 'In person' };
     const dateFormatted = new Date(date + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
     return (
@@ -832,7 +883,7 @@ export function FindCareTab({ onNavigate, onRequireAuth }: { onNavigate?: (tab: 
         <main style={{ padding: 16 }}>
           <section style={{ background: '#FFFFFF', border: '1px solid #E3E8F0', borderRadius: 8, padding: 16, marginBottom: 14, boxShadow: '0 8px 24px rgba(15,23,42,0.05)' }}>
             <div style={{ color: '#0F172A', fontSize: 15, fontWeight: 900, marginBottom: 10 }}>Request details</div>
-            {[['Caregiver', name], ['Date', dateFormatted], ['Time', timeLabels[time] || time], ['Format', typeLabels[type] || type], ['Email', email], ['Cost', 'Free interview']].map(([label, value]) => (
+            {[['Caregiver', name], ['Date', dateFormatted], ['Time', formatInterviewTime(time)], ['Length', `${confirmData.durationMinutes || 30} minutes`], ['Format', typeLabels[type] || type], ['Email', email], ['Cost', 'Free interview']].map(([label, value]) => (
               <div key={label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 14, padding: '8px 0', borderTop: '1px solid #EEF2F7' }}>
                 <span style={{ fontSize: 12, color: '#64748B', fontWeight: 800 }}>{label}</span>
                 <span style={{ fontSize: 12, fontWeight: 850, color: label === 'Cost' ? '#087A3D' : '#0F172A', textAlign: 'right', maxWidth: '62%' }}>{value}</span>
@@ -1291,6 +1342,9 @@ function ModernInterviewBooking({
   dates,
   selectedDate,
   selectedTime,
+  interviewDuration,
+  availableSlots,
+  slotsLoading,
   interviewType,
   bookEmail,
   bookNotes,
@@ -1300,6 +1354,7 @@ function ModernInterviewBooking({
   onBack,
   onSelectDate,
   onSelectTime,
+  onDurationChange,
   onInterviewType,
   onEmail,
   onNotes,
@@ -1309,6 +1364,9 @@ function ModernInterviewBooking({
   dates: { iso: string; day: string; num: number; mon: string }[];
   selectedDate: string | null;
   selectedTime: string | null;
+  interviewDuration: 30 | 60;
+  availableSlots: InterviewSlot[];
+  slotsLoading: boolean;
   interviewType: 'video' | 'inperson';
   bookEmail: string;
   bookNotes: string;
@@ -1318,6 +1376,7 @@ function ModernInterviewBooking({
   onBack: () => void;
   onSelectDate: (value: string) => void;
   onSelectTime: (value: string) => void;
+  onDurationChange: (value: 30 | 60) => void;
   onInterviewType: (value: 'video' | 'inperson') => void;
   onEmail: (value: string) => void;
   onNotes: (value: string) => void;
@@ -1360,18 +1419,41 @@ function ModernInterviewBooking({
           </div>
         </FormPanel>
 
-        <FormPanel title="2. Preferred time">
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
-            {[{ v: 'morning', l: 'Morning', s: '9-11' }, { v: 'afternoon', l: 'Afternoon', s: '12-3' }, { v: 'evening', l: 'Evening', s: '4-7' }].map(({ v, l, s }) => (
-              <button key={v} onClick={() => onSelectTime(v)} style={{ padding: '11px 8px', borderRadius: 8, border: selectedTime === v ? '1.5px solid #315DDF' : '1px solid #D8E1EC', background: selectedTime === v ? '#EEF4FF' : '#FFFFFF', color: selectedTime === v ? '#1D4ED8' : '#334155', cursor: 'pointer' }}>
-                <div style={{ fontSize: 12, fontWeight: 900 }}>{l}</div>
-                <div style={{ fontSize: 11, color: '#64748B', marginTop: 2 }}>{s}</div>
+        <FormPanel title="2. Interview length">
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+            {[
+              { v: 30 as const, label: '30 min', hint: 'Recommended' },
+              { v: 60 as const, label: '60 min', hint: 'Complex care' },
+            ].map(option => (
+              <button key={option.v} onClick={() => onDurationChange(option.v)} style={{ padding: '12px 10px', borderRadius: 8, border: interviewDuration === option.v ? '1.5px solid #315DDF' : '1px solid #D8E1EC', background: interviewDuration === option.v ? '#EEF4FF' : '#FFFFFF', color: interviewDuration === option.v ? '#1D4ED8' : '#334155', cursor: 'pointer', textAlign: 'left' }}>
+                <div style={{ fontSize: 13, fontWeight: 900 }}>{option.label}</div>
+                <div style={{ fontSize: 11, color: '#64748B', marginTop: 2 }}>{option.hint}</div>
               </button>
             ))}
           </div>
         </FormPanel>
 
-        <FormPanel title="3. Interview format">
+        <FormPanel title="3. Available time">
+          {!selectedDate && <div style={{ color: '#64748B', fontSize: 13, lineHeight: 1.45 }}>Pick a date first to see available interview slots.</div>}
+          {selectedDate && slotsLoading && <div style={{ color: '#64748B', fontSize: 13, fontWeight: 800 }}>Loading available slots...</div>}
+          {selectedDate && !slotsLoading && availableSlots.length === 0 && (
+            <div style={{ color: '#B45309', background: '#FFF7ED', border: '1px solid #FED7AA', borderRadius: 8, padding: 12, fontSize: 13, lineHeight: 1.45 }}>
+              No {interviewDuration}-minute slots are open on this date. Try another date or switch interview length.
+            </div>
+          )}
+          {selectedDate && !slotsLoading && availableSlots.length > 0 && (
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+              {availableSlots.map(slot => (
+                <button key={slot.value} onClick={() => onSelectTime(slot.value)} style={{ padding: '11px 8px', borderRadius: 8, border: selectedTime === slot.value ? '1.5px solid #315DDF' : '1px solid #D8E1EC', background: selectedTime === slot.value ? '#EEF4FF' : '#FFFFFF', color: selectedTime === slot.value ? '#1D4ED8' : '#334155', cursor: 'pointer', textAlign: 'left' }}>
+                  <div style={{ fontSize: 12, fontWeight: 900 }}>{slot.label}</div>
+                  <div style={{ fontSize: 11, color: '#64748B', marginTop: 2 }}>{slot.durationMinutes} min</div>
+                </button>
+              ))}
+            </div>
+          )}
+        </FormPanel>
+
+        <FormPanel title="4. Interview format">
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
             {[{ v: 'video' as const, l: 'Video call' }, { v: 'inperson' as const, l: 'In person' }].map(({ v, l }) => (
               <button key={v} onClick={() => onInterviewType(v)} style={{ padding: 12, borderRadius: 8, border: interviewType === v ? '1.5px solid #315DDF' : '1px solid #D8E1EC', background: interviewType === v ? '#EEF4FF' : '#FFFFFF', color: interviewType === v ? '#1D4ED8' : '#334155', fontSize: 13, fontWeight: 900, cursor: 'pointer' }}>{l}</button>
@@ -1379,7 +1461,7 @@ function ModernInterviewBooking({
           </div>
         </FormPanel>
 
-        <FormPanel title="4. Confirmation details">
+        <FormPanel title="5. Confirmation details">
           <input type="email" placeholder="you@example.com" value={bookEmail} onChange={e => onEmail(e.target.value)} style={{ width: '100%', padding: '13px 14px', borderRadius: 8, border: '1px solid #CBD5E1', background: '#FFFFFF', color: '#0F172A', fontSize: 14, outline: 'none', marginBottom: 10, boxSizing: 'border-box' }} />
           <textarea placeholder="Questions or care details to share" value={bookNotes} onChange={e => onNotes(e.target.value)} rows={3} style={{ width: '100%', padding: '13px 14px', borderRadius: 8, border: '1px solid #CBD5E1', background: '#FFFFFF', color: '#0F172A', fontSize: 14, outline: 'none', resize: 'none', boxSizing: 'border-box', fontFamily: 'inherit' }} />
         </FormPanel>
