@@ -164,7 +164,7 @@ function rankedCaregivers(caregivers: Caregiver[], selectedNeeds: string[]) {
     .sort((a, b) => b.score - a.score || a.originalIndex - b.originalIndex);
 }
 
-export function FindCareTab({ onNavigate }: { onNavigate?: (tab: TabId) => void }) {
+export function FindCareTab({ onNavigate, onRequireAuth }: { onNavigate?: (tab: TabId) => void; onRequireAuth?: () => void }) {
   // ── State ────────────────────────────────────────────────────────────
   const [screen, setScreen] = useState<Screen>('dispatch');
   const [selectedNeeds, setSelectedNeeds] = useState<string[]>(() => getLastCareTypes());
@@ -358,7 +358,11 @@ export function FindCareTab({ onNavigate }: { onNavigate?: (tab: TabId) => void 
   // ── Hire directly — opens agreement modal ────────────────────────────
   function directHire(cg: Caregiver) {
     const token = getToken();
-    if (!token) { showToast('Please sign in to hire a caregiver'); return; }
+    if (!token) {
+      if (onRequireAuth) onRequireAuth();
+      else showToast('Please sign in to hire a caregiver');
+      return;
+    }
     setAgreementCg(cg);
   }
 

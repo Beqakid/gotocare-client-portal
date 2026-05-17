@@ -41,6 +41,7 @@ function App() {
   const [activeTab, setActiveTab] = useState<TabId>(getInitialTab());
   const [teamBadge, setTeamBadge] = useState(0);
   const sessionRestored = useRef(!!existingToken);
+  const authReturnTab = useRef<TabId | null>(null);
 
   // ── Poll for pending hire agreements (client needs to sign) ──────────
   useEffect(() => {
@@ -96,7 +97,12 @@ function App() {
   function handleAuthSuccess(token: string, email: string, name: string) {
     setLoggedIn(true);
     setIsGuest(false);
-    if (!sessionRestored.current) setActiveTab('home');
+    if (authReturnTab.current) {
+      setActiveTab(authReturnTab.current);
+      authReturnTab.current = null;
+    } else if (!sessionRestored.current) {
+      setActiveTab('home');
+    }
     sessionRestored.current = false;
   }
 
@@ -111,6 +117,12 @@ function App() {
     setIsGuest(false);
     setActiveTab('home');
     setTeamBadge(0);
+  }
+
+  function handleRequireAuth() {
+    authReturnTab.current = activeTab;
+    setIsGuest(false);
+    setLoggedIn(false);
   }
 
   // Show auth screen unless logged in or guest
@@ -166,7 +178,7 @@ function App() {
       } as React.CSSProperties}>
         <Suspense fallback={<TabSpinner />}>
           {activeTab === 'home'     && <HomeTab onNavigate={navigateToTab} />}
-          {activeTab === 'findcare' && <FindCareTab onNavigate={navigateToTab} />}
+          {activeTab === 'findcare' && <FindCareTab onNavigate={navigateToTab} onRequireAuth={handleRequireAuth} />}
           {activeTab === 'team'     && <TeamTab onNavigate={navigateToTab} onBadgeChange={setTeamBadge} />}
           {activeTab === 'bookings' && <BookingsTab onNavigate={navigateToTab} />}
           {activeTab === 'profile'  && <ProfileTab onNavigate={navigateToTab} onSignOut={handleSignOut} />}
