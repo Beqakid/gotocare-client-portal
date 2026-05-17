@@ -173,6 +173,7 @@ export function FindCareTab({ onNavigate }: { onNavigate?: (tab: TabId) => void 
   const [urgency, setUrgency] = useState('flexible');
   const [loading, setLoading] = useState(false);
   const [loadingText, setLoadingText] = useState('Finding caregivers near you…');
+  const [knownCaregiverQuery, setKnownCaregiverQuery] = useState('');
 
   const [caregivers, setCaregivers] = useState<Caregiver[]>([]);
   const [currentIdx, setCurrentIdx] = useState(0);
@@ -250,6 +251,30 @@ export function FindCareTab({ onNavigate }: { onNavigate?: (tab: TabId) => void 
       setScreen('swiper');
     } catch { showToast('⚠️ Could not load caregivers. Please try again.'); }
     finally { setLoading(false); }
+  }
+
+  async function handleKnownCaregiverSearch() {
+    const query = knownCaregiverQuery.trim();
+    if (query.length < 2) {
+      showToast('Enter a caregiver name or email to search.');
+      return;
+    }
+
+    const loc = location.trim() || 'Atlanta, GA';
+    setLastLocation(loc);
+    setLoading(true); setLoadingText('Looking for that caregiver...');
+    try {
+      const data = await searchCaregivers(loc, selectedNeeds[0], 1, 20, query);
+      const cgs: Caregiver[] = (data.caregivers || data.docs || []) as Caregiver[];
+      setCaregivers(cgs);
+      setCurrentIdx(0);
+      setScreen('swiper');
+      if (!cgs.length) showToast('No caregiver matched that name or email.');
+    } catch {
+      showToast('Could not search caregivers. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   }
 
   // ── Shortlist helpers ─────────────────────────────────────────────────
@@ -400,9 +425,12 @@ export function FindCareTab({ onNavigate }: { onNavigate?: (tab: TabId) => void 
       loading={loading}
       loadingText={loadingText}
       toast={toast}
+      knownCaregiverQuery={knownCaregiverQuery}
       onToggleNeed={toggleNeed}
       onToggleCard={toggleCard}
       onLocationChange={setLocation}
+      onKnownCaregiverQueryChange={setKnownCaregiverQuery}
+      onKnownCaregiverSearch={handleKnownCaregiverSearch}
       onUrgencyChange={setUrgency}
       onGps={handleGps}
       onFind={handleFind}
@@ -833,9 +861,12 @@ function ModernCareSearch({
   loading,
   loadingText,
   toast,
+  knownCaregiverQuery,
   onToggleNeed,
   onToggleCard,
   onLocationChange,
+  onKnownCaregiverQueryChange,
+  onKnownCaregiverSearch,
   onUrgencyChange,
   onGps,
   onFind,
@@ -847,9 +878,12 @@ function ModernCareSearch({
   loading: boolean;
   loadingText: string;
   toast: string;
+  knownCaregiverQuery: string;
   onToggleNeed: (need: string) => void;
   onToggleCard: (id: number) => void;
   onLocationChange: (value: string) => void;
+  onKnownCaregiverQueryChange: (value: string) => void;
+  onKnownCaregiverSearch: () => void;
   onUrgencyChange: (value: string) => void;
   onGps: () => void;
   onFind: () => void;
@@ -869,6 +903,21 @@ function ModernCareSearch({
         </div>
       </div>
       <div style={{ padding: 16 }}>
+        <section style={{ background: '#FFFFFF', border: '1px solid #D8E1EC', borderRadius: 8, padding: 16, marginBottom: 14, boxShadow: '0 6px 22px rgba(15,23,42,0.05)' }}>
+          <div style={{ fontSize: 15, fontWeight: 900, color: '#0F172A', marginBottom: 4 }}>Know the caregiver you want?</div>
+          <div style={{ fontSize: 12, color: '#64748B', marginBottom: 12 }}>Search by caregiver name or email, then open their profile, request an interview, or hire directly.</div>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <input
+              type="search"
+              placeholder="Name or email"
+              value={knownCaregiverQuery}
+              onChange={e => onKnownCaregiverQueryChange(e.target.value)}
+              onKeyDown={e => { if (e.key === 'Enter') onKnownCaregiverSearch(); }}
+              style={{ flex: 1, minWidth: 0, padding: '13px 14px', borderRadius: 8, border: '1px solid #CBD5E1', background: '#FFFFFF', color: '#0F172A', fontSize: 14, outline: 'none' }}
+            />
+            <button onClick={onKnownCaregiverSearch} style={{ minWidth: 82, borderRadius: 8, border: 'none', background: '#0F172A', color: '#FFFFFF', fontSize: 13, fontWeight: 900, cursor: 'pointer' }}>Search</button>
+          </div>
+        </section>
         <section style={{ background: '#FFFFFF', border: '1px solid #E3E8F0', borderRadius: 8, overflow: 'hidden', marginBottom: 14, boxShadow: '0 6px 22px rgba(15,23,42,0.05)' }}>
           <div style={{ padding: '15px 16px', borderBottom: '1px solid #EEF2F7' }}>
             <div style={{ fontSize: 15, fontWeight: 900, color: '#0F172A' }}>1. What care is needed?</div>

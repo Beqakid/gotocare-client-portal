@@ -37,9 +37,10 @@ export async function clientGoogleAuth(idToken: string, name: string, email: str
 }
 
 // ── Caregivers ────────────────────────────────────────────────────────
-export async function searchCaregivers(location: string, specialty?: string, page = 1, limit = 20) {
+export async function searchCaregivers(location: string, specialty?: string, page = 1, limit = 20, query?: string) {
   const params = new URLSearchParams({ location, page: String(page), limit: String(limit) });
   if (specialty) params.append('specialty', specialty);
+  if (query?.trim()) params.append('q', query.trim());
   return request<{ caregivers?: unknown[]; docs?: unknown[] }>(`/search-caregivers?${params}`);
 }
 
