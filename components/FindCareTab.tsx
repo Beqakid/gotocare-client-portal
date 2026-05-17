@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useRef, useCallback } from 'react';
+import React, { useEffect, useMemo, useState, useRef, useCallback } from 'react';
 import { Caregiver, CARE_CATEGORIES, TabId } from '../types';
 import { searchCaregivers, bookInterview, hireCaregiver } from '../utils/api';
 import { getToken, getEmail, getName, setEmail as storeEmail, getLastLocation, setLastLocation, getLastCareTypes, setLastCareTypes, getShortlistLocal, setShortlistLocal, setBookingStatus } from '../utils/storage';
@@ -7,6 +7,7 @@ import { CaregiverSheet } from './CaregiverSheet';
 import { HireAgreementModal } from './HireAgreementModal';
 
 type Screen = 'dispatch' | 'swiper' | 'shortlist' | 'booking' | 'confirm' | 'subscribe' | 'hire-status';
+const PENDING_HIRE_CAREGIVER_KEY = 'gc_pending_hire_caregiver';
 
 function caregiverName(cg: Caregiver): string {
   return `${cg.firstName || cg.first_name || ''} ${cg.lastName || cg.last_name || ''}`.trim() || cg.name || 'Caregiver';
@@ -164,6 +165,23 @@ function rankedCaregivers(caregivers: Caregiver[], selectedNeeds: string[]) {
     .sort((a, b) => b.score - a.score || a.originalIndex - b.originalIndex);
 }
 
+function savePendingHireCaregiver(cg: Caregiver) {
+  try {
+    sessionStorage.setItem(PENDING_HIRE_CAREGIVER_KEY, JSON.stringify(cg));
+  } catch {}
+}
+
+function takePendingHireCaregiver(): Caregiver | null {
+  try {
+    const raw = sessionStorage.getItem(PENDING_HIRE_CAREGIVER_KEY);
+    if (!raw) return null;
+    sessionStorage.removeItem(PENDING_HIRE_CAREGIVER_KEY);
+    return JSON.parse(raw) as Caregiver;
+  } catch {
+    return null;
+  }
+}
+
 export function FindCareTab({ onNavigate, onRequireAuth }: { onNavigate?: (tab: TabId) => void; onRequireAuth?: () => void }) {
   // ── State ────────────────────────────────────────────────────────────
   const [screen, setScreen] = useState<Screen>('dispatch');
@@ -206,6 +224,19 @@ export function FindCareTab({ onNavigate, onRequireAuth }: { onNavigate?: (tab: 
 
   const [toast, setToastMsg] = useState('');
   function showToast(msg: string) { setToastMsg(msg); setTimeout(() => setToastMsg(''), 3000); }
+
+  useEffect(() => {
+    if (!getToken()) return;
+    const pendingCaregiver = takePendingHireCaregiver();
+    if (!pendingCaregiver) return;
+    setCaregivers([pendingCaregiver]);
+    setCurrentIdx(0);
+    setProfileCg(null);
+    setBookingCg(null);
+    setAgreementCg(null);
+    setScreen('swiper');
+    showToast(`${caregiverName(pendingCaregiver)} is ready to hire.`);
+  }, []);
 
   // ── Care tile toggle ─────────────────────────────────────────────────
   function toggleNeed(need: string) {
@@ -359,6 +390,7 @@ export function FindCareTab({ onNavigate, onRequireAuth }: { onNavigate?: (tab: 
   function directHire(cg: Caregiver) {
     const token = getToken();
     if (!token) {
+      savePendingHireCaregiver(cg);
       if (onRequireAuth) onRequireAuth();
       else showToast('Please sign in to hire a caregiver');
       return;
