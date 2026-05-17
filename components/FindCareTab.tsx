@@ -233,9 +233,9 @@ export function FindCareTab({ onNavigate, onRequireAuth }: { onNavigate?: (tab: 
     setCurrentIdx(0);
     setProfileCg(null);
     setBookingCg(null);
-    setAgreementCg(null);
+    setAgreementCg(pendingCaregiver);
     setScreen('swiper');
-    showToast(`${caregiverName(pendingCaregiver)} is ready to hire.`);
+    showToast(`Finish the hire offer for ${caregiverName(pendingCaregiver)}.`);
   }, []);
 
   // ── Care tile toggle ─────────────────────────────────────────────────
