@@ -44,6 +44,12 @@ export async function searchCaregivers(location: string, specialty?: string, pag
   return request<{ caregivers?: unknown[]; docs?: unknown[] }>(`/search-caregivers?${params}`);
 }
 
+export async function getPublicCaregiverProfile(id: number | string) {
+  return request<{ success: boolean; profile?: Record<string, unknown>; error?: string }>(
+    `/public-profile?id=${encodeURIComponent(String(id))}`
+  );
+}
+
 // ── Bookings ──────────────────────────────────────────────────────────
 export async function bookInterview(payload: {
   caregiverId: number | string;

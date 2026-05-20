@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { clientLogin, clientRegister, clientGoogleAuth } from '../utils/api';
+import { clientLogin, clientRegister, clientGoogleAuth, getPublicCaregiverProfile } from '../utils/api';
 import { setToken, setEmail, setName } from '../utils/storage';
 import { isGoogleReady, initGoogleOneTap } from '../utils/auth';
 
@@ -33,6 +33,31 @@ function getPendingCaregiver(): PendingCaregiver | null {
   }
 }
 
+function getIncomingCaregiverId(): string {
+  try {
+    const params = new URLSearchParams(window.location.search);
+    return params.get('book') || params.get('caregiver') || '';
+  } catch {
+    return '';
+  }
+}
+
+function toPendingCaregiver(profile: Record<string, unknown>, fallbackId: string): PendingCaregiver & { id?: string | number } {
+  const name = String(profile.name || '').trim();
+  const [firstName = '', ...rest] = name.split(/\s+/);
+  return {
+    id: (profile.id as string | number | undefined) || fallbackId,
+    name,
+    firstName,
+    lastName: rest.join(' '),
+    city: profile.city as string | undefined,
+    state: profile.state as string | undefined,
+    hourlyRate: Number(profile.hourly_rate || profile.hourlyRate || 0) || undefined,
+    avatar: profile.photo_url as string | undefined,
+    photo_url: profile.photo_url as string | undefined,
+  };
+}
+
 function caregiverName(cg: PendingCaregiver): string {
   return `${cg.firstName || cg.first_name || ''} ${cg.lastName || cg.last_name || ''}`.trim() || cg.name || 'this caregiver';
 }
@@ -49,11 +74,13 @@ export function LoginScreen({ onSuccess, onGuest }: Props) {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [pendingCaregiver] = useState<PendingCaregiver | null>(() => getPendingCaregiver());
+  const [incomingCaregiver, setIncomingCaregiver] = useState<PendingCaregiver | null>(null);
+  const displayedCaregiver = pendingCaregiver || incomingCaregiver;
 
-  const pendingName = pendingCaregiver ? caregiverName(pendingCaregiver) : '';
-  const pendingLocation = pendingCaregiver ? [pendingCaregiver.city, pendingCaregiver.state].filter(Boolean).join(', ') : '';
-  const pendingRate = pendingCaregiver ? pendingCaregiver.hourlyRate || pendingCaregiver.hourly_rate : null;
-  const pendingAvatar = pendingCaregiver?.avatar || pendingCaregiver?.photo_url || '';
+  const pendingName = displayedCaregiver ? caregiverName(displayedCaregiver) : '';
+  const pendingLocation = displayedCaregiver ? [displayedCaregiver.city, displayedCaregiver.state].filter(Boolean).join(', ') : '';
+  const pendingRate = displayedCaregiver ? displayedCaregiver.hourlyRate || displayedCaregiver.hourly_rate : null;
+  const pendingAvatar = displayedCaregiver?.avatar || displayedCaregiver?.photo_url || '';
 
   function persist(token: string, em: string, nm: string) {
     setToken(token);
@@ -111,6 +138,22 @@ export function LoginScreen({ onSuccess, onGuest }: Props) {
     return () => clearTimeout(t);
   }, []);
 
+  useEffect(() => {
+    if (pendingCaregiver) return;
+    const incomingId = getIncomingCaregiverId();
+    if (!incomingId) return;
+    let cancelled = false;
+    getPublicCaregiverProfile(incomingId)
+      .then(data => {
+        if (cancelled || !data.success || !data.profile) return;
+        const caregiver = toPendingCaregiver(data.profile, incomingId);
+        try { sessionStorage.setItem(PENDING_HIRE_CAREGIVER_KEY, JSON.stringify(caregiver)); } catch {}
+        setIncomingCaregiver(caregiver);
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [pendingCaregiver]);
+
   return (
     <div style={{
       position: 'fixed',
@@ -127,15 +170,15 @@ export function LoginScreen({ onSuccess, onGuest }: Props) {
               Carehia client portal
             </div>
             <h1 style={{ margin: 0, fontSize: 34, lineHeight: 1.04, fontWeight: 950, letterSpacing: 0, color: '#152033' }}>
-              {pendingCaregiver ? `Continue hiring ${pendingName}.` : 'Welcome to calmer care coordination.'}
+              {displayedCaregiver ? `Continue hiring ${pendingName}.` : 'Welcome to calmer care coordination.'}
             </h1>
             <p style={{ margin: '12px 0 0', fontSize: 15, lineHeight: 1.6, color: '#526173', maxWidth: 430 }}>
-              {pendingCaregiver
+              {displayedCaregiver
                 ? 'Your caregiver match is saved. Sign in or create an account and we will take you straight to the hire offer.'
                 : 'Search caregivers, request interviews, manage bookings, and keep your care team in one clear place.'}
             </p>
 
-            {pendingCaregiver && (
+            {displayedCaregiver && (
               <div style={{ marginTop: 18, border: '1px solid #D8E1EC', background: '#FFFFFF', borderRadius: 8, padding: 14, boxShadow: '0 10px 28px rgba(21,32,51,0.08)', maxWidth: 430 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                   {pendingAvatar && pendingAvatar.startsWith('http') ? (
@@ -248,14 +291,14 @@ export function LoginScreen({ onSuccess, onGuest }: Props) {
               disabled={loading}
               style={{ width: '100%', minHeight: 48, borderRadius: 8, border: 'none', background: '#315DDF', color: '#FFFFFF', fontSize: 15, fontWeight: 950, cursor: 'pointer', opacity: loading ? 0.7 : 1, marginTop: 2 }}
             >
-              {loading ? 'Please wait...' : pendingCaregiver ? 'Continue to hire' : mode === 'signup' ? 'Create account' : 'Sign in'}
+              {loading ? 'Please wait...' : displayedCaregiver ? 'Continue to hire' : mode === 'signup' ? 'Create account' : 'Sign in'}
             </button>
 
             <button
               onClick={onGuest}
               style={{ width: '100%', minHeight: 44, marginTop: 10, borderRadius: 8, border: '1px solid #CBD5E1', background: '#F8FAFC', color: '#315DDF', fontSize: 14, fontWeight: 900, cursor: 'pointer' }}
             >
-              {pendingCaregiver ? 'Keep browsing caregivers' : 'Browse caregivers first'}
+              {displayedCaregiver ? 'Keep browsing caregivers' : 'Browse caregivers first'}
             </button>
           </section>
         </main>

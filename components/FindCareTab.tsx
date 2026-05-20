@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState, useRef, useCallback } from 'react';
 import { Caregiver, CARE_CATEGORIES, TabId } from '../types';
-import { searchCaregivers, createInterviewBooking, getInterviewSlots, hireCaregiver } from '../utils/api';
+import { searchCaregivers, createInterviewBooking, getInterviewSlots, hireCaregiver, getPublicCaregiverProfile } from '../utils/api';
 import { getToken, getEmail, getName, setEmail as storeEmail, getLastLocation, setLastLocation, getLastCareTypes, setLastCareTypes, getShortlistLocal, setShortlistLocal, setBookingStatus } from '../utils/storage';
 import { reverseGeocode, syncShortlist } from '../utils/api';
 import { CaregiverSheet } from './CaregiverSheet';
@@ -200,6 +200,41 @@ function takePendingHireCaregiver(): Caregiver | null {
   }
 }
 
+function getIncomingCaregiverId(): string {
+  try {
+    const params = new URLSearchParams(window.location.search);
+    return params.get('book') || params.get('caregiver') || '';
+  } catch {
+    return '';
+  }
+}
+
+function publicProfileToCaregiver(profile: Record<string, unknown>, fallbackId: string): Caregiver {
+  const name = String(profile.name || '').trim();
+  const [firstName = '', ...rest] = name.split(/\s+/);
+  return {
+    id: (profile.id as string | number | undefined) || fallbackId,
+    name,
+    firstName,
+    lastName: rest.join(' '),
+    first_name: firstName,
+    last_name: rest.join(' '),
+    city: profile.city as string | undefined,
+    state: profile.state as string | undefined,
+    hourlyRate: Number(profile.hourly_rate || profile.hourlyRate || 0) || undefined,
+    hourly_rate: Number(profile.hourly_rate || profile.hourlyRate || 0) || undefined,
+    avatar: profile.photo_url as string | undefined,
+    photo_url: profile.photo_url as string | undefined,
+    bio: profile.bio as string | undefined,
+    rating: profile.rating as string | number | undefined,
+    reviews: Number(profile.total_reviews || profile.review_count || 0) || undefined,
+    review_count: Number(profile.total_reviews || profile.review_count || 0) || undefined,
+    skills: profile.skills as string[] | string | undefined,
+    care_types: profile.skills as string[] | string | undefined,
+    certifications: profile.certifications as Array<string | { name: string }> | undefined,
+  };
+}
+
 export function FindCareTab({ onNavigate, onRequireAuth }: { onNavigate?: (tab: TabId) => void; onRequireAuth?: () => void }) {
   // ── State ────────────────────────────────────────────────────────────
   const [screen, setScreen] = useState<Screen>('dispatch');
@@ -257,6 +292,35 @@ export function FindCareTab({ onNavigate, onRequireAuth }: { onNavigate?: (tab: 
     setAgreementCg(pendingCaregiver);
     setScreen('swiper');
     showToast(`Finish the hire offer for ${caregiverName(pendingCaregiver)}.`);
+  }, []);
+
+  useEffect(() => {
+    const incomingId = getIncomingCaregiverId();
+    if (!incomingId) return;
+    let cancelled = false;
+    setLoading(true);
+    setLoadingText('Opening caregiver profile...');
+    getPublicCaregiverProfile(incomingId)
+      .then(data => {
+        if (cancelled || !data.success || !data.profile) return;
+        const caregiver = publicProfileToCaregiver(data.profile, incomingId);
+        setCaregivers([caregiver]);
+        setCurrentIdx(0);
+        if (getToken()) {
+          setProfileCg(null);
+          setBookingCg(null);
+          setAgreementCg(caregiver);
+          showToast(`Finish the hire offer for ${caregiverName(caregiver)}.`);
+        } else {
+          setProfileCg(caregiver);
+        }
+        setScreen('swiper');
+      })
+      .catch(() => showToast('Could not open this caregiver profile.'))
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => { cancelled = true; };
   }, []);
 
   useEffect(() => {
