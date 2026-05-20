@@ -17,6 +17,7 @@ const ProfileTab  = lazy(() => import('./components/ProfileTab').then(m => ({ de
 // ── Handle Stripe return ──────────────────────────────────────────────
 function getInitialTab(): TabId {
   const params = new URLSearchParams(window.location.search);
+  if (params.get('subscription') && sessionStorage.getItem('gc_pending_hire_caregiver')) return 'findcare';
   if (params.get('booking_unlocked') || params.get('subscription')) return 'bookings';
   const hash = window.location.hash.replace('#', '') as TabId;
   const validTabs: TabId[] = ['home', 'findcare', 'team', 'bookings', 'profile'];

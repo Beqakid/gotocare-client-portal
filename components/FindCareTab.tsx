@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState, useRef, useCallback } from 'react';
 import { Caregiver, CARE_CATEGORIES, TabId } from '../types';
-import { searchCaregivers, createInterviewBooking, getInterviewSlots, hireCaregiver, getPublicCaregiverProfile } from '../utils/api';
+import { searchCaregivers, createInterviewBooking, getInterviewSlots, getPublicCaregiverProfile, checkSubscription, createCaregiverAccessCheckout } from '../utils/api';
 import { getToken, getEmail, getName, setEmail as storeEmail, getLastLocation, setLastLocation, getLastCareTypes, setLastCareTypes, getShortlistLocal, setShortlistLocal, setBookingStatus } from '../utils/storage';
 import { reverseGeocode, syncShortlist } from '../utils/api';
 import { CaregiverSheet } from './CaregiverSheet';
@@ -8,7 +8,52 @@ import { HireAgreementModal } from './HireAgreementModal';
 
 type Screen = 'dispatch' | 'swiper' | 'shortlist' | 'booking' | 'confirm' | 'subscribe' | 'hire-status';
 const PENDING_HIRE_CAREGIVER_KEY = 'gc_pending_hire_caregiver';
+const PENDING_CARE_ACTION_KEY = 'gc_pending_care_action';
 type InterviewSlot = { value: string; label: string; startTime: string; endTime: string; durationMinutes: number };
+type CareAction = 'interview' | 'hire';
+type AccessPlanKey = 'caregiver_access_30' | 'essential' | 'family';
+type AccessPrompt = { caregiver: Caregiver; action: CareAction };
+
+const ACCESS_PLANS: {
+  key: AccessPlanKey;
+  name: string;
+  price: string;
+  period: string;
+  badge?: string;
+  description: string;
+  features: string[];
+  checkoutEnabled?: boolean;
+}[] = [
+  {
+    key: 'caregiver_access_30',
+    name: '30-Day Caregiver Access',
+    price: '$59',
+    period: 'one time',
+    badge: 'Coming soon',
+    description: 'Interview and hire one selected caregiver for 30 days.',
+    features: ['Unlock this caregiver', 'Send interview request', 'Create a hire offer', 'Manage the relationship for 30 days'],
+    checkoutEnabled: false,
+  },
+  {
+    key: 'family',
+    name: 'Family Plan',
+    price: '$29',
+    period: '/mo',
+    badge: 'Best value',
+    description: 'For families comparing caregivers or managing ongoing care.',
+    features: ['Unlimited caregiver access', 'Interview multiple caregivers', 'Care team tools', 'Scheduling and coordination'],
+    checkoutEnabled: true,
+  },
+  {
+    key: 'essential',
+    name: 'Essential Plan',
+    price: '$15',
+    period: '/mo',
+    description: 'For lighter care searches and a smaller shortlist.',
+    features: ['5 contact unlocks/month', 'Interview scheduling', 'Priority matching', 'Email support'],
+    checkoutEnabled: true,
+  },
+];
 
 function caregiverName(cg: Caregiver): string {
   return `${cg.firstName || cg.first_name || ''} ${cg.lastName || cg.last_name || ''}`.trim() || cg.name || 'Caregiver';
@@ -183,18 +228,21 @@ function rankedCaregivers(caregivers: Caregiver[], selectedNeeds: string[]) {
     .sort((a, b) => b.score - a.score || a.originalIndex - b.originalIndex);
 }
 
-function savePendingHireCaregiver(cg: Caregiver) {
+function savePendingCareAction(cg: Caregiver, action: CareAction) {
   try {
     sessionStorage.setItem(PENDING_HIRE_CAREGIVER_KEY, JSON.stringify(cg));
+    sessionStorage.setItem(PENDING_CARE_ACTION_KEY, action);
   } catch {}
 }
 
-function takePendingHireCaregiver(): Caregiver | null {
+function takePendingCareAction(): { caregiver: Caregiver; action: CareAction } | null {
   try {
     const raw = sessionStorage.getItem(PENDING_HIRE_CAREGIVER_KEY);
     if (!raw) return null;
+    const action = sessionStorage.getItem(PENDING_CARE_ACTION_KEY) === 'interview' ? 'interview' : 'hire';
     sessionStorage.removeItem(PENDING_HIRE_CAREGIVER_KEY);
-    return JSON.parse(raw) as Caregiver;
+    sessionStorage.removeItem(PENDING_CARE_ACTION_KEY);
+    return { caregiver: JSON.parse(raw) as Caregiver, action };
   } catch {
     return null;
   }
@@ -253,6 +301,7 @@ export function FindCareTab({ onNavigate, onRequireAuth }: { onNavigate?: (tab: 
   const [profileCg, setProfileCg] = useState<Caregiver | null>(null);
   const [bookingCg, setBookingCg] = useState<Caregiver | null>(null);
   const [agreementCg, setAgreementCg] = useState<Caregiver | null>(null);
+  const [accessPrompt, setAccessPrompt] = useState<AccessPrompt | null>(null);
 
   // Swipe gesture state
   const swipeStartX = useRef(0);
@@ -276,22 +325,44 @@ export function FindCareTab({ onNavigate, onRequireAuth }: { onNavigate?: (tab: 
   const [confirmData, setConfirmData] = useState<{ name: string; date: string; time: string; type: string; email: string; durationMinutes?: number } | null>(null);
 
   // Plan selection for subscribe
-  const [selectedPlan, setSelectedPlan] = useState<'essential' | 'family' | 'premium'>('family');
+  const [selectedPlan, setSelectedPlan] = useState<AccessPlanKey>('family');
+  const [planLoading, setPlanLoading] = useState('');
 
   const [toast, setToastMsg] = useState('');
   function showToast(msg: string) { setToastMsg(msg); setTimeout(() => setToastMsg(''), 3000); }
 
   useEffect(() => {
     if (!getToken()) return;
-    const pendingCaregiver = takePendingHireCaregiver();
-    if (!pendingCaregiver) return;
-    setCaregivers([pendingCaregiver]);
+    const pending = takePendingCareAction();
+    if (!pending) return;
+    setCaregivers([pending.caregiver]);
     setCurrentIdx(0);
     setProfileCg(null);
     setBookingCg(null);
-    setAgreementCg(pendingCaregiver);
     setScreen('swiper');
-    showToast(`Finish the hire offer for ${caregiverName(pendingCaregiver)}.`);
+    const email = getEmail();
+    if (!email) {
+      setAccessPrompt({ caregiver: pending.caregiver, action: pending.action });
+      showToast(`Choose access to continue with ${caregiverName(pending.caregiver)}.`);
+      return;
+    }
+    setLoading(true);
+    setLoadingText('Checking care access...');
+    checkSubscription(email)
+      .then(sub => {
+        if (sub.subscribed) {
+          continueWithCareAction(pending.caregiver, pending.action);
+          showToast(`Continue with ${caregiverName(pending.caregiver)}.`);
+        } else {
+          setAccessPrompt({ caregiver: pending.caregiver, action: pending.action });
+          showToast(`Choose access to continue with ${caregiverName(pending.caregiver)}.`);
+        }
+      })
+      .catch(() => {
+        setAccessPrompt({ caregiver: pending.caregiver, action: pending.action });
+        showToast(`Choose access to continue with ${caregiverName(pending.caregiver)}.`);
+      })
+      .finally(() => setLoading(false));
   }, []);
 
   useEffect(() => {
@@ -309,8 +380,8 @@ export function FindCareTab({ onNavigate, onRequireAuth }: { onNavigate?: (tab: 
         if (getToken()) {
           setProfileCg(null);
           setBookingCg(null);
-          setAgreementCg(caregiver);
-          showToast(`Finish the hire offer for ${caregiverName(caregiver)}.`);
+          setAccessPrompt({ caregiver, action: 'hire' });
+          showToast(`Choose access to continue with ${caregiverName(caregiver)}.`);
         } else {
           setProfileCg(caregiver);
         }
@@ -440,6 +511,86 @@ export function FindCareTab({ onNavigate, onRequireAuth }: { onNavigate?: (tab: 
     setShortlist(prev => { const next = prev.filter(s => s.id !== id); persistShortlist(next); return next; });
   }
 
+  async function hasPaidAccess(cg: Caregiver, action: CareAction): Promise<boolean> {
+    const token = getToken();
+    if (!token) {
+      savePendingCareAction(cg, action);
+      if (onRequireAuth) onRequireAuth();
+      else showToast('Please sign in to continue.');
+      return false;
+    }
+
+    const email = getEmail();
+    if (!email) {
+      showToast('Please sign in to continue.');
+      return false;
+    }
+
+    setLoading(true);
+    setLoadingText('Checking care access...');
+    try {
+      const sub = await checkSubscription(email);
+      if (sub.subscribed) return true;
+      setSelectedPlan('family');
+      setAccessPrompt({ caregiver: cg, action });
+      return false;
+    } catch {
+      setAccessPrompt({ caregiver: cg, action });
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  function openInterview(cg: Caregiver) {
+    setBookingCg(cg);
+    setSelectedDate(null); setSelectedTime(null); setInterviewType('video');
+    setInterviewDuration(30);
+    setAvailableSlots([]);
+    setBookEmail(getEmail() || '');
+    setBookNotes('');
+    setScreen('booking');
+  }
+
+  function continueWithCareAction(cg: Caregiver, action: CareAction) {
+    setAccessPrompt(null);
+    if (action === 'interview') {
+      openInterview(cg);
+    } else {
+      setAgreementCg(cg);
+    }
+  }
+
+  async function handleAccessCheckout(plan: AccessPlanKey) {
+    if (!accessPrompt) return;
+    const email = getEmail();
+    if (!email) {
+      showToast('Please sign in to choose a plan.');
+      return;
+    }
+    const selectedAccessPlan = ACCESS_PLANS.find(item => item.key === plan);
+    if (!selectedAccessPlan?.checkoutEnabled) {
+      showToast('30-day access needs the Stripe price configured first.');
+      return;
+    }
+
+    savePendingCareAction(accessPrompt.caregiver, accessPrompt.action);
+    setSelectedPlan(plan);
+    setPlanLoading(plan);
+    try {
+      const result = await createCaregiverAccessCheckout(email, plan, accessPrompt.caregiver.id);
+      if (result.url) {
+        window.location.href = result.url;
+      } else {
+        showToast(result.error || 'Could not open checkout. Please try again.');
+      }
+    } catch {
+      showToast('Could not open checkout. Please try again.');
+    } finally {
+      setPlanLoading('');
+    }
+  }
+
   // ── Swipe gestures ────────────────────────────────────────────────────
   function onTouchStart(e: React.TouchEvent) {
     if (swipeLocked.current) return;
@@ -497,14 +648,8 @@ export function FindCareTab({ onNavigate, onRequireAuth }: { onNavigate?: (tab: 
   }
 
   // ── Hire directly — opens agreement modal ────────────────────────────
-  function directHire(cg: Caregiver) {
-    const token = getToken();
-    if (!token) {
-      savePendingHireCaregiver(cg);
-      if (onRequireAuth) onRequireAuth();
-      else showToast('Please sign in to hire a caregiver');
-      return;
-    }
+  async function directHire(cg: Caregiver) {
+    if (!(await hasPaidAccess(cg, 'hire'))) return;
     setAgreementCg(cg);
   }
 
@@ -517,14 +662,9 @@ export function FindCareTab({ onNavigate, onRequireAuth }: { onNavigate?: (tab: 
   }
 
   // ── Booking (interview) ───────────────────────────────────────────────
-  function startInterview(cg: Caregiver) {
-    setBookingCg(cg);
-    setSelectedDate(null); setSelectedTime(null); setInterviewType('video');
-    setInterviewDuration(30);
-    setAvailableSlots([]);
-    setBookEmail(getEmail() || '');
-    setBookNotes('');
-    setScreen('booking');
+  async function startInterview(cg: Caregiver) {
+    if (!(await hasPaidAccess(cg, 'interview'))) return;
+    openInterview(cg);
   }
 
   async function submitInterview() {
@@ -603,6 +743,12 @@ export function FindCareTab({ onNavigate, onRequireAuth }: { onNavigate?: (tab: 
       selectedNeeds={selectedNeeds}
       onCloseAgreement={() => setAgreementCg(null)}
       onAgreementSuccess={onAgreementSuccess}
+      accessPrompt={accessPrompt}
+      selectedPlan={selectedPlan}
+      planLoading={planLoading}
+      onCloseAccess={() => setAccessPrompt(null)}
+      onSelectPlan={setSelectedPlan}
+      onPlanCheckout={handleAccessCheckout}
     />
   );
 
@@ -1149,6 +1295,12 @@ function ModernMatches({
   selectedNeeds,
   onCloseAgreement,
   onAgreementSuccess,
+  accessPrompt,
+  selectedPlan,
+  planLoading,
+  onCloseAccess,
+  onSelectPlan,
+  onPlanCheckout,
 }: {
   caregivers: Caregiver[];
   shortlist: Caregiver[];
@@ -1166,6 +1318,12 @@ function ModernMatches({
   selectedNeeds: string[];
   onCloseAgreement: () => void;
   onAgreementSuccess: (caregiverId: number | string) => void;
+  accessPrompt: AccessPrompt | null;
+  selectedPlan: AccessPlanKey;
+  planLoading: string;
+  onCloseAccess: () => void;
+  onSelectPlan: (plan: AccessPlanKey) => void;
+  onPlanCheckout: (plan: AccessPlanKey) => void;
 }) {
   const ranked = useMemo(() => rankedCaregivers(caregivers, selectedNeeds), [caregivers, selectedNeeds]);
   const best = ranked[0];
@@ -1265,6 +1423,16 @@ function ModernMatches({
           clientToken={getToken() || ''}
           onClose={onCloseAgreement}
           onSuccess={onAgreementSuccess}
+        />
+      )}
+      {accessPrompt && (
+        <AccessPlanModal
+          prompt={accessPrompt}
+          selectedPlan={selectedPlan}
+          planLoading={planLoading}
+          onClose={onCloseAccess}
+          onSelectPlan={onSelectPlan}
+          onPlanCheckout={onPlanCheckout}
         />
       )}
     </div>
@@ -1453,7 +1621,7 @@ function ModernInterviewBooking({
       <div style={{ background: '#FFFFFF', borderBottom: '1px solid #E3E8F0', padding: '42px 16px 16px' }}>
         <button onClick={onBack} style={{ background: '#F8FAFC', border: '1px solid #D8E1EC', borderRadius: 8, padding: '9px 12px', color: '#334155', fontSize: 13, fontWeight: 850, cursor: 'pointer', marginBottom: 14 }}>Back</button>
         <h1 style={{ margin: 0, fontSize: 24, fontWeight: 900 }}>Schedule interview</h1>
-        <div style={{ fontSize: 13, color: '#526173', lineHeight: 1.45, marginTop: 6 }}>Choose a free interview time with {caregiverName(caregiver)}. You can hire after the conversation feels right.</div>
+        <div style={{ fontSize: 13, color: '#526173', lineHeight: 1.45, marginTop: 6 }}>Choose an interview time with {caregiverName(caregiver)}. Your Carehia access covers the request and next hiring step.</div>
       </div>
 
       <div style={{ padding: 16 }}>
@@ -1530,8 +1698,121 @@ function ModernInterviewBooking({
           <textarea placeholder="Questions or care details to share" value={bookNotes} onChange={e => onNotes(e.target.value)} rows={3} style={{ width: '100%', padding: '13px 14px', borderRadius: 8, border: '1px solid #CBD5E1', background: '#FFFFFF', color: '#0F172A', fontSize: 14, outline: 'none', resize: 'none', boxSizing: 'border-box', fontFamily: 'inherit' }} />
         </FormPanel>
 
-        <div style={{ background: '#EAFBF2', border: '1px solid #B7E8CA', borderRadius: 8, padding: 12, color: '#087A3D', fontSize: 12, fontWeight: 850, marginBottom: 12, textAlign: 'center' }}>Interview requests are free. You only pay when care is arranged.</div>
+        <div style={{ background: '#EAFBF2', border: '1px solid #B7E8CA', borderRadius: 8, padding: 12, color: '#087A3D', fontSize: 12, fontWeight: 850, marginBottom: 12, textAlign: 'center' }}>Carehia access keeps interviews, hire offers, and care coordination in one secure place.</div>
         <button onClick={onSubmit} style={{ width: '100%', padding: 15, border: 'none', borderRadius: 8, background: '#315DDF', color: '#fff', fontSize: 15, fontWeight: 900, cursor: 'pointer', boxShadow: '0 8px 20px rgba(49,93,223,0.22)' }}>Send interview request</button>
+      </div>
+    </div>
+  );
+}
+
+function AccessPlanModal({
+  prompt,
+  selectedPlan,
+  planLoading,
+  onClose,
+  onSelectPlan,
+  onPlanCheckout,
+}: {
+  prompt: AccessPrompt;
+  selectedPlan: AccessPlanKey;
+  planLoading: string;
+  onClose: () => void;
+  onSelectPlan: (plan: AccessPlanKey) => void;
+  onPlanCheckout: (plan: AccessPlanKey) => void;
+}) {
+  const name = caregiverName(prompt.caregiver);
+  const actionLabel = prompt.action === 'interview' ? 'interview' : 'hire offer';
+  const selected = ACCESS_PLANS.find(plan => plan.key === selectedPlan) || ACCESS_PLANS[0];
+
+  return (
+    <div
+      style={{ position: 'fixed', inset: 0, zIndex: 300, background: 'rgba(15, 23, 42, 0.55)', display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}
+      onClick={e => { if (e.target === e.currentTarget) onClose(); }}
+    >
+      <div style={{ width: '100%', maxWidth: 560, maxHeight: '92dvh', overflowY: 'auto', background: '#FFFFFF', borderRadius: '24px 24px 0 0', padding: '20px 18px 34px', boxShadow: '0 -18px 50px rgba(15,23,42,0.24)' }}>
+        <div style={{ width: 42, height: 4, borderRadius: 999, background: '#CBD5E1', margin: '0 auto 16px' }} />
+        <div style={{ display: 'flex', justifyContent: 'space-between', gap: 14, alignItems: 'flex-start', marginBottom: 14 }}>
+          <div>
+            <div style={{ color: '#315DDF', fontSize: 12, fontWeight: 950, textTransform: 'uppercase' }}>Carehia access</div>
+            <h2 style={{ margin: '5px 0 0', color: '#0F172A', fontSize: 24, lineHeight: 1.08, fontWeight: 950, letterSpacing: 0 }}>Continue with {name}</h2>
+            <div style={{ marginTop: 7, color: '#526173', fontSize: 13, lineHeight: 1.5 }}>Choose a plan to send this {actionLabel}, keep contact protected, and manage next steps inside Carehia.</div>
+          </div>
+          <button onClick={onClose} aria-label="Close" style={{ flex: '0 0 auto', width: 36, height: 36, borderRadius: 999, border: 'none', background: '#F1F5F9', color: '#475569', fontSize: 18, cursor: 'pointer' }}>x</button>
+        </div>
+
+        <section style={{ border: '1px solid #D8E1EC', borderRadius: 8, background: '#F8FAFC', padding: 13, marginBottom: 14 }}>
+          <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+            <div style={{ width: 50, height: 50, borderRadius: 8, background: '#EAF0FF', color: '#315DDF', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, fontWeight: 950, flex: '0 0 auto' }}>{caregiverInitials(prompt.caregiver)}</div>
+            <div style={{ minWidth: 0, flex: 1 }}>
+              <div style={{ color: '#0F172A', fontSize: 15, fontWeight: 950, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{name}</div>
+              <div style={{ marginTop: 3, color: '#64748B', fontSize: 12 }}>{caregiverSpecialty(prompt.caregiver)}</div>
+            </div>
+            <div style={{ textAlign: 'right', color: '#0F172A', fontSize: 14, fontWeight: 950 }}>${caregiverRate(prompt.caregiver)}/hr</div>
+          </div>
+        </section>
+
+        <div style={{ display: 'grid', gap: 10 }}>
+          {ACCESS_PLANS.map(plan => {
+            const active = selectedPlan === plan.key;
+            const checkoutEnabled = plan.checkoutEnabled !== false;
+            return (
+              <button
+                key={plan.key}
+                onClick={() => onSelectPlan(plan.key)}
+                style={{
+                  width: '100%',
+                  border: `1.5px solid ${active ? '#315DDF' : '#E3E8F0'}`,
+                  borderRadius: 8,
+                  background: active ? '#F8FAFF' : '#FFFFFF',
+                  padding: 14,
+                  textAlign: 'left',
+                  cursor: 'pointer',
+                  boxShadow: active ? '0 10px 28px rgba(49,93,223,0.10)' : 'none',
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'flex-start' }}>
+                  <div style={{ minWidth: 0 }}>
+                    <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+                      <span style={{ color: '#0F172A', fontSize: 15, fontWeight: 950 }}>{plan.name}</span>
+                      {plan.badge && <span style={{ borderRadius: 999, background: '#EAFBF2', color: '#087A3D', padding: '4px 8px', fontSize: 10, fontWeight: 900 }}>{plan.badge}</span>}
+                    </div>
+                    <div style={{ marginTop: 5, color: '#526173', fontSize: 12, lineHeight: 1.4 }}>{plan.description}</div>
+                    {!checkoutEnabled && (
+                      <div style={{ marginTop: 7, color: '#B45309', fontSize: 11, lineHeight: 1.35, fontWeight: 850 }}>
+                        This one-time option is being activated. Choose Family Plan to continue today.
+                      </div>
+                    )}
+                  </div>
+                  <div style={{ textAlign: 'right', flex: '0 0 auto' }}>
+                    <div style={{ color: '#315DDF', fontSize: 21, fontWeight: 950 }}>{plan.price}</div>
+                    <div style={{ color: '#94A3B8', fontSize: 11, fontWeight: 800 }}>{plan.period}</div>
+                  </div>
+                </div>
+                {active && (
+                  <div style={{ display: 'grid', gap: 6, marginTop: 12, borderTop: '1px solid #E3E8F0', paddingTop: 11 }}>
+                    {plan.features.map(feature => (
+                      <div key={feature} style={{ color: '#475569', fontSize: 12, lineHeight: 1.35 }}>
+                        <span style={{ color: '#087A3D', fontWeight: 950, marginRight: 7 }}>+</span>{feature}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </button>
+            );
+          })}
+        </div>
+
+        <button
+          onClick={() => onPlanCheckout(selected.key)}
+          disabled={Boolean(planLoading) || selected.checkoutEnabled === false}
+          style={{ width: '100%', minHeight: 52, border: 'none', borderRadius: 8, background: selected.checkoutEnabled === false ? '#CBD5E1' : '#315DDF', color: selected.checkoutEnabled === false ? '#475569' : '#FFFFFF', fontSize: 15, fontWeight: 950, cursor: planLoading ? 'wait' : selected.checkoutEnabled === false ? 'not-allowed' : 'pointer', marginTop: 14, opacity: planLoading ? 0.72 : 1 }}
+        >
+          {planLoading ? 'Opening secure checkout...' : selected.checkoutEnabled === false ? 'One-time access coming soon' : `Continue with ${selected.name}`}
+        </button>
+        <button onClick={onClose} style={{ width: '100%', minHeight: 44, border: 'none', background: 'transparent', color: '#64748B', fontSize: 13, fontWeight: 850, cursor: 'pointer', marginTop: 8 }}>
+          Keep browsing for now
+        </button>
+        <div style={{ textAlign: 'center', color: '#94A3B8', fontSize: 11, lineHeight: 1.45, marginTop: 4 }}>Search and profile viewing stay free. Secure checkout is handled by Stripe.</div>
       </div>
     </div>
   );

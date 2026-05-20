@@ -202,6 +202,14 @@ export async function createSubscriptionCheckout(email: string, plan: string) {
   });
 }
 
+export async function createCaregiverAccessCheckout(email: string, plan: string, caregiverId?: number | string) {
+  return request<{ url?: string; error?: string }>('/create-subscription-checkout', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, plan, caregiverId }),
+  });
+}
+
 // ── Certifications (for client viewing with subscription) ─────────────
 export async function getCaregiverDocs(email: string, clientToken: string) {
   return request<{ success: boolean; subscribed: boolean; count: number; documents: { name: string }[] }>(
