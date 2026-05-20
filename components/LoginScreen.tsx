@@ -4,6 +4,7 @@ import { setToken, setEmail, setName } from '../utils/storage';
 import { isGoogleReady, initGoogleOneTap } from '../utils/auth';
 
 const PENDING_HIRE_CAREGIVER_KEY = 'gc_pending_hire_caregiver';
+const PENDING_CARE_ACTION_KEY = 'gc_pending_care_action';
 
 interface Props {
   onSuccess: (token: string, email: string, name: string) => void;
@@ -126,6 +127,19 @@ export function LoginScreen({ onSuccess, onGuest }: Props) {
     });
   }
 
+  function handleBrowseCaregivers() {
+    try {
+      sessionStorage.removeItem(PENDING_HIRE_CAREGIVER_KEY);
+      sessionStorage.removeItem(PENDING_CARE_ACTION_KEY);
+      const url = new URL(window.location.href);
+      url.searchParams.delete('book');
+      url.searchParams.delete('caregiver');
+      url.hash = '#findcare';
+      window.history.replaceState({ tab: 'findcare' }, '', url.toString());
+    } catch {}
+    onGuest();
+  }
+
   useEffect(() => {
     const t = setTimeout(() => {
       if (isGoogleReady()) {
@@ -203,7 +217,7 @@ export function LoginScreen({ onSuccess, onGuest }: Props) {
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 8, maxWidth: 430, marginTop: 18 }}>
               <TrustPill title="Verified" text="profiles" />
-              <TrustPill title="Free" text="interviews" />
+              <TrustPill title="Free" text="search" />
               <TrustPill title="Secure" text="account" />
             </div>
           </section>
@@ -295,7 +309,7 @@ export function LoginScreen({ onSuccess, onGuest }: Props) {
             </button>
 
             <button
-              onClick={onGuest}
+              onClick={handleBrowseCaregivers}
               style={{ width: '100%', minHeight: 44, marginTop: 10, borderRadius: 8, border: '1px solid #CBD5E1', background: '#F8FAFC', color: '#315DDF', fontSize: 14, fontWeight: 900, cursor: 'pointer' }}
             >
               {displayedCaregiver ? 'Keep browsing caregivers' : 'Browse caregivers first'}
