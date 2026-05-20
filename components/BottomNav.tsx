@@ -48,7 +48,7 @@ export function BottomNav({ active, onChange, teamBadge = 0 }: Props) {
             flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center',
             justifyContent: 'center', gap: 3, padding: '10px 4px 12px',
             background: 'none', border: 'none', cursor: 'pointer',
-            color: active === tab.id ? '#315DDF' : '#94A3B8',
+            color: active === tab.id ? '#315DDF' : '#475569',
             transition: 'color 0.2s',
             WebkitTapHighlightColor: 'transparent',
             position: 'relative',
@@ -68,7 +68,7 @@ export function BottomNav({ active, onChange, teamBadge = 0 }: Props) {
             </div>
           )}
           {tab.icon}
-          <span style={{ fontSize: 10, fontWeight: active === tab.id ? 700 : 500, letterSpacing: 0.2 }}>
+          <span style={{ fontSize: 10, fontWeight: active === tab.id ? 800 : 650, letterSpacing: 0.2 }}>
             {tab.label}
           </span>
           {active === tab.id && (

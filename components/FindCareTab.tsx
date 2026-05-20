@@ -591,7 +591,7 @@ export function FindCareTab({ onNavigate, onRequireAuth }: { onNavigate?: (tab: 
               <span style={{ fontSize: 20 }}>{cat.emoji}</span>
               <span style={{ flex: 1, fontSize: 15, fontWeight: 700, color: '#0F172A' }}>{cat.title}</span>
               {count > 0 && <span style={{ background: '#7C5CFF', color: '#fff', fontSize: 11, fontWeight: 700, minWidth: 20, height: 20, borderRadius: 10, padding: '0 6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{count}</span>}
-              <span style={{ fontSize: 16, color: '#94A3B8', transition: 'transform 0.25s', display: 'inline-block', transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)' }}>▾</span>
+              <span style={{ fontSize: 16, color: '#315DDF', fontWeight: 900, transition: 'transform 0.25s', display: 'inline-block', transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)' }}>▾</span>
             </div>
             {isOpen && (
               <div style={{ padding: '0 12px 14px' }}>
@@ -904,7 +904,7 @@ export function FindCareTab({ onNavigate, onRequireAuth }: { onNavigate?: (tab: 
           <button onClick={() => setScreen('shortlist')} style={{ width: '100%', padding: 14, background: '#FFFFFF', border: '1px solid #D8E1EC', borderRadius: 8, color: '#315DDF', fontSize: 14, fontWeight: 850, cursor: 'pointer', marginBottom: 10 }}>
             Compare saved caregivers
           </button>
-          <button onClick={() => setScreen('dispatch')} style={{ width: '100%', padding: 14, background: 'transparent', border: 'none', color: '#64748B', fontSize: 14, fontWeight: 800, cursor: 'pointer' }}>
+          <button onClick={() => setScreen('dispatch')} style={{ width: '100%', padding: 14, background: '#F8FAFC', border: '1px solid #D8E1EC', borderRadius: 8, color: '#315DDF', fontSize: 14, fontWeight: 850, cursor: 'pointer' }}>
             Start a new search
           </button>
         </main>
@@ -1022,7 +1022,7 @@ function ModernCareSearch({
                     <span style={{ display: 'block', fontSize: 12, color: '#64748B', marginTop: 2 }}>{count ? `${count} selected` : `${cat.needs.length} care options`}</span>
                   </span>
                   {count > 0 && <span style={{ background: '#DBEAFE', color: '#1D4ED8', fontSize: 11, fontWeight: 850, borderRadius: 999, padding: '5px 8px' }}>{count}</span>}
-                  <span style={{ color: '#94A3B8', fontSize: 16 }}>{isOpen ? '-' : '+'}</span>
+                  <span style={{ color: '#315DDF', fontSize: 16, fontWeight: 900 }}>{isOpen ? '-' : '+'}</span>
                 </button>
                 {isOpen && (
                   <div style={{ padding: '0 14px 14px' }}>
@@ -1121,7 +1121,7 @@ function ModernMatches({
       <div style={{ background: '#FFFFFF', borderBottom: '1px solid #E3E8F0', padding: '42px 16px 16px' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginBottom: 14 }}>
           <button onClick={onBack} style={{ background: '#F8FAFC', border: '1px solid #D8E1EC', borderRadius: 8, padding: '9px 12px', color: '#334155', fontSize: 13, fontWeight: 850, cursor: 'pointer' }}>Refine</button>
-          <button onClick={onShortlist} style={{ background: shortlist.length ? '#EEF4FF' : '#F8FAFC', border: '1px solid #D8E1EC', borderRadius: 8, padding: '9px 12px', color: shortlist.length ? '#315DDF' : '#64748B', fontSize: 13, fontWeight: 850, cursor: 'pointer' }}>Saved {shortlist.length}</button>
+          <button onClick={onShortlist} style={{ background: shortlist.length ? '#EEF4FF' : '#FFFFFF', border: `1px solid ${shortlist.length ? '#BFD2FF' : '#CBD5E1'}`, borderRadius: 8, padding: '9px 12px', color: '#315DDF', fontSize: 13, fontWeight: 850, cursor: 'pointer' }}>Saved {shortlist.length}</button>
         </div>
         <h1 style={{ margin: 0, fontSize: 24, fontWeight: 900, letterSpacing: 0 }}>Caregiver matches</h1>
         <div style={{ fontSize: 13, color: '#526173', lineHeight: 1.45, marginTop: 6 }}>{caregivers.length} caregiver{caregivers.length === 1 ? '' : 's'} near {location || 'your area'}. Carehia ranked the strongest fit first.</div>
