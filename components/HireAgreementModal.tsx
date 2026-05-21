@@ -47,9 +47,24 @@ export function HireAgreementModal({ cg, selectedCareTypes, clientName, clientTo
   const weeklyCost = Math.max(0, (parseFloat(hoursPerWeek) || 0) * rateNum);
   const careTypes = selectedCareTypes.length ? selectedCareTypes : parseCareTypes(cg.care_types);
   const today = new Date().toISOString().split('T')[0];
+  const orderedSelectedDays = DAYS.filter(day => selectedDays.includes(day));
 
   function toggleDay(day: string) {
+    setError('');
     setSelectedDays(prev => prev.includes(day) ? prev.filter(item => item !== day) : [...prev, day]);
+  }
+
+  function handleReview() {
+    setError('');
+    if (!orderedSelectedDays.length) {
+      setError('Choose at least one care day so the schedule appears for the caregiver after hire.');
+      return;
+    }
+    if (!startTime || !endTime || startTime === endTime) {
+      setError('Choose a valid start and end time for the care schedule.');
+      return;
+    }
+    setStep(2);
   }
 
   async function handleSend() {
@@ -57,7 +72,7 @@ export function HireAgreementModal({ cg, selectedCareTypes, clientName, clientTo
     setError('');
     try {
       const notes = [
-        selectedDays.length ? `Days: ${selectedDays.join(', ')}` : '',
+        orderedSelectedDays.length ? `Days: ${orderedSelectedDays.join(', ')}` : '',
         startTime && endTime ? `Hours: ${startTime} - ${endTime}` : '',
         scheduleNotes || '',
       ].filter(Boolean).join('\n');
@@ -71,6 +86,10 @@ export function HireAgreementModal({ cg, selectedCareTypes, clientName, clientTo
           careTypes,
           startDate: startDate || null,
           scheduleNotes: notes || null,
+          scheduleDays: orderedSelectedDays,
+          scheduleStartTime: startTime,
+          scheduleEndTime: endTime,
+          scheduleRecurring: true,
           negotiatedRate: rateNum,
           hoursPerWeek: hoursPerWeek || '20',
         }),
@@ -134,8 +153,8 @@ export function HireAgreementModal({ cg, selectedCareTypes, clientName, clientTo
                 ))}
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-                <TimeField label="Start" value={startTime} onChange={setStartTime} />
-                <TimeField label="End" value={endTime} onChange={setEndTime} />
+                <TimeField label="Start" value={startTime} onChange={value => { setError(''); setStartTime(value); }} />
+                <TimeField label="End" value={endTime} onChange={value => { setError(''); setEndTime(value); }} />
               </div>
             </section>
 
@@ -144,7 +163,9 @@ export function HireAgreementModal({ cg, selectedCareTypes, clientName, clientTo
               <textarea value={scheduleNotes} onChange={e => setScheduleNotes(e.target.value)} placeholder="Care preferences, access notes, or questions" rows={3} style={{ ...inputStyle, minHeight: 92, resize: 'none', fontFamily: 'inherit' }} />
             </section>
 
-            <button onClick={() => setStep(2)} style={primaryButtonStyle}>Review offer</button>
+            {error && <div style={errorStyle}>{error}</div>}
+
+            <button onClick={handleReview} style={primaryButtonStyle}>Review offer</button>
             <button onClick={onClose} style={ghostButtonStyle}>Cancel</button>
           </div>
         )}
@@ -158,7 +179,7 @@ export function HireAgreementModal({ cg, selectedCareTypes, clientName, clientTo
               <DetailRow label="Hours/week" value={`${hoursPerWeek || '20'} hrs`} />
               <DetailRow label="Estimated weekly" value={`$${weeklyCost.toFixed(0)}`} />
               <DetailRow label="Start date" value={startDate ? formatDate(startDate) : 'Flexible'} />
-              <DetailRow label="Days" value={selectedDays.length ? selectedDays.join(', ') : 'To be confirmed'} />
+              <DetailRow label="Days" value={orderedSelectedDays.length ? orderedSelectedDays.join(', ') : 'To be confirmed'} />
               <DetailRow label="Time" value={`${startTime} - ${endTime}`} />
               <DetailRow label="Services" value={(careTypes.length ? careTypes : ['Home care']).join(', ')} />
             </section>

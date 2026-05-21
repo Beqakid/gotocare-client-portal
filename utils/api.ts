@@ -240,7 +240,13 @@ export async function createHireAgreement(payload: {
   careTypes: string[];
   startDate?: string | null;
   scheduleNotes?: string | null;
-  clientSignature: string;
+  scheduleDays?: string[];
+  scheduleStartTime?: string;
+  scheduleEndTime?: string;
+  scheduleRecurring?: boolean;
+  negotiatedRate?: number;
+  hoursPerWeek?: string;
+  clientSignature?: string;
 }) {
   return request<{ success: boolean; agreementToken?: string; error?: string }>('/create-hire-agreement', {
     method: 'POST',
