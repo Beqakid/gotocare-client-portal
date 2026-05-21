@@ -69,10 +69,10 @@ function KaiDemoPage() {
           <div>
             <p style={{ margin: 0, color: '#5B46D6', fontSize: 13, fontWeight: 900, letterSpacing: '0.12em', textTransform: 'uppercase' }}>Kai AI Coach for Carehia</p>
             <h1 style={{ margin: '16px 0 0', maxWidth: 760, fontSize: 'clamp(42px, 8vw, 84px)', lineHeight: 0.98, letterSpacing: '-0.04em' }}>
-              Show how Kai can onboard care teams through conversation.
+              Show how Kai helps families start looking for caregivers.
             </h1>
             <p style={{ margin: '22px 0 0', maxWidth: 680, color: '#48615D', fontSize: 18, lineHeight: 1.65 }}>
-              This demo page is separate from the live client portal. Open Kai from the bottom-right button and use the sample flow to preview care agency onboarding.
+              This demo page is separate from the live client portal. Open Kai from the bottom-right button and use the sample flow to preview caregiver-search onboarding.
             </p>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, marginTop: 28 }}>
               <a href="#demo-flow" style={{ borderRadius: 10, padding: '12px 16px', background: '#7C5CFF', color: '#fff', textDecoration: 'none', fontWeight: 800 }}>What to show</a>
@@ -85,19 +85,19 @@ function KaiDemoPage() {
               <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 44, height: 44, borderRadius: 12, background: '#7C5CFF', color: '#fff', fontWeight: 900 }}>K</span>
               <div>
                 <strong>Kai</strong>
-                <p style={{ margin: '2px 0 0', color: '#61736F', fontSize: 14 }}>Care onboarding assistant</p>
+                <p style={{ margin: '2px 0 0', color: '#61736F', fontSize: 14 }}>Caregiver search assistant</p>
               </div>
             </div>
             <ol id="demo-flow" style={{ display: 'grid', gap: 14, margin: '18px 0 0', paddingLeft: 20, color: '#415752', lineHeight: 1.55 }}>
-              <li>Ask what kind of care setup the partner wants to prepare.</li>
-              <li>Collect agency name, services, coverage area, and contact details.</li>
-              <li>Create a structured care setup preview for manual review.</li>
+              <li>Ask who needs care and what support is needed.</li>
+              <li>Collect location, schedule, urgency, and caregiver preferences.</li>
+              <li>Create a clear care-search preview before browsing caregivers.</li>
             </ol>
           </aside>
         </section>
 
         <footer style={{ borderTop: '1px solid rgba(124,92,255,0.14)', marginTop: 28, padding: '20px 0 8px', color: '#61736F', fontSize: 14 }}>
-          Demo only. Production Carehia integration would save approved Kai outputs into the Carehia workspace.
+          Demo only. Production Carehia integration would save approved Kai outputs into the client workspace and caregiver search flow.
         </footer>
       </div>
     </div>
