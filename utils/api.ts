@@ -211,6 +211,22 @@ export async function createCaregiverAccessCheckout(email: string, plan: string,
 }
 
 // ── Certifications (for client viewing with subscription) ─────────────
+export async function confirmClientSubscription(email: string, plan: string, sessionId?: string) {
+  return request<{ success: boolean; plan?: string; error?: string }>('/confirm-client-subscription', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, plan, sessionId }),
+  });
+}
+
+export async function createClientBillingPortal(email: string) {
+  return request<{ success?: boolean; url?: string; error?: string }>('/create-client-billing-portal', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email }),
+  });
+}
+
 export async function getCaregiverDocs(email: string, clientToken: string) {
   return request<{ success: boolean; subscribed: boolean; count: number; documents: { name: string }[] }>(
     `/caregiver-profile-docs?email=${encodeURIComponent(email)}&clientToken=${clientToken}`

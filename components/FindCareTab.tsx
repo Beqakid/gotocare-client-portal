@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState, useRef, useCallback } from 'react';
 import { Caregiver, CARE_CATEGORIES, TabId } from '../types';
-import { searchCaregivers, createInterviewBooking, getInterviewSlots, getPublicCaregiverProfile, checkSubscription, createCaregiverAccessCheckout } from '../utils/api';
+import { searchCaregivers, createInterviewBooking, getInterviewSlots, getPublicCaregiverProfile, checkSubscription, createCaregiverAccessCheckout, confirmClientSubscription } from '../utils/api';
 import { getToken, getEmail, getName, setEmail as storeEmail, getLastLocation, setLastLocation, getLastCareTypes, setLastCareTypes, getShortlistLocal, setShortlistLocal, setBookingStatus } from '../utils/storage';
 import { reverseGeocode, syncShortlist } from '../utils/api';
 import { CaregiverSheet } from './CaregiverSheet';
@@ -235,17 +235,33 @@ function savePendingCareAction(cg: Caregiver, action: CareAction) {
   } catch {}
 }
 
-function takePendingCareAction(): { caregiver: Caregiver; action: CareAction } | null {
+function readPendingCareAction(): { caregiver: Caregiver; action: CareAction } | null {
   try {
     const raw = sessionStorage.getItem(PENDING_HIRE_CAREGIVER_KEY);
     if (!raw) return null;
     const action = sessionStorage.getItem(PENDING_CARE_ACTION_KEY) === 'interview' ? 'interview' : 'hire';
-    sessionStorage.removeItem(PENDING_HIRE_CAREGIVER_KEY);
-    sessionStorage.removeItem(PENDING_CARE_ACTION_KEY);
     return { caregiver: JSON.parse(raw) as Caregiver, action };
   } catch {
     return null;
   }
+}
+
+function clearPendingCareAction() {
+  try {
+    sessionStorage.removeItem(PENDING_HIRE_CAREGIVER_KEY);
+    sessionStorage.removeItem(PENDING_CARE_ACTION_KEY);
+  } catch {}
+}
+
+function clearSubscriptionReturnParams() {
+  try {
+    const url = new URL(window.location.href);
+    url.searchParams.delete('subscription');
+    url.searchParams.delete('session_id');
+    url.searchParams.delete('plan');
+    url.searchParams.delete('email');
+    window.history.replaceState({}, '', url.toString());
+  } catch {}
 }
 
 function getIncomingCaregiverId(): string {
@@ -333,7 +349,7 @@ export function FindCareTab({ onNavigate, onRequireAuth }: { onNavigate?: (tab: 
 
   useEffect(() => {
     if (!getToken()) return;
-    const pending = takePendingCareAction();
+    const pending = readPendingCareAction();
     if (!pending) return;
     setCaregivers([pending.caregiver]);
     setCurrentIdx(0);
@@ -348,8 +364,20 @@ export function FindCareTab({ onNavigate, onRequireAuth }: { onNavigate?: (tab: 
     }
     setLoading(true);
     setLoadingText('Checking care access...');
-    checkSubscription(email)
-      .then(sub => {
+    const params = new URLSearchParams(window.location.search);
+    const subResult = params.get('subscription');
+    const sessionId = params.get('session_id') || '';
+    const planParam = params.get('plan') || '';
+    const emailParam = params.get('email') || email;
+
+    async function resumePendingCareAction() {
+      if (subResult === 'success' && planParam) {
+        setLoadingText('Activating care access...');
+        await confirmClientSubscription(emailParam, planParam, sessionId);
+        clearSubscriptionReturnParams();
+      }
+      setLoadingText('Checking care access...');
+      const sub = await checkSubscription(email);
         if (sub.subscribed) {
           continueWithCareAction(pending.caregiver, pending.action);
           showToast(`Continue with ${caregiverName(pending.caregiver)}.`);
@@ -357,7 +385,9 @@ export function FindCareTab({ onNavigate, onRequireAuth }: { onNavigate?: (tab: 
           setAccessPrompt({ caregiver: pending.caregiver, action: pending.action });
           showToast(`Choose access to continue with ${caregiverName(pending.caregiver)}.`);
         }
-      })
+    }
+
+    resumePendingCareAction()
       .catch(() => {
         setAccessPrompt({ caregiver: pending.caregiver, action: pending.action });
         showToast(`Choose access to continue with ${caregiverName(pending.caregiver)}.`);
@@ -554,6 +584,7 @@ export function FindCareTab({ onNavigate, onRequireAuth }: { onNavigate?: (tab: 
 
   function continueWithCareAction(cg: Caregiver, action: CareAction) {
     setAccessPrompt(null);
+    clearPendingCareAction();
     if (action === 'interview') {
       openInterview(cg);
     } else {

@@ -1,6 +1,6 @@
 import React from 'react';
 import { getToken, getName, getEmail, clearSession } from '../utils/storage';
-import { checkSubscription, createSubscriptionCheckout, getMyBookings, getMyTeam } from '../utils/api';
+import { checkSubscription, createClientBillingPortal, createSubscriptionCheckout, confirmClientSubscription, getMyBookings, getMyTeam } from '../utils/api';
 import { TabId } from '../types';
 
 interface Props {
@@ -77,14 +77,10 @@ export function ProfileTab({ onNavigate, onSignOut }: Props) {
     const subResult = params.get('subscription');
     const planParam = params.get('plan');
     const emailParam = params.get('email');
+    const sessionId = params.get('session_id') || '';
 
     if (subResult === 'success' && planParam && emailParam) {
-      fetch('https://gotocare-original.jjioji.workers.dev/api/confirm-client-subscription', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: emailParam, plan: planParam }),
-      })
-        .then(r => r.json())
+      confirmClientSubscription(emailParam, planParam, sessionId)
         .then(() => {
           setSubSuccess(true);
           window.history.replaceState({}, '', `${window.location.pathname}${window.location.hash}`);
@@ -116,7 +112,9 @@ export function ProfileTab({ onNavigate, onSignOut }: Props) {
 
     setUpgradeLoading(plan);
     try {
-      const d = await createSubscriptionCheckout(emailVal, plan);
+      const d = sub?.subscribed
+        ? await createClientBillingPortal(emailVal)
+        : await createSubscriptionCheckout(emailVal, plan);
       if (d.url) window.location.href = d.url;
       else if (d.error) alert(d.error);
     } catch {
@@ -228,13 +226,13 @@ export function ProfileTab({ onNavigate, onSignOut }: Props) {
           <QuickAction title="Find care" body="Search caregiver matches" action={() => onNavigate('findcare')} />
           <QuickAction title="Bookings" body="Track interviews" action={() => onNavigate('bookings')} />
           <QuickAction title="Care team" body="Manage hired help" action={() => onNavigate('team')} />
-          <QuickAction title="Plan" body="Upgrade access" action={() => setShowUpgradeModal(true)} />
+          <QuickAction title="Plan" body="Manage subscription" action={() => setShowUpgradeModal(true)} />
         </div>
 
         <SectionTitle title="Account" />
         <MenuGroup
           items={[
-            { label: 'Billing and plan', detail: planLabel.long, action: () => setShowUpgradeModal(true) },
+            { label: 'Subscription Plan', detail: `${planLabel.long} - upgrade, downgrade, or manage billing`, action: () => setShowUpgradeModal(true) },
             { label: 'Notifications', detail: 'Care reminders and updates', action: () => alert('Notification preferences are coming soon.') },
             { label: 'Privacy and security', detail: 'Account and data settings', action: () => window.open('https://carehia.com/privacy', '_blank') },
           ]}
@@ -334,7 +332,7 @@ function PlanCard({ sub, loading, onChangePlan }: { sub: SubscriptionState | nul
             cursor: 'pointer',
           }}
         >
-          {subscribed ? 'Manage' : 'Upgrade'}
+            {subscribed ? 'Manage plan' : 'Upgrade'}
         </button>
       </div>
     </section>
@@ -445,8 +443,10 @@ function UpgradeModal({
       <div style={{ background: '#FFFFFF', borderRadius: '24px 24px 0 0', width: '100%', maxWidth: 520, padding: '22px 18px 34px', maxHeight: '90vh', overflowY: 'auto' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 18 }}>
           <div>
-            <div style={{ fontSize: 21, fontWeight: 900, color: '#0F172A' }}>Choose a care plan</div>
-            <div style={{ marginTop: 4, color: '#64748B', fontSize: 13 }}>Unlock caregiver contact details and support.</div>
+            <div style={{ fontSize: 21, fontWeight: 900, color: '#0F172A' }}>Subscription Plan</div>
+            <div style={{ marginTop: 4, color: '#64748B', fontSize: 13 }}>
+              {sub?.subscribed ? 'Upgrade, downgrade, or manage billing in Stripe.' : 'Unlock caregiver contact details and support.'}
+            </div>
           </div>
           <button onClick={onClose} aria-label="Close" style={{ background: '#F1F5F9', border: 'none', borderRadius: 999, width: 36, height: 36, cursor: 'pointer', fontSize: 18, color: '#475569' }}>x</button>
         </div>
@@ -490,7 +490,7 @@ function UpgradeModal({
                     whiteSpace: 'nowrap',
                   }}
                 >
-                  {upgradeLoading === plan.key ? 'Opening...' : isCurrent ? 'Current' : 'Choose'}
+                  {upgradeLoading === plan.key ? 'Opening...' : isCurrent ? 'Current' : sub?.subscribed ? 'Change' : 'Choose'}
                 </button>
               </div>
 
@@ -505,7 +505,9 @@ function UpgradeModal({
           );
         })}
 
-        <div style={{ textAlign: 'center', color: '#94A3B8', fontSize: 12, marginTop: 8 }}>Cancel anytime. Secure payment via Stripe.</div>
+        <div style={{ textAlign: 'center', color: '#94A3B8', fontSize: 12, marginTop: 8 }}>
+          {sub?.subscribed ? 'Plan changes, invoices, and payment methods open securely in Stripe.' : 'Cancel anytime. Secure payment via Stripe.'}
+        </div>
       </div>
     </div>
   );
