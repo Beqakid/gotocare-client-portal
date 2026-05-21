@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { isSafeProfileImageSrc } from '../utils/images';
 
 interface Caregiver {
   id: number | string;
@@ -228,7 +229,7 @@ function CaregiverSummary({ cg }: { cg: Caregiver }) {
 
   return (
     <section style={{ display: 'flex', gap: 13, alignItems: 'center', border: '1px solid #E3E8F0', background: '#F8FAFC', borderRadius: 18, padding: 14, marginBottom: 14 }}>
-      {avatar && avatar.startsWith('http') ? (
+      {isSafeProfileImageSrc(avatar) ? (
         <img src={avatar} alt={name} style={{ width: 54, height: 54, borderRadius: 16, objectFit: 'cover' }} />
       ) : (
         <div style={{ width: 54, height: 54, borderRadius: 16, background: '#EAF0FF', color: '#315DDF', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 17, fontWeight: 900 }}>{initials(name)}</div>

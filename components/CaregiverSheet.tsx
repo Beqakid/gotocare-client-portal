@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { Caregiver } from '../types';
+import { isSafeProfileImageSrc } from '../utils/images';
 
 interface Props {
   cg: Caregiver | null;
@@ -112,7 +113,7 @@ export function CaregiverSheet({ cg, onClose, onHire, onInterview }: Props) {
         <div style={{ flex: 1, overflowY: 'auto', padding: '0 18px 18px', WebkitOverflowScrolling: 'touch' }}>
           <section style={{ background: '#FFFFFF', border: '1px solid #E3E8F0', borderRadius: 8, padding: 16, marginBottom: 14, boxShadow: '0 8px 24px rgba(15,23,42,0.06)' }}>
             <div style={{ display: 'flex', gap: 14, alignItems: 'flex-start' }}>
-              {avatar && avatar.startsWith('http') ? (
+              {isSafeProfileImageSrc(avatar) ? (
                 <img src={avatar} alt={name} style={{ width: 74, height: 74, borderRadius: 18, objectFit: 'cover', border: '1px solid #D8E1EC' }} onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} />
               ) : (
                 <div style={{ width: 74, height: 74, borderRadius: 18, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, fontWeight: 900, color: '#315DDF', background: '#EEF4FF', flexShrink: 0 }}>{initials(name)}</div>

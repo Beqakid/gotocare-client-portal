@@ -5,6 +5,7 @@ import { getToken, getEmail, getName, setEmail as storeEmail, getLastLocation, s
 import { reverseGeocode, syncShortlist } from '../utils/api';
 import { CaregiverSheet } from './CaregiverSheet';
 import { HireAgreementModal } from './HireAgreementModal';
+import { isSafeProfileImageSrc } from '../utils/images';
 
 type Screen = 'dispatch' | 'swiper' | 'shortlist' | 'booking' | 'confirm' | 'subscribe' | 'hire-status';
 const PENDING_HIRE_CAREGIVER_KEY = 'gc_pending_hire_caregiver';
@@ -930,7 +931,7 @@ export function FindCareTab({ onNavigate, onRequireAuth }: { onNavigate?: (tab: 
             <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '24px 20px', textAlign: 'center', overflowY: 'auto' }}>
               {/* Avatar */}
               <div style={{ position: 'relative', marginBottom: 16 }}>
-                {avatarUrl && avatarUrl.startsWith('http')
+                {isSafeProfileImageSrc(avatarUrl)
                   ? <img src={avatarUrl} alt={caregiverName(cg)} style={{ width: 100, height: 100, borderRadius: '50%', objectFit: 'cover', border: '3px solid #EDE9FE' }} onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} />
                   : <div style={{ width: 100, height: 100, borderRadius: '50%', background: '#EDE9FE', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 40 }}>👩‍⚕️</div>
                 }
@@ -1410,7 +1411,7 @@ function ModernMatches({
           return (
             <article key={person.id || index} style={{ background: '#FFFFFF', border: '1px solid #E3E8F0', borderRadius: 8, padding: 15, marginBottom: 12, boxShadow: '0 6px 22px rgba(15,23,42,0.05)' }}>
               <div style={{ display: 'flex', gap: 13, alignItems: 'flex-start' }}>
-                {avatarUrl && avatarUrl.startsWith('http') ? (
+                {isSafeProfileImageSrc(avatarUrl) ? (
                   <img src={avatarUrl} alt={caregiverName(person)} style={{ width: 58, height: 58, borderRadius: 16, objectFit: 'cover', border: '1px solid #D8E1EC' }} />
                 ) : (
                   <div style={{ width: 58, height: 58, borderRadius: 16, background: '#EEF4FF', color: '#315DDF', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 17, fontWeight: 900, flexShrink: 0 }}>{caregiverInitials(person)}</div>
@@ -1515,7 +1516,7 @@ function BestMatchCard({
       </div>
 
       <div className="carehia-best-match-summary" style={{ display: 'flex', gap: 13, alignItems: 'center', marginBottom: 14 }}>
-        {avatarUrl && avatarUrl.startsWith('http') ? (
+        {isSafeProfileImageSrc(avatarUrl) ? (
           <img src={avatarUrl} alt={caregiverName(person)} style={{ width: 58, height: 58, borderRadius: 16, objectFit: 'cover', border: '1px solid rgba(255,255,255,0.18)' }} />
         ) : (
           <div style={{ width: 58, height: 58, borderRadius: 16, background: 'rgba(255,255,255,0.12)', color: '#FFFFFF', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 17, fontWeight: 900, flexShrink: 0 }}>{caregiverInitials(person)}</div>

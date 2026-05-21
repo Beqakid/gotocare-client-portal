@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { clientLogin, clientRegister, clientGoogleAuth, getPublicCaregiverProfile } from '../utils/api';
 import { setToken, setEmail, setName } from '../utils/storage';
 import { isGoogleReady, initGoogleOneTap } from '../utils/auth';
+import { isSafeProfileImageSrc } from '../utils/images';
 
 const PENDING_HIRE_CAREGIVER_KEY = 'gc_pending_hire_caregiver';
 const PENDING_CARE_ACTION_KEY = 'gc_pending_care_action';
@@ -209,7 +210,7 @@ export function LoginScreen({ onSuccess, onGuest }: Props) {
             {displayedCaregiver && (
               <div style={{ marginTop: 18, border: '1px solid #D8E1EC', background: '#FFFFFF', borderRadius: 8, padding: 14, boxShadow: '0 10px 28px rgba(21,32,51,0.08)', maxWidth: 430 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                  {pendingAvatar && pendingAvatar.startsWith('http') ? (
+                  {isSafeProfileImageSrc(pendingAvatar) ? (
                     <img src={pendingAvatar} alt={pendingName} style={{ width: 52, height: 52, borderRadius: 8, objectFit: 'cover', border: '1px solid #E2E8F0' }} />
                   ) : (
                     <div style={{ width: 52, height: 52, borderRadius: 8, background: '#EAF0FF', color: '#315DDF', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, fontWeight: 950 }}>
