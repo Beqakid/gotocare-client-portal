@@ -201,7 +201,7 @@ export function HomeTab({ onNavigate }: Props) {
   useEffect(() => {
     loadOnsite();
     loadData();
-    pollRef.current = setInterval(loadOnsite, 60000);
+    pollRef.current = setInterval(loadOnsite, 15000);
     return () => {
       if (pollRef.current) clearInterval(pollRef.current);
     };

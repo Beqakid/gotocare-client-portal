@@ -525,7 +525,7 @@ function ScheduleModal({
     <div onClick={onClose} style={modalOverlayStyle}>
       <div onClick={e => e.stopPropagation()} style={modalSheetStyle}>
         <SheetHandle />
-        <div style={{ padding: '16px 20px 32px' }}>
+        <div style={modalContentStyle}>
           <SheetHeader title="Care schedule" subtitle={`with ${memberName(target)}`} onClose={onClose} />
           {success ? (
             <SuccessState title="Schedule saved" body={`Your weekly schedule with ${memberName(target)} is ready.`} />
@@ -598,7 +598,7 @@ function CountersignModal({
     <div onClick={onClose} style={modalOverlayStyle}>
       <div onClick={e => e.stopPropagation()} style={modalSheetStyle}>
         <SheetHandle />
-        <div style={{ padding: '16px 20px 32px' }}>
+        <div style={modalContentStyle}>
           <SheetHeader title="Activate hire" subtitle={`with ${memberName(target)}`} onClose={onClose} />
           {success ? (
             <SuccessState title="Agreement active" body="The hire is active. Both parties will receive a copy." action={signedAgreementToken ? <a href={`${PRINT_BASE}?token=${signedAgreementToken}&format=html`} target="_blank" rel="noreferrer" style={{ color: '#315DDF', fontWeight: 850 }}>View signed agreement</a> : null} />
@@ -842,10 +842,18 @@ const modalOverlayStyle: React.CSSProperties = {
 const modalSheetStyle: React.CSSProperties = {
   width: '100%',
   maxWidth: 560,
-  maxHeight: '92dvh',
-  overflowY: 'auto',
+  maxHeight: 'calc(100dvh - 16px)',
+  display: 'flex',
+  flexDirection: 'column',
+  overflow: 'hidden',
   background: '#FFFFFF',
   borderRadius: '24px 24px 0 0',
+};
+
+const modalContentStyle: React.CSSProperties = {
+  padding: '16px 20px calc(34px + env(safe-area-inset-bottom))',
+  overflowY: 'auto',
+  WebkitOverflowScrolling: 'touch',
 };
 
 const primaryButtonStyle: React.CSSProperties = {
