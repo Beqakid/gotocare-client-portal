@@ -35,8 +35,81 @@ function TabSpinner() {
   );
 }
 
+function KaiDemoPage() {
+  useEffect(() => {
+    if (document.querySelector('script[data-kai-carehia-demo="true"]')) return;
+
+    const script = document.createElement('script');
+    script.src = 'https://kai.jjioji.workers.dev/embed/kai.js';
+    script.defer = true;
+    script.dataset.kaiCarehiaDemo = 'true';
+    script.dataset.app = 'carehia';
+    script.dataset.userRole = 'partner_demo';
+    document.body.appendChild(script);
+  }, []);
+
+  return (
+    <div style={{
+      minHeight: '100dvh',
+      overflowY: 'auto',
+      background: 'radial-gradient(circle at top left, rgba(124,92,255,0.16), transparent 32rem), linear-gradient(135deg, #F8FAFC 0%, #EEF7F5 48%, #F7F2E8 100%)',
+      color: '#10211F',
+      padding: '20px',
+    }}>
+      <div style={{ maxWidth: 1120, margin: '0 auto' }}>
+        <header style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, padding: '8px 0 32px' }}>
+          <a href="/" style={{ display: 'inline-flex', alignItems: 'center', gap: 12, color: '#10211F', textDecoration: 'none' }}>
+            <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 42, height: 42, borderRadius: 12, background: '#7C5CFF', color: '#fff', fontWeight: 900 }}>C</span>
+            <strong>Carehia</strong>
+          </a>
+          <span style={{ border: '1px solid rgba(124,92,255,0.22)', borderRadius: 999, background: 'rgba(255,255,255,0.7)', padding: '6px 12px', color: '#5B46D6', fontSize: 13, fontWeight: 800 }}>Partner demo</span>
+        </header>
+
+        <section style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 28, alignItems: 'center', minHeight: 'calc(100dvh - 170px)' }}>
+          <div>
+            <p style={{ margin: 0, color: '#5B46D6', fontSize: 13, fontWeight: 900, letterSpacing: '0.12em', textTransform: 'uppercase' }}>Kai AI Coach for Carehia</p>
+            <h1 style={{ margin: '16px 0 0', maxWidth: 760, fontSize: 'clamp(42px, 8vw, 84px)', lineHeight: 0.98, letterSpacing: '-0.04em' }}>
+              Show how Kai can onboard care teams through conversation.
+            </h1>
+            <p style={{ margin: '22px 0 0', maxWidth: 680, color: '#48615D', fontSize: 18, lineHeight: 1.65 }}>
+              This demo page is separate from the live client portal. Open Kai from the bottom-right button and use the sample flow to preview care agency onboarding.
+            </p>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, marginTop: 28 }}>
+              <a href="#demo-flow" style={{ borderRadius: 10, padding: '12px 16px', background: '#7C5CFF', color: '#fff', textDecoration: 'none', fontWeight: 800 }}>What to show</a>
+              <a href="/" style={{ borderRadius: 10, padding: '12px 16px', border: '1px solid rgba(124,92,255,0.24)', background: 'rgba(255,255,255,0.72)', color: '#5B46D6', textDecoration: 'none', fontWeight: 800 }}>Back to portal</a>
+            </div>
+          </div>
+
+          <aside style={{ border: '1px solid rgba(124,92,255,0.16)', borderRadius: 14, background: 'rgba(255,255,255,0.82)', boxShadow: '0 24px 70px rgba(15,23,42,0.08)', padding: 24 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 14, paddingBottom: 18, borderBottom: '1px solid rgba(124,92,255,0.12)' }}>
+              <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 44, height: 44, borderRadius: 12, background: '#7C5CFF', color: '#fff', fontWeight: 900 }}>K</span>
+              <div>
+                <strong>Kai</strong>
+                <p style={{ margin: '2px 0 0', color: '#61736F', fontSize: 14 }}>Care onboarding assistant</p>
+              </div>
+            </div>
+            <ol id="demo-flow" style={{ display: 'grid', gap: 14, margin: '18px 0 0', paddingLeft: 20, color: '#415752', lineHeight: 1.55 }}>
+              <li>Ask what kind of care setup the partner wants to prepare.</li>
+              <li>Collect agency name, services, coverage area, and contact details.</li>
+              <li>Create a structured care setup preview for manual review.</li>
+            </ol>
+          </aside>
+        </section>
+
+        <footer style={{ borderTop: '1px solid rgba(124,92,255,0.14)', marginTop: 28, padding: '20px 0 8px', color: '#61736F', fontSize: 14 }}>
+          Demo only. Production Carehia integration would save approved Kai outputs into the Carehia workspace.
+        </footer>
+      </div>
+    </div>
+  );
+}
+
 // ── Root App ───────────────────────────────────────────────────────────
 function App() {
+  if (window.location.pathname === '/kai-demo') {
+    return <KaiDemoPage />;
+  }
+
   const existingToken = getToken();
   const [loggedIn, setLoggedIn] = useState(!!existingToken);
   const [isGuest, setIsGuest] = useState(false);
