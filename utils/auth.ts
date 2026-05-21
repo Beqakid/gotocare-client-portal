@@ -6,6 +6,8 @@ export const GOOGLE_CLIENT_ID = '888877756290-t1chv8b5d5hg0kiosd4qcr34g6rpd33b.a
 
 declare global {
   interface Window {
+    __carehiaGoogleCallback?: GoogleCallback;
+    __carehiaGoogleInitialized?: boolean;
     google?: {
       accounts: {
         id: {
@@ -37,33 +39,60 @@ export function parseJwtPayload(token: string): { name?: string; email?: string;
   }
 }
 
+type GoogleCallback = (credential: string, name: string, email: string, googleId: string) => void;
+type GoogleMomentNotification = {
+  isNotDisplayed?: () => boolean;
+  isSkippedMoment?: () => boolean;
+  isDismissedMoment?: () => boolean;
+};
+
 export function initGoogleOneTap(
-  callback: (credential: string, name: string, email: string, googleId: string) => void
-): void {
-  if (!isGoogleReady()) return;
+  callback: GoogleCallback,
+  options: {
+    buttonEl?: HTMLElement | null;
+    prompt?: boolean;
+    onUnavailable?: () => void;
+  } = {}
+): boolean {
+  if (!isGoogleReady()) return false;
 
-  window.google!.accounts.id.initialize({
-    client_id: GOOGLE_CLIENT_ID,
-    auto_select: false,
-    callback: (response) => {
-      const payload = parseJwtPayload(response.credential);
-      callback(
-        response.credential,
-        payload.name || '',
-        payload.email || '',
-        payload.sub || ''
-      );
-    },
-  });
+  window.__carehiaGoogleCallback = callback;
 
-  window.google!.accounts.id.prompt((notification) => {
-    if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
-      const btn = document.getElementById('auth-google-btn');
-      if (btn) {
-        window.google!.accounts.id.renderButton(btn, {
-          type: 'standard', shape: 'rectangular', theme: 'outline', size: 'large',
-        });
+  if (!window.__carehiaGoogleInitialized) {
+    window.google!.accounts.id.initialize({
+      client_id: GOOGLE_CLIENT_ID,
+      auto_select: false,
+      callback: (response) => {
+        const payload = parseJwtPayload(response.credential);
+        window.__carehiaGoogleCallback?.(
+          response.credential,
+          payload.name || '',
+          payload.email || '',
+          payload.sub || ''
+        );
+      },
+    });
+    window.__carehiaGoogleInitialized = true;
+  }
+
+  if (options.buttonEl) {
+    options.buttonEl.innerHTML = '';
+    window.google!.accounts.id.renderButton(options.buttonEl, {
+      type: 'standard', shape: 'rectangular', theme: 'outline', size: 'large',
+    });
+  }
+
+  if (options.prompt !== false) {
+    window.google!.accounts.id.prompt((notification: GoogleMomentNotification) => {
+      if (
+        notification.isNotDisplayed?.() ||
+        notification.isSkippedMoment?.() ||
+        notification.isDismissedMoment?.()
+      ) {
+        options.onUnavailable?.();
       }
-    }
-  });
+    });
+  }
+
+  return true;
 }
