@@ -276,9 +276,59 @@ function DraftMetric({ label, value }: { label: string; value: string }) {
   );
 }
 
+function UnderConstructionPage() {
+  return (
+    <main style={{
+      minHeight: '100dvh',
+      overflowY: 'auto',
+      background: 'linear-gradient(135deg, #F8FAFC 0%, #EEF7F5 52%, #F7F2E8 100%)',
+      color: '#10211F',
+      padding: 20,
+      display: 'flex',
+      alignItems: 'center',
+    }}>
+      <section style={{ width: '100%', maxWidth: 980, margin: '0 auto', display: 'grid', gap: 24 }}>
+        <header style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 44, height: 44, borderRadius: 12, background: '#7C5CFF', color: '#fff', fontWeight: 900 }}>C</span>
+          <strong style={{ fontSize: 18 }}>Carehia</strong>
+        </header>
+
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 28, alignItems: 'center' }}>
+          <div>
+            <p style={{ margin: 0, color: '#5B46D6', fontSize: 13, fontWeight: 900, letterSpacing: '0.12em', textTransform: 'uppercase' }}>Redesign in progress</p>
+            <h1 style={{ margin: '14px 0 0', maxWidth: 720, fontSize: 'clamp(42px, 8vw, 82px)', lineHeight: 1, letterSpacing: '-0.02em' }}>
+              Carehia is under construction.
+            </h1>
+            <p style={{ margin: '20px 0 0', maxWidth: 640, color: '#48615D', fontSize: 18, lineHeight: 1.65 }}>
+              We are redesigning the Carehia experience and building Kai, our personal assistant for clients, families, and caregivers.
+            </p>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, marginTop: 28 }}>
+              <a href="/kai-demo" style={{ borderRadius: 10, padding: '12px 16px', background: '#7C5CFF', color: '#fff', textDecoration: 'none', fontWeight: 850 }}>View Kai demo</a>
+              <a href="/#home" style={{ borderRadius: 10, padding: '12px 16px', border: '1px solid rgba(124,92,255,0.24)', background: 'rgba(255,255,255,0.72)', color: '#5B46D6', textDecoration: 'none', fontWeight: 850 }}>Team access</a>
+            </div>
+          </div>
+
+          <aside style={{ border: '1px solid rgba(124,92,255,0.16)', borderRadius: 14, background: 'rgba(255,255,255,0.84)', boxShadow: '0 24px 70px rgba(15,23,42,0.08)', padding: 22 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+              <img src={KAI_PA_AVATAR} alt="Kai personal assistant" style={{ width: 74, height: 74, borderRadius: 18, objectFit: 'cover' }} />
+              <div>
+                <strong>Kai is in development</strong>
+                <p style={{ margin: '4px 0 0', color: '#61736F', fontSize: 14, lineHeight: 1.45 }}>A guided PA for care seekers and caregivers.</p>
+              </div>
+            </div>
+          </aside>
+        </div>
+      </section>
+    </main>
+  );
+}
+
 function App() {
   if (window.location.pathname === '/kai-demo') {
     return <KaiDemoPage />;
+  }
+  if (window.location.pathname === '/' && !window.location.hash) {
+    return <UnderConstructionPage />;
   }
 
   const existingToken = getToken();
