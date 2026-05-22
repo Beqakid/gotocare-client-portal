@@ -48,6 +48,28 @@ function KaiDemoPage() {
     document.body.appendChild(script);
   }, []);
 
+  const contractCards = [
+    {
+      title: 'Carehia teaches Kai',
+      items: ['Carehia overview', 'Caregiver search', 'Care needs intake', 'Safety boundaries'],
+    },
+    {
+      title: 'Kai guides the user',
+      items: ['Asks care questions', 'Builds a search preview', 'Explains next steps', 'Supports multilingual routing'],
+    },
+    {
+      title: 'Carehia stays in control',
+      items: ['No medical decisions', 'No caregiver approval', 'No automatic booking', 'No payment action'],
+    },
+  ];
+
+  const flowSteps = [
+    'Family opens Carehia',
+    'Kai asks what care is needed',
+    'Kai prepares a care-search brief',
+    'Carehia routes the next safe action',
+  ];
+
   return (
     <div style={{
       height: '100dvh',
@@ -55,7 +77,7 @@ function KaiDemoPage() {
       overflowX: 'hidden',
       WebkitOverflowScrolling: 'touch',
       overscrollBehavior: 'contain',
-      background: 'radial-gradient(circle at top left, rgba(124,92,255,0.16), transparent 32rem), linear-gradient(135deg, #F8FAFC 0%, #EEF7F5 48%, #F7F2E8 100%)',
+      background: 'linear-gradient(135deg, #F8FAFC 0%, #EEF7F5 52%, #F7F2E8 100%)',
       color: '#10211F',
       padding: '20px',
     }}>
@@ -68,17 +90,17 @@ function KaiDemoPage() {
           <span style={{ border: '1px solid rgba(124,92,255,0.22)', borderRadius: 999, background: 'rgba(255,255,255,0.7)', padding: '6px 12px', color: '#5B46D6', fontSize: 13, fontWeight: 800 }}>Partner demo</span>
         </header>
 
-        <section style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 28, alignItems: 'center', minHeight: 'calc(100dvh - 170px)' }}>
+        <section style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 28, alignItems: 'center', minHeight: 'min(760px, calc(100dvh - 132px))' }}>
           <div>
             <p style={{ margin: 0, color: '#5B46D6', fontSize: 13, fontWeight: 900, letterSpacing: '0.12em', textTransform: 'uppercase' }}>Kai AI Coach for Carehia</p>
-            <h1 style={{ margin: '16px 0 0', maxWidth: 760, fontSize: 'clamp(42px, 8vw, 84px)', lineHeight: 0.98, letterSpacing: '-0.04em' }}>
-              Show how Kai helps families start looking for caregivers.
+            <h1 style={{ margin: '16px 0 0', maxWidth: 760, fontSize: 'clamp(38px, 7vw, 76px)', lineHeight: 1, letterSpacing: '-0.02em' }}>
+              Kai plugs into Carehia and becomes the care onboarding guide.
             </h1>
             <p style={{ margin: '22px 0 0', maxWidth: 680, color: '#48615D', fontSize: 18, lineHeight: 1.65 }}>
-              This demo page is separate from the live client portal. Open Kai from the bottom-right button and use the sample flow to preview caregiver-search onboarding.
+              This demo shows the reusable Kai framework taking on a Carehia-specific role: helping families explain care needs, prepare a caregiver-search preview, and move toward the right next step.
             </p>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, marginTop: 28 }}>
-              <a href="#demo-flow" style={{ borderRadius: 10, padding: '12px 16px', background: '#7C5CFF', color: '#fff', textDecoration: 'none', fontWeight: 800 }}>What to show</a>
+              <a href="#demo-flow" style={{ borderRadius: 10, padding: '12px 16px', background: '#7C5CFF', color: '#fff', textDecoration: 'none', fontWeight: 800 }}>View integration model</a>
               <a href="/" style={{ borderRadius: 10, padding: '12px 16px', border: '1px solid rgba(124,92,255,0.24)', background: 'rgba(255,255,255,0.72)', color: '#5B46D6', textDecoration: 'none', fontWeight: 800 }}>Back to portal</a>
             </div>
           </div>
@@ -88,18 +110,56 @@ function KaiDemoPage() {
               <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 44, height: 44, borderRadius: 12, background: '#7C5CFF', color: '#fff', fontWeight: 900 }}>K</span>
               <div>
                 <strong>Kai</strong>
-                <p style={{ margin: '2px 0 0', color: '#61736F', fontSize: 14 }}>Caregiver search assistant</p>
+                <p style={{ margin: '2px 0 0', color: '#61736F', fontSize: 14 }}>Carehia onboarding assistant</p>
               </div>
             </div>
-            <ol id="demo-flow" style={{ display: 'grid', gap: 14, margin: '18px 0 0', paddingLeft: 20, color: '#415752', lineHeight: 1.55 }}>
-              <li>Ask who needs care and what support is needed.</li>
-              <li>Collect location, schedule, urgency, and caregiver preferences.</li>
-              <li>Create a clear care-search preview before browsing caregivers.</li>
-            </ol>
+            <div style={{ display: 'grid', gap: 12, marginTop: 18 }}>
+              {flowSteps.map((step, index) => (
+                <div key={step} style={{ display: 'grid', gridTemplateColumns: '34px 1fr', gap: 12, alignItems: 'center' }}>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 34, height: 34, borderRadius: 10, background: index === 1 ? '#7C5CFF' : '#EEF2FF', color: index === 1 ? '#fff' : '#5B46D6', fontWeight: 900 }}>{index + 1}</span>
+                  <span style={{ color: '#415752', lineHeight: 1.45 }}>{step}</span>
+                </div>
+              ))}
+            </div>
           </aside>
         </section>
 
-        <footer style={{ borderTop: '1px solid rgba(124,92,255,0.14)', marginTop: 28, padding: '20px 0 8px', color: '#61736F', fontSize: 14 }}>
+        <section id="demo-flow" style={{ display: 'grid', gap: 18, padding: '16px 0 36px' }}>
+          <div style={{ maxWidth: 720 }}>
+            <p style={{ margin: 0, color: '#5B46D6', fontSize: 12, fontWeight: 900, letterSpacing: '0.12em', textTransform: 'uppercase' }}>Integration contract</p>
+            <h2 style={{ margin: '10px 0 0', fontSize: 'clamp(28px, 4vw, 44px)', lineHeight: 1.08, letterSpacing: '-0.01em' }}>
+              The same Kai engine, shaped by the app profile.
+            </h2>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(230px, 1fr))', gap: 14 }}>
+            {contractCards.map((card) => (
+              <article key={card.title} style={{ border: '1px solid rgba(124,92,255,0.14)', borderRadius: 12, background: 'rgba(255,255,255,0.78)', padding: 18 }}>
+                <h3 style={{ margin: 0, fontSize: 18 }}>{card.title}</h3>
+                <ul style={{ display: 'grid', gap: 8, margin: '14px 0 0', paddingLeft: 18, color: '#48615D', lineHeight: 1.45 }}>
+                  {card.items.map((item) => <li key={item}>{item}</li>)}
+                </ul>
+              </article>
+            ))}
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 14 }}>
+            <article style={{ border: '1px solid rgba(20,184,166,0.24)', borderRadius: 12, background: '#F0FDFA', padding: 18 }}>
+              <h3 style={{ margin: 0, color: '#0F766E', fontSize: 18 }}>Live demo path</h3>
+              <p style={{ margin: '10px 0 0', color: '#315A55', lineHeight: 1.55 }}>
+                Open Kai from the bottom-right button, use the sample answers, and generate a care-search preview.
+              </p>
+            </article>
+            <article style={{ border: '1px solid rgba(245,158,11,0.28)', borderRadius: 12, background: '#FFFBEB', padding: 18 }}>
+              <h3 style={{ margin: 0, color: '#92400E', fontSize: 18 }}>Production boundary</h3>
+              <p style={{ margin: '10px 0 0', color: '#6B4E16', lineHeight: 1.55 }}>
+                Kai can guide and prepare drafts. Saving, caregiver matching, approvals, bookings, and payments stay permissioned inside Carehia.
+              </p>
+            </article>
+          </div>
+        </section>
+
+        <footer style={{ borderTop: '1px solid rgba(124,92,255,0.14)', padding: '20px 0 8px', color: '#61736F', fontSize: 14 }}>
           Demo only. Production Carehia integration would save approved Kai outputs into the client workspace and caregiver search flow.
         </footer>
       </div>
