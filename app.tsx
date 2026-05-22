@@ -6,6 +6,7 @@ import { LoginScreen } from './components/LoginScreen';
 import { BottomNav } from './components/BottomNav';
 
 const API = 'https://gotocare-original.jjioji.workers.dev/api';
+const KAI_PA_AVATAR = '/assets/kai-carehia-pa.png';
 
 // Code-split tabs — each tab loads on first visit then cached
 const HomeTab     = lazy(() => import('./components/HomeTab').then(m => ({ default: m.HomeTab })));
@@ -71,6 +72,8 @@ function KaiDemoPage() {
     script.dataset.kaiCarehiaDemo = 'true';
     script.dataset.app = 'carehia';
     script.dataset.userRole = 'partner_demo';
+    script.dataset.avatarUrl = KAI_PA_AVATAR;
+    script.dataset.voiceScaffold = 'true';
     document.body.appendChild(script);
   }, []);
 
@@ -106,7 +109,7 @@ function KaiDemoPage() {
     },
     {
       title: 'Kai guides the user',
-      items: ['Asks care questions', 'Builds a search preview', 'Explains next steps', 'Supports multilingual routing'],
+      items: ['Supports clients', 'Supports caregivers', 'Builds care previews', 'Explains next steps'],
     },
     {
       title: 'Carehia stays in control',
@@ -115,10 +118,10 @@ function KaiDemoPage() {
   ];
 
   const flowSteps = [
-    'Family opens Carehia',
-    'Kai asks what care is needed',
-    'Kai prepares a care-search brief',
-    'Carehia routes the next safe action',
+    'Client or caregiver opens Carehia',
+    'Kai asks what they need today',
+    'Kai prepares the next safe step',
+    'Carehia keeps approval and actions controlled',
   ];
 
   return (
@@ -145,10 +148,10 @@ function KaiDemoPage() {
           <div>
             <p style={{ margin: 0, color: '#5B46D6', fontSize: 13, fontWeight: 900, letterSpacing: '0.12em', textTransform: 'uppercase' }}>Kai AI Coach for Carehia</p>
             <h1 style={{ margin: '16px 0 0', maxWidth: 760, fontSize: 'clamp(38px, 7vw, 76px)', lineHeight: 1, letterSpacing: '-0.02em' }}>
-              Kai plugs into Carehia and becomes the care onboarding guide.
+              Kai becomes a personal assistant for clients and caregivers.
             </h1>
             <p style={{ margin: '22px 0 0', maxWidth: 680, color: '#48615D', fontSize: 18, lineHeight: 1.65 }}>
-              This demo shows the reusable Kai framework taking on a Carehia-specific role: helping families explain care needs, prepare a caregiver-search preview, and move toward the right next step.
+              This demo shows Kai as a warm Carehia PA: helping families find care, helping caregivers understand their path, and preparing the next step without taking sensitive actions automatically.
             </p>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, marginTop: 28 }}>
               <a href="#demo-flow" style={{ borderRadius: 10, padding: '12px 16px', background: '#7C5CFF', color: '#fff', textDecoration: 'none', fontWeight: 800 }}>View integration model</a>
@@ -158,11 +161,15 @@ function KaiDemoPage() {
 
           <aside style={{ border: '1px solid rgba(124,92,255,0.16)', borderRadius: 14, background: 'rgba(255,255,255,0.82)', boxShadow: '0 24px 70px rgba(15,23,42,0.08)', padding: 24 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 14, paddingBottom: 18, borderBottom: '1px solid rgba(124,92,255,0.12)' }}>
-              <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 44, height: 44, borderRadius: 12, background: '#7C5CFF', color: '#fff', fontWeight: 900 }}>K</span>
+              <img src={KAI_PA_AVATAR} alt="Kai personal assistant" style={{ width: 72, height: 72, borderRadius: 18, objectFit: 'cover', border: '3px solid #FFFFFF', boxShadow: '0 14px 34px rgba(15,23,42,0.14)' }} />
               <div>
                 <strong>Kai</strong>
-                <p style={{ margin: '2px 0 0', color: '#61736F', fontSize: 14 }}>Carehia onboarding assistant</p>
+                <p style={{ margin: '2px 0 0', color: '#61736F', fontSize: 14 }}>Carehia personal assistant</p>
               </div>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginTop: 18 }}>
+              <span style={{ border: '1px solid #D8E1EC', borderRadius: 10, background: '#F8FAFC', padding: 10, color: '#334155', fontSize: 12, fontWeight: 850 }}>Client PA</span>
+              <span style={{ border: '1px solid #D8E1EC', borderRadius: 10, background: '#F8FAFC', padding: 10, color: '#334155', fontSize: 12, fontWeight: 850 }}>Caregiver PA</span>
             </div>
             <div style={{ display: 'grid', gap: 12, marginTop: 18 }}>
               {flowSteps.map((step, index) => (
