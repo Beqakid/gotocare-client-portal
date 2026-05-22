@@ -123,6 +123,7 @@ function KaiDemoPage() {
     'Kai prepares the next safe step',
     'Carehia keeps approval and actions controlled',
   ];
+  const draftMode = careDraft?.answers?.businessModel?.toLowerCase().includes('caregiver') ? 'caregiver' : 'client';
 
   return (
     <div style={{
@@ -220,7 +221,9 @@ function KaiDemoPage() {
             <article style={{ border: '1px solid rgba(49,93,223,0.22)', borderRadius: 12, background: '#FFFFFF', boxShadow: '0 18px 55px rgba(15,23,42,0.08)', padding: 18 }}>
               <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'flex-start', justifyContent: 'space-between', gap: 14 }}>
                 <div style={{ minWidth: 0 }}>
-                  <p style={{ margin: 0, color: '#315DDF', fontSize: 12, fontWeight: 900, letterSpacing: '0.1em', textTransform: 'uppercase' }}>Care search draft received</p>
+                  <p style={{ margin: 0, color: '#315DDF', fontSize: 12, fontWeight: 900, letterSpacing: '0.1em', textTransform: 'uppercase' }}>
+                    {draftMode === 'caregiver' ? 'Caregiver PA draft received' : 'Care search draft received'}
+                  </p>
                   <h3 style={{ margin: '8px 0 0', color: '#0F172A', fontSize: 24, lineHeight: 1.08 }}>{careDraft.draft.businessName || 'Carehia care search'}</h3>
                   <p style={{ margin: '8px 0 0', color: '#48615D', lineHeight: 1.55 }}>{careDraft.draft.tagline || careDraft.draft.about}</p>
                 </div>
@@ -228,9 +231,9 @@ function KaiDemoPage() {
               </div>
 
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 10, marginTop: 16 }}>
-                <DraftMetric label="Care type" value={careDraft.draft.businessType || 'Caregiver search'} />
-                <DraftMetric label="Location" value={careDraft.answers?.location || 'Not set'} />
-                <DraftMetric label="Timing" value={careDraft.draft.contactInfo || 'Not set'} />
+                <DraftMetric label={draftMode === 'caregiver' ? 'Care role' : 'Care type'} value={careDraft.draft.businessType || 'Caregiver search'} />
+                <DraftMetric label={draftMode === 'caregiver' ? 'Service area' : 'Location'} value={careDraft.answers?.location || 'Not set'} />
+                <DraftMetric label={draftMode === 'caregiver' ? 'Availability' : 'Timing'} value={careDraft.draft.contactInfo || 'Not set'} />
               </div>
 
               {careDraft.draft.services?.length ? (
@@ -242,12 +245,14 @@ function KaiDemoPage() {
               ) : null}
 
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, marginTop: 18 }}>
-                <button onClick={continueToFindCare} style={{ border: 'none', borderRadius: 10, background: '#315DDF', color: '#fff', padding: '12px 14px', fontWeight: 900, cursor: 'pointer' }}>Use draft in Find Care</button>
+                <button onClick={continueToFindCare} style={{ border: 'none', borderRadius: 10, background: '#315DDF', color: '#fff', padding: '12px 14px', fontWeight: 900, cursor: 'pointer' }}>
+                  {draftMode === 'caregiver' ? 'Use draft for caregiver path' : 'Use draft in Find Care'}
+                </button>
                 <button onClick={() => setCareDraft(null)} style={{ border: '1px solid #CBD5E1', borderRadius: 10, background: '#fff', color: '#334155', padding: '12px 14px', fontWeight: 850, cursor: 'pointer' }}>Clear demo draft</button>
               </div>
 
               <p style={{ margin: '12px 0 0', color: '#64748B', fontSize: 13, lineHeight: 1.45 }}>
-                This is still approval-gated. Kai prepared the care search; Carehia controls matching, contact, booking, and payment.
+                This is still approval-gated. Kai prepared the {draftMode === 'caregiver' ? 'caregiver onboarding draft' : 'care search'}; Carehia controls matching, contact, booking, and payment.
               </p>
             </article>
           )}
