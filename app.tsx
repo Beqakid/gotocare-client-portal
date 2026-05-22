@@ -14,6 +14,23 @@ const TeamTab     = lazy(() => import('./components/TeamTab').then(m => ({ defau
 const BookingsTab = lazy(() => import('./components/BookingsTab').then(m => ({ default: m.BookingsTab })));
 const ProfileTab  = lazy(() => import('./components/ProfileTab').then(m => ({ default: m.ProfileTab })));
 
+type KaiCareDraft = {
+  app?: string;
+  draftId?: string;
+  draft?: {
+    businessName?: string;
+    businessType?: string;
+    tagline?: string;
+    about?: string;
+    services?: string[];
+    contactInfo?: string;
+    ctaStyle?: string;
+  };
+  answers?: Record<string, string>;
+  phaseBehavior?: string;
+  approvalRequired?: boolean;
+};
+
 // ── Handle Stripe return ──────────────────────────────────────────────
 function getInitialTab(): TabId {
   const params = new URLSearchParams(window.location.search);
@@ -36,6 +53,15 @@ function TabSpinner() {
 }
 
 function KaiDemoPage() {
+  const [careDraft, setCareDraft] = useState<KaiCareDraft | null>(() => {
+    try {
+      const raw = sessionStorage.getItem('kai.lastCarehiaDraft');
+      return raw ? JSON.parse(raw) as KaiCareDraft : null;
+    } catch {
+      return null;
+    }
+  });
+
   useEffect(() => {
     if (document.querySelector('script[data-kai-carehia-demo="true"]')) return;
 
@@ -47,6 +73,31 @@ function KaiDemoPage() {
     script.dataset.userRole = 'partner_demo';
     document.body.appendChild(script);
   }, []);
+
+  useEffect(() => {
+    function onKaiDraftCreated(event: Event) {
+      const detail = (event as CustomEvent<KaiCareDraft>).detail;
+      if (!detail || detail.app !== 'carehia') return;
+      setCareDraft(detail);
+      try {
+        sessionStorage.setItem('kai.lastCarehiaDraft', JSON.stringify(detail));
+      } catch {}
+    }
+
+    window.addEventListener('kai:draft-created', onKaiDraftCreated as EventListener);
+    return () => window.removeEventListener('kai:draft-created', onKaiDraftCreated as EventListener);
+  }, []);
+
+  function continueToFindCare() {
+    if (careDraft?.draft?.services?.length) {
+      localStorage.setItem('gc_last_care_types', JSON.stringify(careDraft.draft.services));
+    }
+    const locationAnswer = careDraft?.answers?.location || '';
+    if (locationAnswer) {
+      localStorage.setItem('gc_last_location', locationAnswer);
+    }
+    window.location.href = '/#findcare';
+  }
 
   const contractCards = [
     {
@@ -157,6 +208,42 @@ function KaiDemoPage() {
               </p>
             </article>
           </div>
+
+          {careDraft?.draft && (
+            <article style={{ border: '1px solid rgba(49,93,223,0.22)', borderRadius: 12, background: '#FFFFFF', boxShadow: '0 18px 55px rgba(15,23,42,0.08)', padding: 18 }}>
+              <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'flex-start', justifyContent: 'space-between', gap: 14 }}>
+                <div style={{ minWidth: 0 }}>
+                  <p style={{ margin: 0, color: '#315DDF', fontSize: 12, fontWeight: 900, letterSpacing: '0.1em', textTransform: 'uppercase' }}>Care search draft received</p>
+                  <h3 style={{ margin: '8px 0 0', color: '#0F172A', fontSize: 24, lineHeight: 1.08 }}>{careDraft.draft.businessName || 'Carehia care search'}</h3>
+                  <p style={{ margin: '8px 0 0', color: '#48615D', lineHeight: 1.55 }}>{careDraft.draft.tagline || careDraft.draft.about}</p>
+                </div>
+                <span style={{ borderRadius: 999, background: '#EEF4FF', color: '#315DDF', padding: '7px 10px', fontSize: 12, fontWeight: 900 }}>{careDraft.phaseBehavior || 'draft_only'}</span>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 10, marginTop: 16 }}>
+                <DraftMetric label="Care type" value={careDraft.draft.businessType || 'Caregiver search'} />
+                <DraftMetric label="Location" value={careDraft.answers?.location || 'Not set'} />
+                <DraftMetric label="Timing" value={careDraft.draft.contactInfo || 'Not set'} />
+              </div>
+
+              {careDraft.draft.services?.length ? (
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 14 }}>
+                  {careDraft.draft.services.map((need) => (
+                    <span key={need} style={{ border: '1px solid #B7E8CA', borderRadius: 999, background: '#EAFBF2', color: '#087A3D', padding: '7px 10px', fontSize: 12, fontWeight: 800 }}>{need}</span>
+                  ))}
+                </div>
+              ) : null}
+
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, marginTop: 18 }}>
+                <button onClick={continueToFindCare} style={{ border: 'none', borderRadius: 10, background: '#315DDF', color: '#fff', padding: '12px 14px', fontWeight: 900, cursor: 'pointer' }}>Use draft in Find Care</button>
+                <button onClick={() => setCareDraft(null)} style={{ border: '1px solid #CBD5E1', borderRadius: 10, background: '#fff', color: '#334155', padding: '12px 14px', fontWeight: 850, cursor: 'pointer' }}>Clear demo draft</button>
+              </div>
+
+              <p style={{ margin: '12px 0 0', color: '#64748B', fontSize: 13, lineHeight: 1.45 }}>
+                This is still approval-gated. Kai prepared the care search; Carehia controls matching, contact, booking, and payment.
+              </p>
+            </article>
+          )}
         </section>
 
         <footer style={{ borderTop: '1px solid rgba(124,92,255,0.14)', padding: '20px 0 8px', color: '#61736F', fontSize: 14 }}>
@@ -168,6 +255,15 @@ function KaiDemoPage() {
 }
 
 // ── Root App ───────────────────────────────────────────────────────────
+function DraftMetric({ label, value }: { label: string; value: string }) {
+  return (
+    <div style={{ border: '1px solid #E3E8F0', borderRadius: 10, background: '#F8FAFC', padding: 12 }}>
+      <div style={{ color: '#64748B', fontSize: 11, fontWeight: 900, textTransform: 'uppercase', letterSpacing: 0.5 }}>{label}</div>
+      <div style={{ color: '#0F172A', fontSize: 14, fontWeight: 850, marginTop: 5, lineHeight: 1.35 }}>{value}</div>
+    </div>
+  );
+}
+
 function App() {
   if (window.location.pathname === '/kai-demo') {
     return <KaiDemoPage />;
