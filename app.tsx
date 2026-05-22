@@ -50,8 +50,11 @@ function KaiDemoPage() {
 
   return (
     <div style={{
-      minHeight: '100dvh',
+      height: '100dvh',
       overflowY: 'auto',
+      overflowX: 'hidden',
+      WebkitOverflowScrolling: 'touch',
+      overscrollBehavior: 'contain',
       background: 'radial-gradient(circle at top left, rgba(124,92,255,0.16), transparent 32rem), linear-gradient(135deg, #F8FAFC 0%, #EEF7F5 48%, #F7F2E8 100%)',
       color: '#10211F',
       padding: '20px',
