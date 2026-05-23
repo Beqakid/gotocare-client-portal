@@ -1,11 +1,11 @@
 // Carehia Client Portal Service Worker v7
-const CACHE_NAME = 'carehia-client-v7';
+const CACHE_NAME = 'carehia-client-v7-restore1';
 
 // Always network-first for HTML + JS bundles
-const NETWORK_FIRST = ['/index.html', '/', '/kai-demo', '/dist/'];
+const NETWORK_FIRST = ['/index.html', '/', '/dist/'];
 
 self.addEventListener('install', event => {
-  console.log('[SW] Installing v7');
+  console.log('[SW] Installing v7 restore');
   self.skipWaiting();
   event.waitUntil(
     caches.open(CACHE_NAME).then(cache => {
@@ -15,7 +15,7 @@ self.addEventListener('install', event => {
 });
 
 self.addEventListener('activate', event => {
-  console.log('[SW] Activating v7');
+  console.log('[SW] Activating v7 restore');
   event.waitUntil(
     caches.keys().then(keys => {
       return Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k)));
