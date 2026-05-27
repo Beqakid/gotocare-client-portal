@@ -60,7 +60,9 @@ export async function bookInterview(payload: {
   interviewType: string;
   notes: string;
   durationMinutes?: number;
+  clientToken?: string;
 }) {
+  // AUTHZ-05: include session token so backend can authenticate the request
   return request('/book-interview', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -89,7 +91,9 @@ export async function createInterviewBooking(payload: {
   interviewType: string;
   notes: string;
   durationMinutes?: number;
+  clientToken?: string;
 }) {
+  // AUTHZ-05: include session token so backend can authenticate the request
   return request('/book-interview', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -105,15 +109,20 @@ export async function hireCaregiver(token: string, caregiverId: number | string,
   });
 }
 
-export async function getMyBookings(email: string) {
-  return request<{ bookings: unknown[] }>(`/my-bookings?email=${encodeURIComponent(email)}`);
+export async function getMyBookings(email: string, clientToken?: string) {
+  // AUTHZ-01: send session token so backend can verify ownership
+  if (clientToken) {
+    return request<{ bookings: unknown[] }>(`/my-bookings?clientToken=${encodeURIComponent(clientToken)}`);
+  }
+  return request<{ bookings: unknown[] }>(`/my-bookings?clientToken=${encodeURIComponent(email)}`);
 }
 
-export async function cancelBooking(bookingId: number, clientEmail: string) {
+export async function cancelBooking(bookingId: number, clientEmail: string, clientToken?: string) {
+  // AUTHZ-04: send session token so backend can verify ownership
   return request<{ success: boolean; error?: string }>('/cancel-booking', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ bookingId, clientEmail }),
+    body: JSON.stringify({ bookingId, clientEmail, clientToken }),
   });
 }
 

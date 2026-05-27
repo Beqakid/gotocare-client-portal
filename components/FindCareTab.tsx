@@ -768,6 +768,7 @@ export function FindCareTab({ onNavigate, onRequireAuth }: { onNavigate?: (tab: 
         careNeeds: selectedNeeds.join(', ') || 'General Care',
         preferredDate: selectedDate, preferredTime: selectedTime,
         interviewType, notes: bookNotes, durationMinutes: interviewDuration,
+        clientToken: getToken() || undefined,  // AUTHZ-05: pass session token for backend auth
       });
       storeEmail(bookEmail);
       setBookingStatus(bookingCg.id, { status: 'pending', caregiverName: caregiverName(bookingCg), date: selectedDate, time: selectedTime, interviewType, durationMinutes: interviewDuration, bookedAt: new Date().toISOString() });

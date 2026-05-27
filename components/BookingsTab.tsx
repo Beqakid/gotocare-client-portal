@@ -104,13 +104,14 @@ export function BookingsTab({ onNavigate }: Props) {
 
   const load = useCallback(async () => {
     const email = getEmail();
-    if (!email) {
+    const token = getToken();
+    if (!email && !token) {
       setLoading(false);
       return;
     }
 
     try {
-      const d = await getMyBookings(email);
+      const d = await getMyBookings(email, token || undefined);
       setBookings((d.bookings || []) as Booking[]);
       setError('');
     } catch {
@@ -124,13 +125,14 @@ export function BookingsTab({ onNavigate }: Props) {
 
   async function handleCancel(b: Booking) {
     const email = getEmail();
-    if (!email) return;
+    const cancelToken = getToken();
+    if (!email && !cancelToken) return;
     if (!confirm('Cancel this interview request?')) return;
 
     const id = getBookingId(b);
     setCancelling(id);
     try {
-      const d = await cancelBooking(id, email);
+      const d = await cancelBooking(id, email || '', cancelToken || undefined);
       if (d.success) load();
       else alert(d.error || 'Could not cancel. Please try again.');
     } catch {
