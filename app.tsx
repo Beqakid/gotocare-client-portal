@@ -170,7 +170,7 @@ function App() {
       `}</style>
 
       {/* Scrollable content area — fills space between top and bottom nav */}
-      <div style={{
+      <div className="carehia-main-scroll" style={{
         flex: 1,
         overflowY: 'auto',
         overflowX: 'hidden',

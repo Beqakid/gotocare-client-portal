@@ -234,33 +234,33 @@ export function HomeTab({ onNavigate }: Props) {
 
   return (
     <div style={{ background: '#F6F8FB', minHeight: '100dvh', paddingBottom: 92, color: '#122033' }}>
-      <section style={{ background: '#FFFFFF', borderBottom: '1px solid #E3E8F0', padding: '44px 18px 18px' }}>
-        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 14, marginBottom: 18 }}>
-          <div style={{ minWidth: 0 }}>
-            <div style={{ fontSize: 13, color: '#64748B', fontWeight: 700, marginBottom: 4 }}>{today}</div>
-            <h1 style={{ margin: 0, fontSize: 25, lineHeight: 1.1, fontWeight: 850, letterSpacing: 0, color: '#0F172A' }}>
-              {greeting}{clientName ? `, ${firstName(clientName)}` : ''}
-            </h1>
-            <div style={{ fontSize: 14, color: '#526173', marginTop: 8, lineHeight: 1.45 }}>
-              Your care plan, hiring steps, and visits in one place.
-            </div>
+      <section style={{ background: '#FFFFFF', borderBottom: '1px solid #E3E8F0', padding: '34px 16px 18px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginBottom: 12 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#4C1D95', fontSize: 22, fontWeight: 900 }}>
+            <span style={{ width: 30, height: 30, borderRadius: 10, background: '#F1EAFE', color: '#4C1D95', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16 }}>CH</span>
+            carehia
           </div>
           <button
             onClick={() => onNavigate('profile')}
-            aria-label="Open profile"
-            style={{
-              width: 48, height: 48, borderRadius: 16, border: '1px solid #D8E1EC',
-              background: '#F8FAFC', color: '#24364B', fontSize: 14, fontWeight: 850,
-              display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0,
-            }}
+            aria-label="Open account"
+            style={{ width: 44, height: 44, borderRadius: 14, border: '1px solid #D8E1EC', background: '#F8FAFC', color: '#24364B', fontSize: 13, fontWeight: 850, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}
           >
             {initials(clientName)}
           </button>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-          <MetricCard label="Care team" value={team.length ? String(team.length) : 'None yet'} sub={team.length ? 'Active caregivers' : 'Ready to build'} />
-          <MetricCard label="Next booking" value={upcoming ? (upcoming.requested_date || upcoming.preferred_date ? dateLabel(upcoming.requested_date || upcoming.preferred_date) : 'Pending') : 'Open'} sub={upcoming ? bookingScheduleLabel(upcoming) : 'Schedule care'} />
+        <div style={{ border: '1px solid #E3E8F0', borderRadius: 8, overflow: 'hidden', background: '#FFFFFF', boxShadow: '0 12px 32px rgba(15,23,42,0.08)' }}>
+          <img src="/assets/carehia_client_welcome.png" alt="Carehia welcome" style={{ display: 'block', width: '100%', height: 'auto' }} />
+          <div style={{ padding: 16 }}>
+            <h1 style={{ margin: 0, fontSize: 30, lineHeight: 1.05, fontWeight: 950, letterSpacing: 0, color: '#0F172A' }}>Quality care. Peace of mind.</h1>
+            <div style={{ marginTop: 9, color: '#526173', fontSize: 15, lineHeight: 1.5 }}>
+              {clientName ? `${greeting}, ${firstName(clientName)}. ` : ''}Find trusted caregivers for your loved one in a few simple steps.
+            </div>
+            <div style={{ display: 'grid', gap: 9, marginTop: 16 }}>
+              <button onClick={() => onNavigate('findcare')} style={{ width: '100%', minHeight: 54, border: 'none', borderRadius: 8, background: '#5B2FD6', color: '#FFFFFF', fontSize: 16, fontWeight: 950, cursor: 'pointer', boxShadow: '0 10px 22px rgba(91,47,214,0.22)' }}>Find a Caregiver</button>
+              <button onClick={() => { try { sessionStorage.setItem('carehia_need_help_now', '1'); } catch {} onNavigate('findcare'); }} style={{ width: '100%', minHeight: 52, border: '1.5px solid #5B2FD6', borderRadius: 8, background: '#FFFFFF', color: '#4C1D95', fontSize: 15, fontWeight: 950, cursor: 'pointer' }}>I Need Help Now</button>
+            </div>
+          </div>
         </div>
       </section>
 

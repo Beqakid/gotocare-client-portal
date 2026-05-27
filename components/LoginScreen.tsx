@@ -7,6 +7,16 @@ import { isSafeProfileImageSrc } from '../utils/images';
 const PENDING_HIRE_CAREGIVER_KEY = 'gc_pending_hire_caregiver';
 const PENDING_CARE_ACTION_KEY = 'gc_pending_care_action';
 
+const LOGIN_CAROUSEL_IMAGES = [
+  { src: '/assets/client-login-family.png', alt: 'Carehia family care' },
+  { src: '/assets/carehia_client_welcome.png', alt: 'Carehia welcome' },
+  { src: '/assets/carehia_client_peace_of_mind.png', alt: 'Peace of mind for loved ones' },
+  { src: '/assets/carehia_client_trust.png', alt: 'Care you can trust' },
+  { src: '/assets/carehia_client_support.png', alt: 'Carehia support every step of the way' },
+  { src: '/assets/carehia_client_family_bonds.png', alt: 'More than care, family bonds' },
+  { src: '/assets/carehia_caregiver_app.png', alt: 'Carehia caregiver app' },
+];
+
 interface Props {
   onSuccess: (token: string, email: string, name: string) => void;
   onGuest: () => void;
@@ -76,6 +86,7 @@ export function LoginScreen({ onSuccess, onGuest }: Props) {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [googleReady, setGoogleReady] = useState(false);
+  const [carouselIndex, setCarouselIndex] = useState(0);
   const googleButtonRef = useRef<HTMLDivElement | null>(null);
   const [pendingCaregiver] = useState<PendingCaregiver | null>(() => getPendingCaregiver());
   const [incomingCaregiver, setIncomingCaregiver] = useState<PendingCaregiver | null>(null);
@@ -146,6 +157,13 @@ export function LoginScreen({ onSuccess, onGuest }: Props) {
   }
 
   useEffect(() => {
+    const timer = window.setInterval(() => {
+      setCarouselIndex(current => (current + 1) % LOGIN_CAROUSEL_IMAGES.length);
+    }, 5200);
+    return () => window.clearInterval(timer);
+  }, []);
+
+  useEffect(() => {
     let cancelled = false;
     let attempts = 0;
     let timer: number | undefined;
@@ -192,52 +210,60 @@ export function LoginScreen({ onSuccess, onGuest }: Props) {
       color: '#152033',
       overflowY: 'auto',
     }}>
-      <div style={{ minHeight: '100dvh', display: 'grid', gridTemplateColumns: 'minmax(0, 1fr)', alignItems: 'center', padding: '28px 16px' }}>
-        <main style={{ width: '100%', maxWidth: 980, margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(290px, 1fr))', gap: 18, alignItems: 'center' }}>
-          <section style={{ padding: '10px 2px' }}>
-            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, border: '1px solid #C8D8D2', background: '#ECF7F3', color: '#0F766E', borderRadius: 999, padding: '7px 10px', fontSize: 12, fontWeight: 850, marginBottom: 16 }}>
-              Carehia client portal
+      <div className="carehia-login-screen" style={{ minHeight: '100dvh', display: 'grid', gridTemplateColumns: 'minmax(0, 1fr)', alignItems: 'center', padding: '22px 16px' }}>
+        <main className="carehia-login-layout" style={{ width: '100%', maxWidth: 1080, margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 18, alignItems: 'stretch' }}>
+          <section className="carehia-login-image-panel" style={{ borderRadius: 8, overflow: 'hidden', border: '1px solid #D8E1EC', boxShadow: '0 18px 50px rgba(21,32,51,0.12)', background: '#FFFFFF' }}>
+            <div className="carehia-login-carousel-track" style={{ display: 'flex', width: `${LOGIN_CAROUSEL_IMAGES.length * 100}%`, transform: `translateX(-${carouselIndex * (100 / LOGIN_CAROUSEL_IMAGES.length)}%)`, transition: 'transform 520ms ease' }}>
+              {LOGIN_CAROUSEL_IMAGES.map(image => (
+                <img
+                  key={image.src}
+                  className="carehia-login-image"
+                  src={image.src}
+                  alt={image.alt}
+                  style={{ width: `${100 / LOGIN_CAROUSEL_IMAGES.length}%`, height: '100%', objectFit: 'contain', objectPosition: 'center', display: 'block', background: '#FFFFFF', flex: '0 0 auto' }}
+                />
+              ))}
             </div>
-            <h1 style={{ margin: 0, fontSize: 34, lineHeight: 1.04, fontWeight: 950, letterSpacing: 0, color: '#152033' }}>
-              {displayedCaregiver ? `Continue hiring ${pendingName}.` : 'Welcome to calmer care coordination.'}
-            </h1>
-            <p style={{ margin: '12px 0 0', fontSize: 15, lineHeight: 1.6, color: '#526173', maxWidth: 430 }}>
-              {displayedCaregiver
-                ? 'Your caregiver match is saved. Sign in or create an account and we will take you straight to the hire offer.'
-                : 'Search caregivers, request interviews, manage bookings, and keep your care team in one clear place.'}
-            </p>
+            <div className="carehia-login-carousel-dots" aria-label="Carehia login image carousel" style={{ display: 'flex', justifyContent: 'center', gap: 7, padding: '9px 10px 11px', background: '#FFFFFF' }}>
+              {LOGIN_CAROUSEL_IMAGES.map((image, index) => (
+                <button
+                  key={image.src}
+                  type="button"
+                  aria-label={`Show image ${index + 1}`}
+                  onClick={() => setCarouselIndex(index)}
+                  style={{ width: carouselIndex === index ? 18 : 7, height: 7, borderRadius: 999, border: 'none', background: carouselIndex === index ? '#4C1D95' : '#D8E1EC', padding: 0, cursor: 'pointer', transition: 'width 180ms ease, background 180ms ease' }}
+                />
+              ))}
+            </div>
+          </section>
+
+          <section className="carehia-login-auth-panel" style={{ background: '#FFFFFF', border: '1px solid #D8E1EC', borderRadius: 8, padding: 18, boxShadow: '0 18px 50px rgba(21,32,51,0.12)' }}>
+            <button
+              onClick={handleBrowseCaregivers}
+              style={{ width: '100%', minHeight: 46, marginBottom: 12, borderRadius: 8, border: '1px solid #CBD5E1', background: '#F8FAFC', color: '#315DDF', fontSize: 14, fontWeight: 900, cursor: 'pointer' }}
+            >
+              {displayedCaregiver ? 'Keep browsing caregivers' : 'Browse caregivers first'}
+            </button>
 
             {displayedCaregiver && (
-              <div style={{ marginTop: 18, border: '1px solid #D8E1EC', background: '#FFFFFF', borderRadius: 8, padding: 14, boxShadow: '0 10px 28px rgba(21,32,51,0.08)', maxWidth: 430 }}>
+              <div style={{ marginBottom: 14, border: '1px solid #D8E1EC', background: '#F8FAFC', borderRadius: 8, padding: 13 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                   {isSafeProfileImageSrc(pendingAvatar) ? (
-                    <img src={pendingAvatar} alt={pendingName} style={{ width: 52, height: 52, borderRadius: 8, objectFit: 'cover', border: '1px solid #E2E8F0' }} />
+                    <img src={pendingAvatar} alt={pendingName} style={{ width: 48, height: 48, borderRadius: 8, objectFit: 'cover', border: '1px solid #E2E8F0' }} />
                   ) : (
-                    <div style={{ width: 52, height: 52, borderRadius: 8, background: '#EAF0FF', color: '#315DDF', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, fontWeight: 950 }}>
+                    <div style={{ width: 48, height: 48, borderRadius: 8, background: '#EAF0FF', color: '#315DDF', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 15, fontWeight: 950 }}>
                       {caregiverInitials(pendingName)}
                     </div>
                   )}
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ color: '#152033', fontSize: 16, fontWeight: 950 }}>{pendingName}</div>
+                    <div style={{ color: '#152033', fontSize: 15, fontWeight: 950 }}>{pendingName}</div>
                     <div style={{ color: '#64748B', fontSize: 12, marginTop: 3 }}>
                       {[pendingLocation || 'Caregiver match', pendingRate ? `$${pendingRate}/hr` : 'Hire offer ready'].filter(Boolean).join(' | ')}
                     </div>
                   </div>
                 </div>
-                <div style={{ marginTop: 12, borderTop: '1px solid #EEF2F7', paddingTop: 11, color: '#0F766E', fontSize: 12, fontWeight: 850 }}>
-                  After sign-in, the hire offer opens automatically.
-                </div>
               </div>
             )}
-
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 8, maxWidth: 430, marginTop: 18 }}>
-              <TrustPill title="Verified" text="profiles" />
-              <TrustPill title="Free" text="search" />
-              <TrustPill title="Secure" text="account" />
-            </div>
-          </section>
-
-          <section style={{ background: '#FFFFFF', border: '1px solid #D8E1EC', borderRadius: 8, padding: 18, boxShadow: '0 18px 50px rgba(21,32,51,0.12)' }}>
             <div style={{ display: 'flex', gap: 6, background: '#F1F5F9', borderRadius: 8, padding: 4, marginBottom: 16 }}>
               {(['signin', 'signup'] as const).map(item => (
                 <button
@@ -317,13 +343,6 @@ export function LoginScreen({ onSuccess, onGuest }: Props) {
               style={{ width: '100%', minHeight: 48, borderRadius: 8, border: 'none', background: '#315DDF', color: '#FFFFFF', fontSize: 15, fontWeight: 950, cursor: 'pointer', opacity: loading ? 0.7 : 1, marginTop: 2 }}
             >
               {loading ? 'Please wait...' : displayedCaregiver ? 'Continue to hire' : mode === 'signup' ? 'Create account' : 'Sign in'}
-            </button>
-
-            <button
-              onClick={handleBrowseCaregivers}
-              style={{ width: '100%', minHeight: 44, marginTop: 10, borderRadius: 8, border: '1px solid #CBD5E1', background: '#F8FAFC', color: '#315DDF', fontSize: 14, fontWeight: 900, cursor: 'pointer' }}
-            >
-              {displayedCaregiver ? 'Keep browsing caregivers' : 'Browse caregivers first'}
             </button>
           </section>
         </main>

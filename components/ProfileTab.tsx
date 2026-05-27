@@ -186,7 +186,7 @@ export function ProfileTab({ onNavigate, onSignOut }: Props) {
               </div>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10, marginTop: 18 }}>
+            <div className="carehia-profile-metrics" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10, marginTop: 18 }}>
               <Metric label="Bookings" value={bookingCount === null ? '-' : String(bookingCount)} />
               <Metric label="Care team" value={teamCount === null ? '-' : String(teamCount)} />
               <Metric label="Plan" value={planLabel.short} />
@@ -222,7 +222,7 @@ export function ProfileTab({ onNavigate, onSignOut }: Props) {
 
       <div style={{ padding: '0 18px 18px' }}>
         <SectionTitle title="Care shortcuts" />
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 18 }}>
+        <div className="carehia-profile-actions" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 18 }}>
           <QuickAction title="Find care" body="Search caregiver matches" action={() => onNavigate('findcare')} />
           <QuickAction title="Bookings" body="Track interviews" action={() => onNavigate('bookings')} />
           <QuickAction title="Care team" body="Manage hired help" action={() => onNavigate('team')} />

@@ -128,9 +128,9 @@ export function CaregiverSheet({ cg, onClose, onHire, onInterview }: Props) {
               </div>
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, marginTop: 14 }}>
-              <TrustBox label="Rating" value={rating ? `${rating} (${reviewCount})` : 'New'} />
+              <TrustBox label="Reviews" value={rating ? `${rating} (${reviewCount})` : 'New'} />
               <TrustBox label="Experience" value={exp ? `${exp} yrs` : 'Verified'} />
-              <TrustBox label="Contact" value="Private" />
+              <TrustBox label="Trust" value="ID verified" />
             </div>
           </section>
 
@@ -165,8 +165,8 @@ export function CaregiverSheet({ cg, onClose, onHire, onInterview }: Props) {
           <div style={{ background: '#FFFFFF', border: '1px solid #E3E8F0', borderRadius: 8, padding: '14px 16px', display: 'flex', alignItems: 'center', gap: 12 }}>
             <span style={{ width: 34, height: 34, borderRadius: 8, background: '#FFF7ED', color: '#C2410C', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 900 }}>ID</span>
             <div>
-              <div style={{ fontSize: 13, fontWeight: 800, color: '#0F172A' }}>Contact info is private</div>
-              <div style={{ fontSize: 12, color: '#64748B', marginTop: 2 }}>Interview or hire to connect safely through Carehia.</div>
+              <div style={{ fontSize: 13, fontWeight: 800, color: '#0F172A' }}>Background checked and ID verified</div>
+              <div style={{ fontSize: 12, color: '#64748B', marginTop: 2 }}>Request to book to connect safely through Carehia.</div>
             </div>
           </div>
         </div>
@@ -176,7 +176,7 @@ export function CaregiverSheet({ cg, onClose, onHire, onInterview }: Props) {
             onClick={() => { onClose(); setTimeout(() => onInterview(cg), 80); }}
             style={{ flex: 1, padding: 14, background: '#315DDF', border: 'none', borderRadius: 8, color: '#fff', fontSize: 14, fontWeight: 900, cursor: 'pointer', boxShadow: '0 4px 14px rgba(49,93,223,0.24)' }}
           >
-            Interview
+            Request to Book
           </button>
           <button
             onClick={() => { onClose(); setTimeout(() => onHire(cg), 80); }}

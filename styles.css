@@ -97,6 +97,36 @@ select {
   min-height: 64px;
 }
 
+.carehia-main-scroll {
+  width: 100%;
+}
+
+.carehia-login-layout {
+  grid-template-columns: 1fr !important;
+  max-width: 520px !important;
+}
+
+.carehia-login-auth-panel {
+  align-self: center;
+}
+
+.carehia-login-image-panel {
+  padding: 0 !important;
+}
+
+.carehia-login-carousel-track {
+  aspect-ratio: 3 / 2;
+  overflow: hidden;
+  will-change: transform;
+}
+
+.carehia-login-image {
+  max-width: 100%;
+  object-fit: contain !important;
+  object-position: center !important;
+  background: #FFFFFF;
+}
+
 .carehia-segmented-tabs {
   overflow-x: auto;
   scroll-snap-type: x proximity;
@@ -107,6 +137,43 @@ select {
 }
 
 @media (max-width: 430px) {
+  body {
+    background: #F6F8FB;
+  }
+
+  .carehia-login-screen {
+    align-items: start !important;
+    padding: 10px 10px 18px !important;
+  }
+
+  .carehia-login-layout {
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+    max-width: 430px !important;
+  }
+
+  .carehia-login-image-panel {
+    border-radius: 8px !important;
+  }
+
+  .carehia-login-image {
+    max-height: none !important;
+    object-position: center !important;
+  }
+
+  .carehia-login-auth-panel {
+    padding: 14px !important;
+    box-shadow: 0 10px 28px rgba(21,32,51,0.10) !important;
+  }
+
+  .carehia-profile-metrics {
+    grid-template-columns: 1fr !important;
+  }
+
+  .carehia-profile-actions {
+    grid-template-columns: 1fr !important;
+  }
+
   .carehia-bottom-nav {
     min-height: calc(72px + env(safe-area-inset-bottom, 0px));
   }
@@ -181,6 +248,15 @@ select {
 }
 
 @media (max-width: 360px) {
+  .carehia-login-screen {
+    padding-left: 8px !important;
+    padding-right: 8px !important;
+  }
+
+  .carehia-login-image {
+    max-height: none !important;
+  }
+
   .carehia-journey-header {
     flex-direction: column !important;
   }
@@ -191,5 +267,39 @@ select {
 
   .carehia-journey-label {
     font-size: 8px !important;
+  }
+}
+
+@media (min-width: 720px) {
+  .carehia-main-scroll {
+    width: min(100%, 480px);
+    margin: 0 auto;
+    border-left: 1px solid #E3E8F0;
+    border-right: 1px solid #E3E8F0;
+    background: #F6F8FB;
+  }
+
+  .carehia-bottom-nav {
+    left: 50% !important;
+    right: auto !important;
+    width: min(100%, 480px);
+    transform: translateX(-50%);
+    border-left: 1px solid #E3E8F0;
+    border-right: 1px solid #E3E8F0;
+  }
+}
+
+@media (min-width: 431px) and (max-width: 760px) {
+  .carehia-login-layout {
+    grid-template-columns: 1fr !important;
+    max-width: 520px !important;
+  }
+
+  .carehia-login-image-panel {
+    min-height: 0 !important;
+  }
+
+  .carehia-login-image {
+    max-height: 42dvh !important;
   }
 }

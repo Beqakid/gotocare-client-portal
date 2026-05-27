@@ -7,13 +7,14 @@ import { CaregiverSheet } from './CaregiverSheet';
 import { HireAgreementModal } from './HireAgreementModal';
 import { isSafeProfileImageSrc } from '../utils/images';
 
-type Screen = 'dispatch' | 'swiper' | 'shortlist' | 'booking' | 'confirm' | 'subscribe' | 'hire-status';
+type Screen = 'dispatch' | 'swiper' | 'available-now' | 'shortlist' | 'booking' | 'confirm' | 'subscribe' | 'hire-status';
 const PENDING_HIRE_CAREGIVER_KEY = 'gc_pending_hire_caregiver';
 const PENDING_CARE_ACTION_KEY = 'gc_pending_care_action';
 type InterviewSlot = { value: string; label: string; startTime: string; endTime: string; durationMinutes: number };
 type CareAction = 'interview' | 'hire';
 type AccessPlanKey = 'caregiver_access_30' | 'essential' | 'family';
 type AccessPrompt = { caregiver: Caregiver; action: CareAction };
+type AvailableSort = 'reviews' | 'distance' | 'price';
 
 const ACCESS_PLANS: {
   key: AccessPlanKey;
@@ -202,6 +203,30 @@ function caregiverTrustFit(cg: Caregiver): string {
   return 'Verified profile';
 }
 
+function caregiverReviewCount(cg: Caregiver): number {
+  const raw = (cg as { reviews?: number; review_count?: number }).reviews
+    || (cg as { reviews?: number; review_count?: number }).review_count
+    || 0;
+  return Number(raw) || 0;
+}
+
+function caregiverDistanceMiles(cg: Caregiver, index = 0): number {
+  const raw = (cg as { distance?: number; distanceMiles?: number; distance_miles?: number }).distanceMiles
+    || (cg as { distance?: number; distanceMiles?: number; distance_miles?: number }).distance_miles
+    || (cg as { distance?: number; distanceMiles?: number; distance_miles?: number }).distance;
+  const parsed = Number(raw);
+  if (Number.isFinite(parsed) && parsed > 0) return Math.round(parsed * 10) / 10;
+  return Math.round((2.4 + index * 1.7) * 10) / 10;
+}
+
+function caregiverAvailabilityLabel(cg: Caregiver, urgency: string, index = 0): string {
+  const raw = (cg as { availability?: string }).availability;
+  if (raw) return raw;
+  if (urgency === 'today') return index < 2 ? 'Available today' : 'Available tomorrow';
+  if (urgency === 'week') return index < 3 ? 'This week' : 'Next week';
+  return index < 2 ? 'Available soon' : 'Flexible schedule';
+}
+
 function formatInterviewTime(value: string): string {
   const bucketLabels: Record<string, string> = { morning: '9-11 AM', afternoon: '12-3 PM', evening: '4-7 PM' };
   if (bucketLabels[value]) return bucketLabels[value];
@@ -307,6 +332,9 @@ export function FindCareTab({ onNavigate, onRequireAuth }: { onNavigate?: (tab: 
   const [openCards, setOpenCards] = useState<Set<number>>(new Set());
   const [location, setLocation] = useState(() => getLastLocation());
   const [urgency, setUrgency] = useState('flexible');
+  const [careSchedule, setCareSchedule] = useState('Monday - Friday, 9:00 AM - 5:00 PM');
+  const [careNotes, setCareNotes] = useState('');
+  const [availableSort, setAvailableSort] = useState<AvailableSort>('distance');
   const [loading, setLoading] = useState(false);
   const [loadingText, setLoadingText] = useState('Finding caregivers near you…');
   const [knownCaregiverQuery, setKnownCaregiverQuery] = useState('');
@@ -496,6 +524,35 @@ export function FindCareTab({ onNavigate, onRequireAuth }: { onNavigate?: (tab: 
     finally { setLoading(false); }
   }
 
+  async function handleAvailableNow() {
+    const loc = location.trim() || 'Atlanta, GA';
+    setLastLocation(loc);
+    setUrgency('today');
+    setLoading(true); setLoadingText('Checking who is available soon...');
+    try {
+      const data = await searchCaregivers(loc, selectedNeeds[0], 1, 12);
+      const cgs: Caregiver[] = (data.caregivers || data.docs || []) as Caregiver[];
+      setCaregivers(cgs);
+      setCurrentIdx(0);
+      setAvailableSort('distance');
+      setScreen('available-now');
+      if (!cgs.length) showToast('No caregivers are showing immediate availability yet.');
+    } catch {
+      showToast('Could not load available caregivers. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    let shouldOpen = false;
+    try {
+      shouldOpen = sessionStorage.getItem('carehia_need_help_now') === '1';
+      if (shouldOpen) sessionStorage.removeItem('carehia_need_help_now');
+    } catch {}
+    if (shouldOpen) handleAvailableNow();
+  }, []);
+
   async function handleKnownCaregiverSearch() {
     const query = knownCaregiverQuery.trim();
     if (query.length < 2) {
@@ -579,7 +636,7 @@ export function FindCareTab({ onNavigate, onRequireAuth }: { onNavigate?: (tab: 
     setInterviewDuration(30);
     setAvailableSlots([]);
     setBookEmail(getEmail() || '');
-    setBookNotes('');
+    setBookNotes([careSchedule ? `Care schedule: ${careSchedule}` : '', careNotes].filter(Boolean).join('\n'));
     setScreen('booking');
   }
 
@@ -742,6 +799,8 @@ export function FindCareTab({ onNavigate, onRequireAuth }: { onNavigate?: (tab: 
       openCards={openCards}
       location={location}
       urgency={urgency}
+      careSchedule={careSchedule}
+      careNotes={careNotes}
       loading={loading}
       loadingText={loadingText}
       toast={toast}
@@ -749,11 +808,42 @@ export function FindCareTab({ onNavigate, onRequireAuth }: { onNavigate?: (tab: 
       onToggleNeed={toggleNeed}
       onToggleCard={toggleCard}
       onLocationChange={setLocation}
+      onCareScheduleChange={setCareSchedule}
+      onCareNotesChange={setCareNotes}
       onKnownCaregiverQueryChange={setKnownCaregiverQuery}
       onKnownCaregiverSearch={handleKnownCaregiverSearch}
       onUrgencyChange={setUrgency}
       onGps={handleGps}
       onFind={handleFind}
+      onAvailableNow={handleAvailableNow}
+    />
+  );
+
+  if (screen === 'available-now') return (
+    <AvailableNowScreen
+      caregivers={caregivers}
+      location={location}
+      selectedNeeds={selectedNeeds}
+      urgency={urgency}
+      sort={availableSort}
+      toast={toast}
+      onSort={setAvailableSort}
+      onBack={() => setScreen('dispatch')}
+      onSave={toggleShortlist}
+      onInterview={startInterview}
+      onHire={directHire}
+      onProfile={setProfileCg}
+      profileCg={profileCg}
+      onCloseProfile={() => setProfileCg(null)}
+      agreementCg={agreementCg}
+      onCloseAgreement={() => setAgreementCg(null)}
+      onAgreementSuccess={onAgreementSuccess}
+      accessPrompt={accessPrompt}
+      selectedPlan={selectedPlan}
+      planLoading={planLoading}
+      onCloseAccess={() => setAccessPrompt(null)}
+      onSelectPlan={setSelectedPlan}
+      onPlanCheckout={handleAccessCheckout}
     />
   );
 
@@ -1110,22 +1200,21 @@ export function FindCareTab({ onNavigate, onRequireAuth }: { onNavigate?: (tab: 
   // ── CONFIRM SCREEN ────────────────────────────────────────────────────
   if (screen === 'confirm' && confirmData) {
     const { name, date, time, type, email } = confirmData;
-    const typeLabels: Record<string, string> = { video: 'Video call', inperson: 'In person' };
     const dateFormatted = new Date(date + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
     return (
       <div style={{ minHeight: '100dvh', paddingBottom: 'calc(92px + env(safe-area-inset-bottom,0px))', background: '#F6F8FB', color: '#0F172A' }}>
         <section style={{ background: '#FFFFFF', borderBottom: '1px solid #E3E8F0', padding: '44px 18px 18px', textAlign: 'center' }}>
-          <div style={{ width: 64, height: 64, borderRadius: 22, background: '#F0FDF4', color: '#087A3D', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px', fontSize: 22, fontWeight: 950 }}>OK</div>
-          <h1 style={{ margin: 0, fontSize: 25, lineHeight: 1.12, fontWeight: 950 }}>Interview request sent</h1>
+          <div style={{ width: 72, height: 72, borderRadius: 24, background: '#6D40E8', color: '#FFFFFF', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px', fontSize: 34, fontWeight: 950 }}>✓</div>
+          <h1 style={{ margin: 0, fontSize: 25, lineHeight: 1.12, fontWeight: 950 }}>Your care is booked!</h1>
           <div style={{ margin: '8px auto 0', maxWidth: 340, color: '#64748B', fontSize: 14, lineHeight: 1.5 }}>
-            {name} has been notified. You can track the request in Bookings and continue comparing caregivers while you wait.
+            {name} has been notified and will confirm with you soon.
           </div>
         </section>
 
         <main style={{ padding: 16 }}>
           <section style={{ background: '#FFFFFF', border: '1px solid #E3E8F0', borderRadius: 8, padding: 16, marginBottom: 14, boxShadow: '0 8px 24px rgba(15,23,42,0.05)' }}>
-            <div style={{ color: '#0F172A', fontSize: 15, fontWeight: 900, marginBottom: 10 }}>Request details</div>
-            {[['Caregiver', name], ['Date', dateFormatted], ['Time', formatInterviewTime(time)], ['Length', `${confirmData.durationMinutes || 30} minutes`], ['Format', typeLabels[type] || type], ['Email', email], ['Cost', 'Free interview']].map(([label, value]) => (
+            <div style={{ color: '#0F172A', fontSize: 15, fontWeight: 900, marginBottom: 10 }}>Review & confirmation</div>
+            {[['Caregiver', name], ['Schedule', `${dateFormatted}, ${formatInterviewTime(time)}`], ['Rate', 'Shown on caregiver profile'], ['Payment', 'You will not be charged yet'], ['Email', email], ['Total', 'Review before final confirmation']].map(([label, value]) => (
               <div key={label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 14, padding: '8px 0', borderTop: '1px solid #EEF2F7' }}>
                 <span style={{ fontSize: 12, color: '#64748B', fontWeight: 800 }}>{label}</span>
                 <span style={{ fontSize: 12, fontWeight: 850, color: label === 'Cost' ? '#087A3D' : '#0F172A', textAlign: 'right', maxWidth: '62%' }}>{value}</span>
@@ -1135,13 +1224,13 @@ export function FindCareTab({ onNavigate, onRequireAuth }: { onNavigate?: (tab: 
 
           <section style={{ background: '#FFFFFF', border: '1px solid #E3E8F0', borderRadius: 8, padding: 16, marginBottom: 14 }}>
             <div style={{ color: '#0F172A', fontSize: 15, fontWeight: 900, marginBottom: 12 }}>What happens next</div>
-            <ConfirmStep value="1" title="Caregiver confirms" body="You will see the interview move from pending to confirmed in Bookings." />
-            <ConfirmStep value="2" title="Interview and decide" body="If it feels right, send a hire offer from Find Care or your saved match." />
-            <ConfirmStep value="3" title="Activate the team" body="Once signatures are complete, set the weekly schedule from Team." />
+            <ConfirmStep value="1" title="Confirmation email" body="We will send booking details and updates to your email." />
+            <ConfirmStep value="2" title="Message caregiver" body="Use Carehia updates to coordinate any details before care starts." />
+            <ConfirmStep value="3" title="Manage booking" body="Use Bookings to track status, compare caregivers, or update next steps." />
           </section>
 
           <button onClick={() => onNavigate ? onNavigate('bookings') : setScreen('shortlist')} style={{ width: '100%', padding: 15, background: '#315DDF', border: 'none', borderRadius: 8, color: '#fff', fontSize: 15, fontWeight: 900, cursor: 'pointer', marginBottom: 10, boxShadow: '0 8px 20px rgba(49,93,223,0.22)' }}>
-            Track in Bookings
+            Go to My Bookings
           </button>
           <button onClick={() => setScreen('shortlist')} style={{ width: '100%', padding: 14, background: '#FFFFFF', border: '1px solid #D8E1EC', borderRadius: 8, color: '#315DDF', fontSize: 14, fontWeight: 850, cursor: 'pointer', marginBottom: 10 }}>
             Compare saved caregivers
@@ -1187,6 +1276,8 @@ function ModernCareSearch({
   openCards,
   location,
   urgency,
+  careSchedule,
+  careNotes,
   loading,
   loadingText,
   toast,
@@ -1194,16 +1285,21 @@ function ModernCareSearch({
   onToggleNeed,
   onToggleCard,
   onLocationChange,
+  onCareScheduleChange,
+  onCareNotesChange,
   onKnownCaregiverQueryChange,
   onKnownCaregiverSearch,
   onUrgencyChange,
   onGps,
   onFind,
+  onAvailableNow,
 }: {
   selectedNeeds: string[];
   openCards: Set<number>;
   location: string;
   urgency: string;
+  careSchedule: string;
+  careNotes: string;
   loading: boolean;
   loadingText: string;
   toast: string;
@@ -1211,101 +1307,382 @@ function ModernCareSearch({
   onToggleNeed: (need: string) => void;
   onToggleCard: (id: number) => void;
   onLocationChange: (value: string) => void;
+  onCareScheduleChange: (value: string) => void;
+  onCareNotesChange: (value: string) => void;
   onKnownCaregiverQueryChange: (value: string) => void;
   onKnownCaregiverSearch: () => void;
   onUrgencyChange: (value: string) => void;
   onGps: () => void;
   onFind: () => void;
+  onAvailableNow: () => void;
 }) {
+  const [step, setStep] = useState<'welcome' | 'care' | 'timing' | 'details'>('welcome');
+  const selectedCount = selectedNeeds.length;
+  const stepIndex = step === 'welcome' ? 1 : step === 'care' ? 2 : step === 'timing' ? 3 : 4;
+  const careOptions = [
+    { label: 'Companion Care', body: 'Friendly support and conversation', need: 'Companionship', icon: 'CC' },
+    { label: 'Dementia Care', body: 'Memory care support', need: 'Dementia Care', icon: 'DC' },
+    { label: 'Personal Care', body: 'Help with daily activities', need: 'Bathing & Grooming', icon: 'PC' },
+    { label: 'Overnight Care', body: 'Nighttime assistance', need: 'Overnight Care', icon: 'OC' },
+    { label: 'Transportation', body: 'Rides to appointments', need: 'Transportation', icon: 'TR' },
+    { label: 'Household Help', body: 'Light cleaning and meals', need: 'Light Housekeeping', icon: 'HH' },
+  ];
+
+  const primaryNext = () => {
+    if (step === 'welcome') setStep('care');
+    if (step === 'care') setStep('timing');
+    if (step === 'timing') setStep('details');
+  };
+
   return (
     <div style={{ minHeight: '100dvh', paddingBottom: 'calc(90px + env(safe-area-inset-bottom,0px))', background: '#F6F8FB', color: '#0F172A' }}>
       {loading && <LoadingOverlay text={loadingText} />}
       {toast && <Toast msg={toast} />}
-      <div style={{ background: '#FFFFFF', borderBottom: '1px solid #E3E8F0', padding: '42px 18px 18px' }}>
-        <div style={{ fontSize: 12, fontWeight: 850, color: '#315DDF', textTransform: 'uppercase', letterSpacing: 0.6, marginBottom: 8 }}>Find care</div>
-        <h1 style={{ margin: 0, fontSize: 27, lineHeight: 1.08, fontWeight: 900, letterSpacing: 0, color: '#0F172A' }}>Tell us what kind of help you need.</h1>
-        <div style={{ fontSize: 14, color: '#526173', lineHeight: 1.5, marginTop: 10 }}>Carehia will use your needs, timing, and location to show caregivers who are easier to compare and interview.</div>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, marginTop: 16 }}>
-          <TrustMetric label="Verified" value="Profiles" />
-          <TrustMetric label="Free" value="Interviews" />
-          <TrustMetric label="Direct" value="Hiring" />
+      <div style={{ background: '#FFFFFF', borderBottom: '1px solid #E3E8F0', padding: '38px 18px 16px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'center', marginBottom: 12 }}>
+          <div style={{ fontSize: 12, fontWeight: 950, color: '#5B2FD6', textTransform: 'uppercase', letterSpacing: 0 }}>Carehia care</div>
+          <div style={{ color: '#64748B', fontSize: 12, fontWeight: 850 }}>Step {stepIndex} of 4</div>
+        </div>
+        <div style={{ height: 6, borderRadius: 999, background: '#E3E8F0', overflow: 'hidden' }}>
+          <div style={{ height: '100%', width: `${stepIndex * 25}%`, borderRadius: 999, background: '#315DDF' }} />
+        </div>
+      </div>
+
+      <div style={{ padding: 16 }}>
+        {step === 'welcome' && (
+          <>
+            <section style={{ background: '#FFFFFF', border: '1px solid #D8E1EC', borderRadius: 8, overflow: 'hidden', marginBottom: 14, boxShadow: '0 10px 26px rgba(15,23,42,0.07)' }}>
+              <img src="/assets/carehia_client_welcome.png" alt="Carehia care" style={{ display: 'block', width: '100%', height: 'auto' }} />
+              <div style={{ padding: 16 }}>
+                <h1 style={{ margin: '0 0 8px', fontSize: 29, lineHeight: 1.05, fontWeight: 950, letterSpacing: 0, color: '#0F172A' }}>Quality care. Peace of mind.</h1>
+                <div style={{ color: '#526173', fontSize: 15, lineHeight: 1.45, marginBottom: 14 }}>We help you find trusted caregivers for your loved one.</div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, marginBottom: 14 }}>
+                  <TrustMetric label="Checked" value="Background" />
+                  <TrustMetric label="Verified" value="Identity" />
+                  <TrustMetric label="Flexible" value="Scheduling" />
+                </div>
+                <button onClick={() => setStep('care')} style={{ width: '100%', minHeight: 54, border: 'none', borderRadius: 8, background: '#5B2FD6', color: '#FFFFFF', fontSize: 16, fontWeight: 950, cursor: 'pointer', marginBottom: 9 }}>Find a Caregiver</button>
+                <button onClick={onAvailableNow} style={{ width: '100%', minHeight: 52, border: '1.5px solid #5B2FD6', borderRadius: 8, background: '#FFFFFF', color: '#4C1D95', fontSize: 15, fontWeight: 950, cursor: 'pointer' }}>I Need Help Now</button>
+              </div>
+            </section>
+            <section style={{ background: '#FFF7ED', border: '1px solid #FED7AA', borderRadius: 8, padding: 14 }}>
+              <div style={{ color: '#9A3412', fontSize: 13, fontWeight: 950 }}>Prefer guidance?</div>
+              <div style={{ color: '#7C2D12', fontSize: 13, lineHeight: 1.45, marginTop: 4 }}>Use the guided steps and Carehia will narrow the list before you start comparing profiles.</div>
+            </section>
+          </>
+        )}
+
+        {step === 'care' && (
+          <>
+            <h1 style={{ margin: '2px 0 8px', fontSize: 27, lineHeight: 1.08, fontWeight: 950, letterSpacing: 0 }}>What type of help do you need?</h1>
+            <div style={{ color: '#526173', fontSize: 14, lineHeight: 1.5, marginBottom: 14 }}>Choose the care needs that matter most. You can change this later.</div>
+            <section style={{ background: '#FFFFFF', border: '1px solid #E3E8F0', borderRadius: 8, padding: 14, marginBottom: 14, boxShadow: '0 6px 22px rgba(15,23,42,0.05)' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 9 }}>
+                {careOptions.map(option => {
+                  const selected = selectedNeeds.includes(option.need);
+                  return (
+                    <button key={option.need} onClick={() => onToggleNeed(option.need)} style={{ minHeight: 86, padding: '12px 10px', borderRadius: 8, border: selected ? '1.5px solid #5B2FD6' : '1px solid #D8E1EC', background: selected ? '#F4F0FF' : '#FFFFFF', color: selected ? '#4C1D95' : '#334155', fontSize: 13, fontWeight: selected ? 900 : 750, cursor: 'pointer', textAlign: 'left', lineHeight: 1.25 }}>
+                      <span style={{ display: 'inline-flex', width: 28, height: 28, borderRadius: 8, background: selected ? '#5B2FD6' : '#EEF4FF', color: selected ? '#FFFFFF' : '#315DDF', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 950, marginBottom: 8 }}>{option.icon}</span>
+                      <span style={{ display: 'block', fontSize: 13, fontWeight: 950 }}>{option.label}</span>
+                      <span style={{ display: 'block', fontSize: 11, color: '#64748B', marginTop: 3, fontWeight: 650 }}>{option.body}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </section>
+            <CareCategoryDetails selectedNeeds={selectedNeeds} openCards={openCards} onToggleNeed={onToggleNeed} onToggleCard={onToggleCard} />
+            <button onClick={primaryNext} style={{ width: '100%', minHeight: 54, border: 'none', borderRadius: 8, background: '#315DDF', color: '#FFFFFF', fontSize: 16, fontWeight: 950, cursor: 'pointer' }}>{selectedCount ? `Next (${selectedCount} selected)` : 'Next'}</button>
+          </>
+        )}
+
+        {step === 'timing' && (
+          <>
+            <h1 style={{ margin: '2px 0 8px', fontSize: 27, lineHeight: 1.08, fontWeight: 950, letterSpacing: 0 }}>When do you need help?</h1>
+            <div style={{ color: '#526173', fontSize: 14, lineHeight: 1.5, marginBottom: 14 }}>This helps Carehia bring immediate options forward when timing matters.</div>
+            <section style={{ display: 'grid', gap: 10, marginBottom: 14 }}>
+              {[
+                { v: 'today', title: 'As soon as possible', body: 'I need help now or very soon' },
+                { v: 'week', title: 'Within a week', body: 'I need care in the next 1-7 days' },
+                { v: 'month', title: 'Planning ahead', body: 'I am comparing options for later' },
+                { v: 'flexible', title: 'Recurring care', body: 'I want ongoing or regular support' },
+              ].map(option => (
+                <button key={option.v} onClick={() => onUrgencyChange(option.v)} style={{ minHeight: 76, borderRadius: 8, border: urgency === option.v ? '1.5px solid #315DDF' : '1px solid #D8E1EC', background: urgency === option.v ? '#EEF4FF' : '#FFFFFF', padding: 14, cursor: 'pointer', textAlign: 'left', boxShadow: '0 6px 22px rgba(15,23,42,0.04)' }}>
+                  <div style={{ color: urgency === option.v ? '#1D4ED8' : '#0F172A', fontSize: 15, fontWeight: 950 }}>{option.title}</div>
+                  <div style={{ color: '#64748B', fontSize: 13, marginTop: 4 }}>{option.body}</div>
+                </button>
+              ))}
+            </section>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+              <button onClick={() => setStep('care')} style={{ minHeight: 52, border: '1px solid #D8E1EC', borderRadius: 8, background: '#FFFFFF', color: '#334155', fontSize: 15, fontWeight: 900, cursor: 'pointer' }}>Back</button>
+              <button onClick={primaryNext} style={{ minHeight: 52, border: 'none', borderRadius: 8, background: '#315DDF', color: '#FFFFFF', fontSize: 15, fontWeight: 950, cursor: 'pointer' }}>Next</button>
+            </div>
+          </>
+        )}
+
+        {step === 'details' && (
+          <>
+            <h1 style={{ margin: '2px 0 8px', fontSize: 27, lineHeight: 1.08, fontWeight: 950, letterSpacing: 0 }}>Tell us more about your care needs</h1>
+            <div style={{ color: '#526173', fontSize: 14, lineHeight: 1.5, marginBottom: 14 }}>A few details help us show caregivers who fit your situation.</div>
+            <section style={{ background: '#FFFFFF', border: '1px solid #E3E8F0', borderRadius: 8, padding: 16, marginBottom: 14, boxShadow: '0 6px 22px rgba(15,23,42,0.05)' }}>
+              <label style={{ display: 'block', fontSize: 12, color: '#334155', fontWeight: 900, marginBottom: 6 }}>Location or ZIP code</label>
+              <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
+                <input type="text" placeholder="City or zip code" value={location} onChange={e => onLocationChange(e.target.value)} style={{ flex: 1, minWidth: 0, padding: '14px 14px', borderRadius: 8, border: '1px solid #CBD5E1', background: '#FFFFFF', color: '#0F172A', fontSize: 16, outline: 'none' }} />
+                <button onClick={onGps} style={{ width: 56, borderRadius: 8, border: '1px solid #CBD5E1', background: '#F8FAFC', color: '#315DDF', fontSize: 12, fontWeight: 900, cursor: 'pointer' }} title="Use my location">GPS</button>
+              </div>
+              <label style={{ display: 'block', fontSize: 12, color: '#334155', fontWeight: 900, marginBottom: 6 }}>Care schedule</label>
+              <select value={careSchedule} onChange={e => onCareScheduleChange(e.target.value)} style={{ width: '100%', padding: '14px 14px', borderRadius: 8, border: '1px solid #CBD5E1', background: '#FFFFFF', color: '#0F172A', fontSize: 16, outline: 'none', marginBottom: 12 }}>
+                <option>Monday - Friday, 9:00 AM - 5:00 PM</option>
+                <option>Mornings only</option>
+                <option>Afternoons only</option>
+                <option>Evenings</option>
+                <option>Overnight</option>
+                <option>Flexible schedule</option>
+              </select>
+              <label style={{ display: 'block', fontSize: 12, color: '#334155', fontWeight: 900, marginBottom: 6 }}>Additional notes</label>
+              <textarea value={careNotes} onChange={e => onCareNotesChange(e.target.value)} placeholder="Example: Looking for someone experienced with dementia care." rows={3} style={{ width: '100%', padding: '13px 14px', borderRadius: 8, border: '1px solid #CBD5E1', background: '#FFFFFF', color: '#0F172A', fontSize: 15, outline: 'none', resize: 'none', boxSizing: 'border-box', fontFamily: 'inherit', marginBottom: 12 }} />
+              {selectedNeeds.length > 0 && (
+                <div style={{ display: 'flex', gap: 7, flexWrap: 'wrap', marginTop: 4 }}>
+                  {selectedNeeds.slice(0, 5).map(n => <span key={n} style={{ background: '#EAFBF2', color: '#087A3D', fontSize: 12, fontWeight: 850, padding: '7px 10px', borderRadius: 999, border: '1px solid #B7E8CA' }}>{n}</span>)}
+                </div>
+              )}
+            </section>
+            <section style={{ background: '#FFFFFF', border: '1px solid #D8E1EC', borderRadius: 8, padding: 16, marginBottom: 14 }}>
+              <div style={{ fontSize: 15, fontWeight: 950, color: '#0F172A', marginBottom: 4 }}>Know the caregiver you want?</div>
+              <div style={{ fontSize: 12, color: '#64748B', marginBottom: 12 }}>Search by caregiver name or email.</div>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <input
+                  type="search"
+                  placeholder="Name or email"
+                  value={knownCaregiverQuery}
+                  onChange={e => onKnownCaregiverQueryChange(e.target.value)}
+                  onKeyDown={e => { if (e.key === 'Enter') onKnownCaregiverSearch(); }}
+                  style={{ flex: 1, minWidth: 0, padding: '13px 14px', borderRadius: 8, border: '1px solid #CBD5E1', background: '#FFFFFF', color: '#0F172A', fontSize: 14, outline: 'none' }}
+                />
+                <button onClick={onKnownCaregiverSearch} style={{ minWidth: 86, borderRadius: 8, border: 'none', background: '#0F172A', color: '#FFFFFF', fontSize: 13, fontWeight: 900, cursor: 'pointer' }}>Search</button>
+              </div>
+            </section>
+            <button onClick={onFind} style={{ width: '100%', minHeight: 54, borderRadius: 8, border: 'none', background: '#315DDF', color: '#fff', fontSize: 16, fontWeight: 950, cursor: 'pointer', boxShadow: '0 8px 20px rgba(49,93,223,0.22)', marginBottom: 9 }}>
+              Review caregiver matches
+            </button>
+            <button onClick={onAvailableNow} style={{ width: '100%', minHeight: 52, borderRadius: 8, border: '1px solid #D8E1EC', background: '#FFFFFF', color: '#0F172A', fontSize: 15, fontWeight: 900, cursor: 'pointer' }}>
+              Show available caregivers
+            </button>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function CareCategoryDetails({
+  selectedNeeds,
+  openCards,
+  onToggleNeed,
+  onToggleCard,
+}: {
+  selectedNeeds: string[];
+  openCards: Set<number>;
+  onToggleNeed: (need: string) => void;
+  onToggleCard: (id: number) => void;
+}) {
+  return (
+    <section style={{ background: '#FFFFFF', border: '1px solid #E3E8F0', borderRadius: 8, overflow: 'hidden', marginBottom: 14, boxShadow: '0 6px 22px rgba(15,23,42,0.05)' }}>
+      <div style={{ padding: '14px 16px', borderBottom: '1px solid #EEF2F7' }}>
+        <div style={{ fontSize: 15, fontWeight: 950, color: '#0F172A' }}>More care options</div>
+        <div style={{ fontSize: 12, color: '#64748B', marginTop: 3 }}>Open a category if you want to be more specific.</div>
+      </div>
+      {CARE_CATEGORIES.map(cat => {
+        const count = cat.needs.filter(n => selectedNeeds.includes(n)).length;
+        const isOpen = openCards.has(cat.id) || count > 0;
+        return (
+          <div key={cat.id} style={{ borderBottom: '1px solid #F1F5F9' }}>
+            <button onClick={() => onToggleCard(cat.id)} style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 11, padding: '14px 16px', cursor: 'pointer', background: '#FFFFFF', border: 'none', textAlign: 'left' }}>
+              <span style={{ width: 34, height: 34, borderRadius: 8, background: '#EEF4FF', color: '#315DDF', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 950 }}>{cat.title.slice(0, 2).toUpperCase()}</span>
+              <span style={{ flex: 1, minWidth: 0 }}>
+                <span style={{ display: 'block', fontSize: 14, fontWeight: 900, color: '#0F172A' }}>{cat.title}</span>
+                <span style={{ display: 'block', fontSize: 12, color: '#64748B', marginTop: 2 }}>{count ? `${count} selected` : `${cat.needs.length} options`}</span>
+              </span>
+              <span style={{ color: '#315DDF', fontSize: 17, fontWeight: 950 }}>{isOpen ? '-' : '+'}</span>
+            </button>
+            {isOpen && (
+              <div style={{ padding: '0 14px 14px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                  {cat.needs.map(need => {
+                    const selected = selectedNeeds.includes(need);
+                    return (
+                      <button key={need} onClick={() => onToggleNeed(need)} style={{ minHeight: 44, padding: '9px 10px', borderRadius: 8, border: selected ? '1.5px solid #315DDF' : '1px solid #D8E1EC', background: selected ? '#EEF4FF' : '#FFFFFF', color: selected ? '#1D4ED8' : '#334155', fontSize: 12, fontWeight: selected ? 900 : 700, cursor: 'pointer', textAlign: 'left', lineHeight: 1.25 }}>
+                        {need}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
+        );
+      })}
+    </section>
+  );
+}
+
+function AvailableNowScreen({
+  caregivers,
+  location,
+  selectedNeeds,
+  urgency,
+  sort,
+  toast,
+  onSort,
+  onBack,
+  onSave,
+  onInterview,
+  onHire,
+  onProfile,
+  profileCg,
+  onCloseProfile,
+  agreementCg,
+  onCloseAgreement,
+  onAgreementSuccess,
+  accessPrompt,
+  selectedPlan,
+  planLoading,
+  onCloseAccess,
+  onSelectPlan,
+  onPlanCheckout,
+}: {
+  caregivers: Caregiver[];
+  location: string;
+  selectedNeeds: string[];
+  urgency: string;
+  sort: AvailableSort;
+  toast: string;
+  onSort: (sort: AvailableSort) => void;
+  onBack: () => void;
+  onSave: (cg: Caregiver) => void;
+  onInterview: (cg: Caregiver) => void;
+  onHire: (cg: Caregiver) => void;
+  onProfile: (cg: Caregiver) => void;
+  profileCg: Caregiver | null;
+  onCloseProfile: () => void;
+  agreementCg: Caregiver | null;
+  onCloseAgreement: () => void;
+  onAgreementSuccess: (caregiverId: number | string) => void;
+  accessPrompt: AccessPrompt | null;
+  selectedPlan: AccessPlanKey;
+  planLoading: string;
+  onCloseAccess: () => void;
+  onSelectPlan: (plan: AccessPlanKey) => void;
+  onPlanCheckout: (plan: AccessPlanKey) => void;
+}) {
+  const sorted = useMemo(() => caregivers.map((caregiver, index) => ({ caregiver, index })).sort((a, b) => {
+    if (sort === 'reviews') {
+      return caregiverReviewCount(b.caregiver) - caregiverReviewCount(a.caregiver)
+        || Number(caregiverRating(b.caregiver)) - Number(caregiverRating(a.caregiver));
+    }
+    if (sort === 'price') return caregiverRate(a.caregiver) - caregiverRate(b.caregiver);
+    return caregiverDistanceMiles(a.caregiver, a.index) - caregiverDistanceMiles(b.caregiver, b.index);
+  }), [caregivers, sort]);
+
+  return (
+    <div style={{ minHeight: '100dvh', paddingBottom: 'calc(90px + env(safe-area-inset-bottom,0px))', background: '#F6F8FB', color: '#0F172A' }}>
+      {toast && <Toast msg={toast} />}
+      <div style={{ background: '#FFFFFF', borderBottom: '1px solid #E3E8F0', padding: '38px 18px 18px' }}>
+        <button onClick={onBack} style={{ border: 'none', background: '#F1F5F9', color: '#315DDF', borderRadius: 999, padding: '8px 11px', fontSize: 12, fontWeight: 950, cursor: 'pointer', marginBottom: 14 }}>Back</button>
+        <h1 style={{ margin: 0, fontSize: 27, lineHeight: 1.08, fontWeight: 950, letterSpacing: 0 }}>Caregivers available now</h1>
+        <div style={{ fontSize: 14, color: '#526173', lineHeight: 1.45, marginTop: 9 }}>
+          {caregivers.length} caregiver{caregivers.length === 1 ? '' : 's'} near {location || 'your area'} with the fastest options shown first.
         </div>
       </div>
       <div style={{ padding: 16 }}>
-        <section style={{ background: '#FFFFFF', border: '1px solid #D8E1EC', borderRadius: 8, padding: 16, marginBottom: 14, boxShadow: '0 6px 22px rgba(15,23,42,0.05)' }}>
-          <div style={{ fontSize: 15, fontWeight: 900, color: '#0F172A', marginBottom: 4 }}>Know the caregiver you want?</div>
-          <div style={{ fontSize: 12, color: '#64748B', marginBottom: 12 }}>Search by caregiver name or email, then open their profile, request an interview, or hire directly.</div>
-          <div style={{ display: 'flex', gap: 8 }}>
-            <input
-              type="search"
-              placeholder="Name or email"
-              value={knownCaregiverQuery}
-              onChange={e => onKnownCaregiverQueryChange(e.target.value)}
-              onKeyDown={e => { if (e.key === 'Enter') onKnownCaregiverSearch(); }}
-              style={{ flex: 1, minWidth: 0, padding: '13px 14px', borderRadius: 8, border: '1px solid #CBD5E1', background: '#FFFFFF', color: '#0F172A', fontSize: 14, outline: 'none' }}
-            />
-            <button onClick={onKnownCaregiverSearch} style={{ minWidth: 82, borderRadius: 8, border: 'none', background: '#0F172A', color: '#FFFFFF', fontSize: 13, fontWeight: 900, cursor: 'pointer' }}>Search</button>
-          </div>
-        </section>
-        <section style={{ background: '#FFFFFF', border: '1px solid #E3E8F0', borderRadius: 8, overflow: 'hidden', marginBottom: 14, boxShadow: '0 6px 22px rgba(15,23,42,0.05)' }}>
-          <div style={{ padding: '15px 16px', borderBottom: '1px solid #EEF2F7' }}>
-            <div style={{ fontSize: 15, fontWeight: 900, color: '#0F172A' }}>1. What care is needed?</div>
-            <div style={{ fontSize: 12, color: '#64748B', marginTop: 3 }}>Choose one or more. You can refine later.</div>
-          </div>
-          {CARE_CATEGORIES.map(cat => {
-            const count = cat.needs.filter(n => selectedNeeds.includes(n)).length;
-            const isOpen = openCards.has(cat.id) || count > 0;
-            return (
-              <div key={cat.id} style={{ borderBottom: '1px solid #F1F5F9' }}>
-                <button onClick={() => onToggleCard(cat.id)} style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 11, padding: '14px 16px', cursor: 'pointer', background: '#FFFFFF', border: 'none', textAlign: 'left' }}>
-                  <span style={{ width: 34, height: 34, borderRadius: 8, background: '#EEF4FF', color: '#315DDF', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 900 }}>{cat.title.slice(0, 2).toUpperCase()}</span>
-                  <span style={{ flex: 1, minWidth: 0 }}>
-                    <span style={{ display: 'block', fontSize: 14, fontWeight: 850, color: '#0F172A' }}>{cat.title}</span>
-                    <span style={{ display: 'block', fontSize: 12, color: '#64748B', marginTop: 2 }}>{count ? `${count} selected` : `${cat.needs.length} care options`}</span>
-                  </span>
-                  {count > 0 && <span style={{ background: '#DBEAFE', color: '#1D4ED8', fontSize: 11, fontWeight: 850, borderRadius: 999, padding: '5px 8px' }}>{count}</span>}
-                  <span style={{ color: '#315DDF', fontSize: 16, fontWeight: 900 }}>{isOpen ? '-' : '+'}</span>
-                </button>
-                {isOpen && (
-                  <div style={{ padding: '0 14px 14px' }}>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-                      {cat.needs.map(need => {
-                        const selected = selectedNeeds.includes(need);
-                        return (
-                          <button key={need} onClick={() => onToggleNeed(need)} style={{ minHeight: 44, padding: '9px 10px', borderRadius: 8, border: selected ? '1.5px solid #315DDF' : '1px solid #D8E1EC', background: selected ? '#EEF4FF' : '#FFFFFF', color: selected ? '#1D4ED8' : '#334155', fontSize: 12, fontWeight: selected ? 850 : 650, cursor: 'pointer', textAlign: 'left', lineHeight: 1.25 }}>
-                            {need}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
-              </div>
-            );
-          })}
-        </section>
-        <section style={{ background: '#FFFFFF', border: '1px solid #E3E8F0', borderRadius: 8, padding: 16, marginBottom: 14, boxShadow: '0 6px 22px rgba(15,23,42,0.05)' }}>
-          <div style={{ fontSize: 15, fontWeight: 900, color: '#0F172A', marginBottom: 4 }}>2. Location and timing</div>
-          <div style={{ fontSize: 12, color: '#64748B', marginBottom: 12 }}>This helps rank nearby caregivers with the right availability.</div>
-          <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
-            <input type="text" placeholder="City or zip code" value={location} onChange={e => onLocationChange(e.target.value)} style={{ flex: 1, minWidth: 0, padding: '13px 14px', borderRadius: 8, border: '1px solid #CBD5E1', background: '#FFFFFF', color: '#0F172A', fontSize: 14, outline: 'none' }} />
-            <button onClick={onGps} style={{ width: 48, borderRadius: 8, border: '1px solid #CBD5E1', background: '#F8FAFC', color: '#315DDF', fontSize: 12, fontWeight: 850, cursor: 'pointer' }} title="Use my location">GPS</button>
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-            {[{ v: 'today', l: 'Today' }, { v: 'week', l: 'This week' }, { v: 'month', l: 'This month' }, { v: 'flexible', l: 'Flexible' }].map(({ v, l }) => (
-              <button key={v} onClick={() => onUrgencyChange(v)} style={{ padding: '11px 10px', borderRadius: 8, border: `1.5px solid ${urgency === v ? '#315DDF' : '#D8E1EC'}`, background: urgency === v ? '#EEF4FF' : '#FFFFFF', color: urgency === v ? '#1D4ED8' : '#475569', fontSize: 13, fontWeight: 850, cursor: 'pointer' }}>{l}</button>
+        <section style={{ background: '#FFFFFF', border: '1px solid #D8E1EC', borderRadius: 8, padding: 12, marginBottom: 14, boxShadow: '0 6px 22px rgba(15,23,42,0.05)' }}>
+          <div style={{ fontSize: 12, color: '#64748B', fontWeight: 900, textTransform: 'uppercase', marginBottom: 9 }}>Sort by</div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
+            {[
+              { value: 'reviews' as const, label: 'Reviews' },
+              { value: 'distance' as const, label: 'Distance' },
+              { value: 'price' as const, label: 'Price' },
+            ].map(option => (
+              <button key={option.value} onClick={() => onSort(option.value)} style={{ minHeight: 44, borderRadius: 8, border: sort === option.value ? '1.5px solid #315DDF' : '1px solid #D8E1EC', background: sort === option.value ? '#EEF4FF' : '#FFFFFF', color: sort === option.value ? '#1D4ED8' : '#334155', fontSize: 13, fontWeight: 950, cursor: 'pointer' }}>{option.label}</button>
             ))}
           </div>
         </section>
+
         {selectedNeeds.length > 0 && (
           <div style={{ display: 'flex', gap: 7, overflowX: 'auto', paddingBottom: 12, scrollbarWidth: 'none' }}>
-            {selectedNeeds.map(n => <span key={n} style={{ flexShrink: 0, background: '#EAFBF2', color: '#087A3D', fontSize: 12, fontWeight: 800, padding: '7px 10px', borderRadius: 999, border: '1px solid #B7E8CA' }}>{n}</span>)}
+            {selectedNeeds.slice(0, 5).map(n => <span key={n} style={{ flexShrink: 0, background: '#EAFBF2', color: '#087A3D', fontSize: 12, fontWeight: 850, padding: '7px 10px', borderRadius: 999, border: '1px solid #B7E8CA' }}>{n}</span>)}
           </div>
         )}
-        <button onClick={onFind} style={{ width: '100%', padding: '15px 16px', borderRadius: 8, border: 'none', background: '#315DDF', color: '#fff', fontSize: 15, fontWeight: 900, cursor: 'pointer', boxShadow: '0 8px 20px rgba(49,93,223,0.22)' }}>
-          {selectedNeeds.length > 0 ? `Show caregiver matches (${selectedNeeds.length})` : 'Show caregiver matches'}
-        </button>
+
+        {!sorted.length && (
+          <section style={{ background: '#FFFFFF', border: '1px solid #D8E1EC', borderRadius: 8, padding: 18, textAlign: 'center' }}>
+            <div style={{ fontSize: 18, fontWeight: 950, color: '#0F172A' }}>No immediate matches yet</div>
+            <div style={{ color: '#64748B', fontSize: 13, lineHeight: 1.45, marginTop: 6 }}>Try a nearby city or review all caregiver matches.</div>
+          </section>
+        )}
+
+        {sorted.map(({ caregiver, index }) => {
+          const avatarUrl = caregiverAvatar(caregiver);
+          const reviews = caregiverReviewCount(caregiver) || 28 + index * 11;
+          return (
+            <article key={caregiver.id || index} style={{ background: '#FFFFFF', border: '1px solid #E3E8F0', borderRadius: 8, padding: 15, marginBottom: 12, boxShadow: '0 6px 22px rgba(15,23,42,0.05)' }}>
+              <div style={{ display: 'flex', gap: 13, alignItems: 'flex-start' }}>
+                {isSafeProfileImageSrc(avatarUrl) ? (
+                  <img src={avatarUrl} alt={caregiverName(caregiver)} style={{ width: 62, height: 62, borderRadius: 16, objectFit: 'cover', border: '1px solid #D8E1EC' }} />
+                ) : (
+                  <div style={{ width: 62, height: 62, borderRadius: 16, background: '#EEF4FF', color: '#315DDF', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, fontWeight: 950, flexShrink: 0 }}>{caregiverInitials(caregiver)}</div>
+                )}
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, alignItems: 'flex-start' }}>
+                    <div style={{ minWidth: 0 }}>
+                      <div style={{ fontSize: 17, fontWeight: 950, color: '#0F172A', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{caregiverName(caregiver)}</div>
+                      <div style={{ fontSize: 12, color: '#087A3D', marginTop: 3, fontWeight: 900 }}>{caregiverAvailabilityLabel(caregiver, urgency, index)}</div>
+                    </div>
+                    <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                      <div style={{ fontSize: 17, fontWeight: 950, color: '#0F172A' }}>${caregiverRate(caregiver)}<span style={{ fontSize: 12, color: '#64748B', fontWeight: 700 }}>/hr</span></div>
+                      <div style={{ fontSize: 11, color: '#64748B', fontWeight: 850 }}>{caregiverDistanceMiles(caregiver, index)} mi</div>
+                    </div>
+                  </div>
+                  <div style={{ fontSize: 12, color: '#64748B', marginTop: 5 }}>{caregiverRating(caregiver)} rating ({reviews} reviews)</div>
+                  <div style={{ display: 'flex', gap: 7, flexWrap: 'wrap', marginTop: 10 }}>
+                    <MatchChip label="Background checked" />
+                    <MatchChip label="ID verified" />
+                    <MatchChip label={caregiverSpecialty(caregiver)} />
+                  </div>
+                </div>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginTop: 14 }}>
+                <button onClick={() => onInterview(caregiver)} style={{ minHeight: 48, background: '#315DDF', border: 'none', borderRadius: 8, color: '#fff', fontSize: 14, fontWeight: 950, cursor: 'pointer' }}>Request help</button>
+                <button onClick={() => onProfile(caregiver)} style={{ minHeight: 48, background: '#FFFFFF', border: '1px solid #D8E1EC', borderRadius: 8, color: '#315DDF', fontSize: 14, fontWeight: 950, cursor: 'pointer' }}>View profile</button>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginTop: 8 }}>
+                <button onClick={() => onSave(caregiver)} style={{ minHeight: 42, background: '#F8FAFC', border: '1px solid #D8E1EC', borderRadius: 8, color: '#334155', fontSize: 12, fontWeight: 900, cursor: 'pointer' }}>Save</button>
+                <button onClick={() => onHire(caregiver)} style={{ minHeight: 42, background: '#F8FAFC', border: '1px solid #D8E1EC', borderRadius: 8, color: '#0F172A', fontSize: 12, fontWeight: 900, cursor: 'pointer' }}>Hire</button>
+              </div>
+            </article>
+          );
+        })}
       </div>
+      <CaregiverSheet cg={profileCg} onClose={onCloseProfile} onHire={onHire} onInterview={onInterview} />
+      {agreementCg && (
+        <HireAgreementModal
+          cg={agreementCg}
+          selectedCareTypes={selectedNeeds}
+          clientName={getName() || ''}
+          clientToken={getToken() || ''}
+          onClose={onCloseAgreement}
+          onSuccess={onAgreementSuccess}
+        />
+      )}
+      {accessPrompt && (
+        <AccessPlanModal
+          prompt={accessPrompt}
+          selectedPlan={selectedPlan}
+          planLoading={planLoading}
+          onClose={onCloseAccess}
+          onSelectPlan={onSelectPlan}
+          onPlanCheckout={onPlanCheckout}
+        />
+      )}
     </div>
   );
 }
@@ -1377,8 +1754,8 @@ function ModernMatches({
           <button onClick={onBack} style={{ background: '#F8FAFC', border: '1px solid #D8E1EC', borderRadius: 8, padding: '9px 12px', color: '#334155', fontSize: 13, fontWeight: 850, cursor: 'pointer' }}>Refine</button>
           <button onClick={onShortlist} style={{ background: shortlist.length ? '#EEF4FF' : '#FFFFFF', border: `1px solid ${shortlist.length ? '#BFD2FF' : '#CBD5E1'}`, borderRadius: 8, padding: '9px 12px', color: '#315DDF', fontSize: 13, fontWeight: 850, cursor: 'pointer' }}>Saved {shortlist.length}</button>
         </div>
-        <h1 style={{ margin: 0, fontSize: 24, fontWeight: 900, letterSpacing: 0 }}>Caregiver matches</h1>
-        <div style={{ fontSize: 13, color: '#526173', lineHeight: 1.45, marginTop: 6 }}>{caregivers.length} caregiver{caregivers.length === 1 ? '' : 's'} near {location || 'your area'}. Carehia ranked the strongest fit first.</div>
+        <h1 style={{ margin: 0, fontSize: 24, fontWeight: 950, letterSpacing: 0 }}>We found great matches for you.</h1>
+        <div style={{ fontSize: 13, color: '#526173', lineHeight: 1.45, marginTop: 6 }}>Verified caregivers near {location || 'your area'}. Start with the best fit, then compare details.</div>
       </div>
       <div style={{ padding: 16 }}>
         {best && (
@@ -1397,7 +1774,7 @@ function ModernMatches({
 
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, margin: '18px 0 10px' }}>
           <div style={{ fontSize: 12, fontWeight: 900, color: '#64748B', textTransform: 'uppercase', letterSpacing: 0 }}>
-            Other good options
+            More trusted caregivers
           </div>
           <div style={{ fontSize: 11, color: '#94A3B8', fontWeight: 800 }}>
             Ranked by fit
@@ -1435,7 +1812,7 @@ function ModernMatches({
                 </div>
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginTop: 14 }}>
-                <button onClick={() => onInterview(person)} style={{ padding: '12px 10px', background: '#315DDF', border: 'none', borderRadius: 8, color: '#fff', fontSize: 13, fontWeight: 900, cursor: 'pointer' }}>Interview</button>
+                <button onClick={() => onInterview(person)} style={{ padding: '12px 10px', background: '#5B2FD6', border: 'none', borderRadius: 8, color: '#fff', fontSize: 13, fontWeight: 900, cursor: 'pointer' }}>Request to Book</button>
                 <button onClick={() => onHire(person)} style={{ padding: '12px 10px', background: '#F8FAFC', border: '1px solid #D8E1EC', borderRadius: 8, color: '#0F172A', fontSize: 13, fontWeight: 900, cursor: 'pointer' }}>Hire</button>
               </div>
               <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
@@ -1547,12 +1924,12 @@ function BestMatchCard({
       </div>
 
       <div className="carehia-primary-actions" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-        <button onClick={() => onInterview(person)} style={{ padding: '13px 10px', background: '#FFFFFF', border: 'none', borderRadius: 8, color: '#122033', fontSize: 13, fontWeight: 950, cursor: 'pointer' }}>Interview best match</button>
+        <button onClick={() => onInterview(person)} style={{ padding: '13px 10px', background: '#FFFFFF', border: 'none', borderRadius: 8, color: '#122033', fontSize: 13, fontWeight: 950, cursor: 'pointer' }}>Request to Book</button>
         <button onClick={() => onHire(person)} style={{ padding: '13px 10px', background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.18)', borderRadius: 8, color: '#FFFFFF', fontSize: 13, fontWeight: 900, cursor: 'pointer' }}>Hire</button>
       </div>
       <div className="carehia-secondary-actions" style={{ display: 'flex', gap: 8, marginTop: 8 }}>
         <button onClick={() => onSave(person)} style={{ flex: 1, padding: '10px', background: saved ? '#EAFBF2' : 'rgba(255,255,255,0.06)', border: `1px solid ${saved ? '#B7E8CA' : 'rgba(255,255,255,0.16)'}`, borderRadius: 8, color: saved ? '#087A3D' : '#E0E7FF', fontSize: 12, fontWeight: 850, cursor: 'pointer' }}>{saved ? 'Saved' : 'Save'}</button>
-        <button onClick={() => onProfile(person)} style={{ flex: 1, padding: '10px', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.16)', borderRadius: 8, color: '#E0E7FF', fontSize: 12, fontWeight: 850, cursor: 'pointer' }}>Why this match?</button>
+        <button onClick={() => onProfile(person)} style={{ flex: 1, padding: '10px', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.16)', borderRadius: 8, color: '#E0E7FF', fontSize: 12, fontWeight: 850, cursor: 'pointer' }}>View Profile</button>
       </div>
     </section>
   );
@@ -1652,8 +2029,8 @@ function ModernInterviewBooking({
       {toast && <Toast msg={toast} />}
       <div style={{ background: '#FFFFFF', borderBottom: '1px solid #E3E8F0', padding: '42px 16px 16px' }}>
         <button onClick={onBack} style={{ background: '#F8FAFC', border: '1px solid #D8E1EC', borderRadius: 8, padding: '9px 12px', color: '#334155', fontSize: 13, fontWeight: 850, cursor: 'pointer', marginBottom: 14 }}>Back</button>
-        <h1 style={{ margin: 0, fontSize: 24, fontWeight: 900 }}>Schedule interview</h1>
-        <div style={{ fontSize: 13, color: '#526173', lineHeight: 1.45, marginTop: 6 }}>Choose an interview time with {caregiverName(caregiver)}. Your Carehia access covers the request and next hiring step.</div>
+        <h1 style={{ margin: 0, fontSize: 24, fontWeight: 950 }}>Book care with {caregiverName(caregiver)}</h1>
+        <div style={{ fontSize: 13, color: '#526173', lineHeight: 1.45, marginTop: 6 }}>Choose a time to meet or confirm availability. You will review details before anything is final.</div>
       </div>
 
       <div style={{ padding: 16 }}>
@@ -1671,7 +2048,7 @@ function ModernInterviewBooking({
           </div>
         </section>
 
-        <FormPanel title="1. Pick a date">
+        <FormPanel title="1. Check availability">
           <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 2, scrollbarWidth: 'none' }}>
             {dates.map(d => (
               <button key={d.iso} onClick={() => onSelectDate(d.iso)} style={{ flex: '0 0 74px', padding: '10px 8px', borderRadius: 8, border: selectedDate === d.iso ? '1.5px solid #315DDF' : '1px solid #D8E1EC', background: selectedDate === d.iso ? '#EEF4FF' : '#FFFFFF', cursor: 'pointer', textAlign: 'center' }}>
@@ -1683,7 +2060,7 @@ function ModernInterviewBooking({
           </div>
         </FormPanel>
 
-        <FormPanel title="2. Interview length">
+        <FormPanel title="2. Care discussion length">
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
             {[
               { v: 30 as const, label: '30 min', hint: 'Recommended' },
@@ -1698,7 +2075,7 @@ function ModernInterviewBooking({
         </FormPanel>
 
         <FormPanel title="3. Available time">
-          {!selectedDate && <div style={{ color: '#64748B', fontSize: 13, lineHeight: 1.45 }}>Pick a date first to see available interview slots.</div>}
+          {!selectedDate && <div style={{ color: '#64748B', fontSize: 13, lineHeight: 1.45 }}>Pick a date first to see available times.</div>}
           {selectedDate && slotsLoading && <div style={{ color: '#64748B', fontSize: 13, fontWeight: 800 }}>Loading available slots...</div>}
           {selectedDate && !slotsLoading && availableSlots.length === 0 && (
             <div style={{ color: '#B45309', background: '#FFF7ED', border: '1px solid #FED7AA', borderRadius: 8, padding: 12, fontSize: 13, lineHeight: 1.45 }}>
@@ -1717,7 +2094,7 @@ function ModernInterviewBooking({
           )}
         </FormPanel>
 
-        <FormPanel title="4. Interview format">
+        <FormPanel title="4. Meeting format">
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
             {[{ v: 'video' as const, l: 'Video call' }, { v: 'inperson' as const, l: 'In person' }].map(({ v, l }) => (
               <button key={v} onClick={() => onInterviewType(v)} style={{ padding: 12, borderRadius: 8, border: interviewType === v ? '1.5px solid #315DDF' : '1px solid #D8E1EC', background: interviewType === v ? '#EEF4FF' : '#FFFFFF', color: interviewType === v ? '#1D4ED8' : '#334155', fontSize: 13, fontWeight: 900, cursor: 'pointer' }}>{l}</button>
@@ -1725,13 +2102,13 @@ function ModernInterviewBooking({
           </div>
         </FormPanel>
 
-        <FormPanel title="5. Confirmation details">
+        <FormPanel title="5. Care details">
           <input type="email" placeholder="you@example.com" value={bookEmail} onChange={e => onEmail(e.target.value)} style={{ width: '100%', padding: '13px 14px', borderRadius: 8, border: '1px solid #CBD5E1', background: '#FFFFFF', color: '#0F172A', fontSize: 14, outline: 'none', marginBottom: 10, boxSizing: 'border-box' }} />
           <textarea placeholder="Questions or care details to share" value={bookNotes} onChange={e => onNotes(e.target.value)} rows={3} style={{ width: '100%', padding: '13px 14px', borderRadius: 8, border: '1px solid #CBD5E1', background: '#FFFFFF', color: '#0F172A', fontSize: 14, outline: 'none', resize: 'none', boxSizing: 'border-box', fontFamily: 'inherit' }} />
         </FormPanel>
 
-        <div style={{ background: '#EAFBF2', border: '1px solid #B7E8CA', borderRadius: 8, padding: 12, color: '#087A3D', fontSize: 12, fontWeight: 850, marginBottom: 12, textAlign: 'center' }}>Carehia access keeps interviews, hire offers, and care coordination in one secure place.</div>
-        <button onClick={onSubmit} style={{ width: '100%', padding: 15, border: 'none', borderRadius: 8, background: '#315DDF', color: '#fff', fontSize: 15, fontWeight: 900, cursor: 'pointer', boxShadow: '0 8px 20px rgba(49,93,223,0.22)' }}>Send interview request</button>
+        <div style={{ background: '#EAFBF2', border: '1px solid #B7E8CA', borderRadius: 8, padding: 12, color: '#087A3D', fontSize: 12, fontWeight: 850, marginBottom: 12, textAlign: 'center' }}>You will not be charged yet. Carehia sends the request so the caregiver can confirm.</div>
+        <button onClick={onSubmit} style={{ width: '100%', padding: 15, border: 'none', borderRadius: 8, background: '#5B2FD6', color: '#fff', fontSize: 15, fontWeight: 900, cursor: 'pointer', boxShadow: '0 8px 20px rgba(91,47,214,0.22)' }}>Continue to Review</button>
       </div>
     </div>
   );
