@@ -379,6 +379,43 @@ export function FindCareTab({ onNavigate, onRequireAuth }: { onNavigate?: (tab: 
   useEffect(() => {
     if (!getToken()) return;
     const pending = readPendingCareAction();
+    const _urlParams = new URLSearchParams(window.location.search);
+    const _subResult = _urlParams.get('subscription');
+    const _cgReturn = _urlParams.get('caregiver_return');
+
+    // Fallback: sessionStorage was cleared (e.g. iOS new tab) but caregiver_return is in URL
+    if (!pending && _subResult === 'success' && _cgReturn) {
+      const _email = getEmail();
+      setLoading(true);
+      setLoadingText('Restoring your caregiver...');
+      getPublicCaregiverProfile(_cgReturn)
+        .then(async (data) => {
+          if (!data.success || !data.profile) return;
+          const _cg = publicProfileToCaregiver(data.profile, Number(_cgReturn));
+          setCaregivers([_cg]);
+          setCurrentIdx(0);
+          setProfileCg(null);
+          setBookingCg(null);
+          setScreen('swiper');
+          clearSubscriptionReturnParams();
+          if (_email) {
+            const _plan = _urlParams.get('plan') || '';
+            const _emailParam = _urlParams.get('email') || _email;
+            const _sessionId = _urlParams.get('session_id') || '';
+            if (_plan) await confirmClientSubscription(_emailParam, _plan, _sessionId).catch(() => {});
+            const _sub = await checkSubscription(_email).catch(() => ({ subscribed: false }));
+            if (_sub.subscribed) {
+              showToast('✅ Subscribed! Contact info is now visible.');
+            } else {
+              setAccessPrompt({ caregiver: _cg, action: 'hire' });
+            }
+          }
+        })
+        .catch(() => showToast('Could not restore caregiver. Please search again.'))
+        .finally(() => setLoading(false));
+      return;
+    }
+
     if (!pending) return;
     setCaregivers([pending.caregiver]);
     setCurrentIdx(0);

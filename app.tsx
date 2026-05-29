@@ -17,8 +17,11 @@ const ProfileTab  = lazy(() => import('./components/ProfileTab').then(m => ({ de
 // ── Handle Stripe return ──────────────────────────────────────────────
 function getInitialTab(): TabId {
   const params = new URLSearchParams(window.location.search);
-  if (params.get('subscription') && sessionStorage.getItem('gc_pending_hire_caregiver')) return 'findcare';
-  if (params.get('subscription')) return 'profile';
+  if (params.get('subscription') === 'success') {
+    // Restore to findcare if pending caregiver is in sessionStorage OR URL (new-tab safe)
+    if (sessionStorage.getItem('gc_pending_hire_caregiver') || params.get('caregiver_return')) return 'findcare';
+    return 'profile';
+  }
   if (params.get('booking_unlocked')) return 'bookings';
   const hash = window.location.hash.replace('#', '') as TabId;
   const validTabs: TabId[] = ['home', 'findcare', 'team', 'bookings', 'profile'];
@@ -75,6 +78,7 @@ function App() {
     const url = new URL(window.location.href);
     url.searchParams.delete('booking_unlocked');
     url.searchParams.delete('subscription');
+    url.searchParams.delete('caregiver_return');
     url.hash = '#' + tab;
     window.history.pushState({ tab }, '', url.toString());
   }
