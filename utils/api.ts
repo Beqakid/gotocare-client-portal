@@ -2,6 +2,8 @@
 // Carehia API utility — all fetch calls
 // ══════════════════════════════════════════
 
+import { getToken } from './storage';
+
 export const API = 'https://gotocare-original.jjioji.workers.dev/api';
 
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
@@ -208,6 +210,14 @@ export async function createSubscriptionCheckout(email: string, plan: string) {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ email, plan }),
+  });
+}
+
+export async function removeBookingFromView(bookingId: number) {
+  return request<{ success: boolean; error?: string }>('/client-bookings/hide', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ bookingId, clientToken: getToken(), reason: 'user_removed' }),
   });
 }
 

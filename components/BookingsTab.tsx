@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { getMyBookings, cancelBooking } from '../utils/api';
+import { getMyBookings, cancelBooking, removeBookingFromView } from '../utils/api';
 import { getEmail, getToken } from '../utils/storage';
 import { TabId } from '../types';
 import { CareJourney } from './CareJourney';
@@ -99,6 +99,7 @@ export function BookingsTab({ onNavigate }: Props) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [cancelling, setCancelling] = useState<number | null>(null);
+  const [removing, setRemoving] = useState<number | null>(null);
   const [filter, setFilter] = useState<BookingFilter>('all');
   const [view, setView] = useState<BookingView>('list');
 
@@ -139,6 +140,21 @@ export function BookingsTab({ onNavigate }: Props) {
       alert('Network error. Please try again.');
     } finally {
       setCancelling(null);
+    }
+  }
+
+  async function handleRemove(b: Booking) {
+    const id = getBookingId(b);
+    if (!confirm('Remove this interview from your list? This only hides it from your Bookings view.')) return;
+    setRemoving(id);
+    try {
+      const d = await removeBookingFromView(id);
+      if (d.success) setBookings(prev => prev.filter(item => getBookingId(item) !== id));
+      else alert(d.error || 'Could not remove. Please try again.');
+    } catch {
+      alert('Network error. Please try again.');
+    } finally {
+      setRemoving(null);
     }
   }
 
@@ -253,7 +269,7 @@ export function BookingsTab({ onNavigate }: Props) {
         )}
 
         {!loading && !error && filteredBookings.length > 0 && view !== 'list' && (
-          <BookingCalendarView bookings={filteredBookings} view={view} onCancel={handleCancel} cancelling={cancelling} />
+          <BookingCalendarView bookings={filteredBookings} view={view} onCancel={handleCancel} onRemove={handleRemove} cancelling={cancelling} removing={removing} />
         )}
 
         {!loading && !error && view === 'list' && filteredBookings.map(b => (
@@ -261,7 +277,9 @@ export function BookingsTab({ onNavigate }: Props) {
             key={getBookingId(b)}
             booking={b}
             cancelling={cancelling === getBookingId(b)}
+            removing={removing === getBookingId(b)}
             onCancel={handleCancel}
+            onRemove={handleRemove}
             onNavigate={onNavigate}
           />
         ))}
@@ -293,12 +311,16 @@ export function BookingsTab({ onNavigate }: Props) {
 function BookingCard({
   booking,
   cancelling,
+  removing,
   onCancel,
+  onRemove,
   onNavigate,
 }: {
   booking: Booking;
   cancelling: boolean;
+  removing: boolean;
   onCancel: (b: Booking) => void;
+  onRemove: (b: Booking) => void;
   onNavigate: (tab: TabId) => void;
 }) {
   const id = getBookingId(booking);
@@ -309,6 +331,7 @@ function BookingCard({
   const city = booking.caregiverCity || booking.caregiver_city;
   const careType = booking.careType || booking.care_type || booking.care_needs || 'Home care';
   const canCancel = status === 'pending';
+  const canRemove = status === 'cancelled' || status === 'declined';
   const isConfirmed = status === 'accepted' || status === 'hired';
   const schedule = getScheduleLabel(booking);
   const interviewFormat = getInterviewFormat(booking.interview_type);
@@ -471,6 +494,27 @@ function BookingCard({
               Search again
             </button>
           )}
+
+          {canRemove && (
+            <button
+              onClick={() => onRemove(booking)}
+              disabled={removing}
+              style={{
+                flex: 1,
+                minHeight: 44,
+                border: '1px solid #FECACA',
+                borderRadius: 13,
+                background: '#FFFFFF',
+                color: '#B91C1C',
+                fontSize: 13,
+                fontWeight: 850,
+                cursor: removing ? 'wait' : 'pointer',
+                opacity: removing ? 0.72 : 1,
+              }}
+            >
+              {removing ? 'Removing...' : 'Remove'}
+            </button>
+          )}
         </div>
       </div>
     </article>
@@ -492,14 +536,37 @@ function ViewTabs({ value, onChange }: { value: BookingView; onChange: (view: Bo
   );
 }
 
-function BookingCalendarView({ bookings, view, onCancel, cancelling }: { bookings: Booking[]; view: BookingView; onCancel: (b: Booking) => void; cancelling: number | null }) {
+function BookingCalendarView({
+  bookings,
+  view,
+  onCancel,
+  onRemove,
+  cancelling,
+  removing,
+}: {
+  bookings: Booking[];
+  view: BookingView;
+  onCancel: (b: Booking) => void;
+  onRemove: (b: Booking) => void;
+  cancelling: number | null;
+  removing: number | null;
+}) {
   const sorted = [...bookings].sort((a, b) => bookingStartMs(a) - bookingStartMs(b));
   if (view === 'day') {
     const grouped = groupBookingsByDay(sorted);
     const firstDay = grouped[0];
     return (
       <CalendarPanel title={firstDay ? formatDate(firstDay.date, { weekday: 'long', month: 'long', day: 'numeric' }) : 'Today'}>
-        {firstDay ? firstDay.items.map(item => <CalendarBooking key={getBookingId(item)} booking={item} onCancel={onCancel} cancelling={cancelling === getBookingId(item)} />) : <CalendarEmpty />}
+        {firstDay ? firstDay.items.map(item => (
+          <CalendarBooking
+            key={getBookingId(item)}
+            booking={item}
+            onCancel={onCancel}
+            onRemove={onRemove}
+            cancelling={cancelling === getBookingId(item)}
+            removing={removing === getBookingId(item)}
+          />
+        )) : <CalendarEmpty />}
       </CalendarPanel>
     );
   }
@@ -535,7 +602,17 @@ function BookingCalendarView({ bookings, view, onCancel, cancelling }: { booking
           <div key={day.date} style={{ display: 'grid', gridTemplateColumns: '86px 1fr', gap: 10, alignItems: 'start' }}>
             <div style={{ color: '#0F172A', fontSize: 12, fontWeight: 900, paddingTop: 8 }}>{formatDate(day.date, { weekday: 'short', month: 'short', day: 'numeric' })}</div>
             <div style={{ display: 'grid', gap: 8 }}>
-              {day.items.map(item => <CalendarBooking key={getBookingId(item)} booking={item} onCancel={onCancel} cancelling={cancelling === getBookingId(item)} compact />)}
+              {day.items.map(item => (
+                <CalendarBooking
+                  key={getBookingId(item)}
+                  booking={item}
+                  onCancel={onCancel}
+                  onRemove={onRemove}
+                  cancelling={cancelling === getBookingId(item)}
+                  removing={removing === getBookingId(item)}
+                  compact
+                />
+              ))}
             </div>
           </div>
         ))}
@@ -553,9 +630,24 @@ function CalendarPanel({ title, children }: { title: string; children: React.Rea
   );
 }
 
-function CalendarBooking({ booking, onCancel, cancelling, compact }: { booking: Booking; onCancel: (b: Booking) => void; cancelling: boolean; compact?: boolean }) {
+function CalendarBooking({
+  booking,
+  onCancel,
+  onRemove,
+  cancelling,
+  removing,
+  compact,
+}: {
+  booking: Booking;
+  onCancel: (b: Booking) => void;
+  onRemove: (b: Booking) => void;
+  cancelling: boolean;
+  removing: boolean;
+  compact?: boolean;
+}) {
   const status = booking.status || 'pending';
   const statusCfg = STATUS_CONFIG[status] || STATUS_CONFIG.pending;
+  const canRemove = status === 'cancelled' || status === 'declined';
   return (
     <div style={{ border: `1px solid ${statusCfg.border}`, background: statusCfg.bg, borderRadius: 10, padding: compact ? 10 : 12 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, alignItems: 'flex-start' }}>
@@ -569,6 +661,11 @@ function CalendarBooking({ booking, onCancel, cancelling, compact }: { booking: 
       {status === 'pending' && (
         <button onClick={() => onCancel(booking)} disabled={cancelling} style={{ marginTop: 9, border: '1px solid #FECACA', background: '#FFFFFF', color: '#B91C1C', borderRadius: 8, padding: '7px 9px', fontSize: 11, fontWeight: 850, cursor: cancelling ? 'wait' : 'pointer' }}>
           {cancelling ? 'Cancelling...' : 'Cancel'}
+        </button>
+      )}
+      {canRemove && (
+        <button onClick={() => onRemove(booking)} disabled={removing} style={{ marginTop: 9, border: '1px solid #FECACA', background: '#FFFFFF', color: '#B91C1C', borderRadius: 8, padding: '7px 9px', fontSize: 11, fontWeight: 850, cursor: removing ? 'wait' : 'pointer' }}>
+          {removing ? 'Removing...' : 'Remove'}
         </button>
       )}
     </div>
