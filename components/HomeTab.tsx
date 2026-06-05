@@ -372,7 +372,7 @@ export function HomeTab({ onNavigate }: Props) {
         </div>
 
         <div style={{ border: '1px solid #E3E8F0', borderRadius: 8, overflow: 'hidden', background: '#FFFFFF', boxShadow: '0 12px 32px rgba(15,23,42,0.08)' }}>
-          <img src="/assets/carehia_client_welcome.png" alt="Carehia welcome" style={{ display: 'block', width: '100%', height: 'auto' }} />
+          <img src="https://cdn.jsdelivr.net/gh/Beqakid/gotocare-client-portal@main/assets/carehia_client_welcome.png" alt="Carehia welcome" style={{ display: 'block', width: '100%', height: 'auto' }} />
           <div style={{ padding: 16 }}>
             {/* Phase 24: reframed title + subtitle */}
             <h1 style={{ margin: 0, fontSize: 30, lineHeight: 1.05, fontWeight: 950, letterSpacing: 0, color: '#0F172A' }}>Today</h1>

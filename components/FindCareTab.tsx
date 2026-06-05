@@ -1457,7 +1457,7 @@ function ModernCareSearch({
         {step === 'welcome' && (
           <>
             <section style={{ background: '#FFFFFF', border: '1px solid #D8E1EC', borderRadius: 8, overflow: 'hidden', marginBottom: 14, boxShadow: '0 10px 26px rgba(15,23,42,0.07)' }}>
-              <img src="/assets/carehia_client_welcome.png" alt="Carehia care" style={{ display: 'block', width: '100%', height: 'auto' }} />
+              <img src="https://cdn.jsdelivr.net/gh/Beqakid/gotocare-client-portal@main/assets/carehia_client_welcome.png" alt="Carehia care" style={{ display: 'block', width: '100%', height: 'auto' }} />
               <div style={{ padding: 16 }}>
                 <h1 style={{ margin: '0 0 8px', fontSize: 29, lineHeight: 1.05, fontWeight: 950, letterSpacing: 0, color: '#0F172A' }}>Quality care. Peace of mind.</h1>
                 <div style={{ color: '#526173', fontSize: 15, lineHeight: 1.45, marginBottom: 14 }}>We help you find trusted caregivers for your loved one.</div>
