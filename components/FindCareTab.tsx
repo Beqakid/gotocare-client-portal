@@ -1194,6 +1194,15 @@ export function FindCareTab({ onNavigate, onRequireAuth }: { onNavigate?: (tab: 
                   <div style={{ fontSize: 15, fontWeight: 700, color: '#fff' }}>{n}</div>
                   <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.6)', marginTop: 2 }}>⭐ {Number(rating).toFixed(1)} · ${rate}/hr</div>
                   <div style={{ fontSize: 12, color: '#7C5CFF', marginTop: 2 }}>🎯 {match}% match</div>
+                  {/* Phase 13: trust badges on shortlist card */}
+                  {(() => {
+                    const pb: string[] = Array.isArray((s as any).publicBadges) ? (s as any).publicBadges : [];
+                    return pb.length > 0 ? (
+                      <div style={{ fontSize: 11, color: '#a78bfa', marginTop: 4 }}>
+                        {pb.slice(0, 2).join(' · ')}
+                      </div>
+                    ) : null;
+                  })()}
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                   <button onClick={() => directHire(s)} style={{ padding: '8px 12px', background: 'linear-gradient(135deg,#7C5CFF,#4A90E2)', border: 'none', borderRadius: 10, color: '#fff', fontSize: 12, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' }}>💼 Hire Now</button>
@@ -1891,6 +1900,19 @@ function ModernMatches({
                     <MatchChip label={caregiverNeedFit(person, selectedNeeds)} />
                     <MatchChip label={`${caregiverRating(person)} rating`} />
                   </div>
+                  {/* Phase 13: trust badge row on ranked card */}
+                  {(() => {
+                    const pb: string[] = Array.isArray((person as any).publicBadges) ? (person as any).publicBadges : [];
+                    return pb.length > 0 ? (
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5, marginTop: 7 }}>
+                        {pb.slice(0, 3).map((lbl: string) => (
+                          <span key={lbl} style={{ fontSize: 10, fontWeight: 700, padding: '3px 9px', borderRadius: 50, background: '#F5F3FF', color: '#6D28D9', border: '1px solid #DDD6FE' }}>
+                            {lbl}
+                          </span>
+                        ))}
+                      </div>
+                    ) : null;
+                  })()}
                 </div>
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginTop: 14 }}>

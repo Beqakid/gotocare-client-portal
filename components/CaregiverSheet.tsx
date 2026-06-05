@@ -183,6 +183,43 @@ export function CaregiverSheet({ cg, onClose, onHire, onInterview }: Props) {
             </InfoPanel>
           )}
 
+          {/* Phase 13: Why this caregiver may be a good match */}
+          {(() => {
+            const reasons: string[] = [];
+            const badgeLabels = sheetBadges.map(b => b.label);
+            if (badgeLabels.includes('Trusted Pro'))                reasons.push('Trusted Pro caregiver');
+            else if (badgeLabels.includes('Carehia Verified'))      reasons.push('Carehia Verified');
+            if (badgeLabels.includes('CPR Verified'))               reasons.push('CPR Verified');
+            if (badgeLabels.includes('Background Check Completed')) reasons.push('Background check completed');
+            if (badgeLabels.includes('References Verified'))        reasons.push('References verified');
+            if (badgeLabels.includes('First Aid Verified'))         reasons.push('First Aid certified');
+            if (Number(rating) >= 4.7)                              reasons.push('Highly rated by families');
+            else if (Number(rating) >= 4.0 && rating)              reasons.push(`${rating} star rating`);
+            if (allSkills.some(s => s.toLowerCase().includes('dementia')))   reasons.push('Dementia care experience');
+            if (allSkills.some(s => s.toLowerCase().includes('alzheimer')))  reasons.push("Alzheimer’s care experience");
+            if (allSkills.some(s => s.toLowerCase().includes('companion')))  reasons.push('Companion care');
+            if (location)                                            reasons.push('Near your area');
+            if (exp && Number(exp) >= 3)                            reasons.push(`${exp} years of care experience`);
+            if (reasons.length === 0) return null;
+            return (
+              <InfoPanel title="Why this caregiver may be a good match">
+                <div style={{ fontSize: 11, color: '#64748B', marginBottom: 10, lineHeight: 1.5 }}>
+                  Carehia verifies trust signals so families can choose with more confidence.
+                </div>
+                <ChipWrap>
+                  {reasons.slice(0, 5).map(r => (
+                    <span key={r} style={{ background: '#F0FDF4', color: '#087A3D', border: '1px solid #B7E8CA', padding: '5px 11px', borderRadius: 999, fontSize: 12, fontWeight: 800 }}>
+                      ✓ {r}
+                    </span>
+                  ))}
+                </ChipWrap>
+                <div style={{ fontSize: 11, color: '#94A3B8', marginTop: 10, lineHeight: 1.45 }}>
+                  Private documents and background details are never shown publicly.
+                </div>
+              </InfoPanel>
+            );
+          })()}
+
           <InfoPanel title="Languages">
             <ChipWrap>
               {langs.map(l => <Chip key={l}>{l}</Chip>)}
