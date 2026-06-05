@@ -5,6 +5,7 @@ import { Caregiver, TabId } from '../types';
 
 // ── Phase 24 backend base ──────────────────────────────────────────────────
 const API_BASE = 'https://gotocare-original.jjioji.workers.dev/api';
+const ADMIN_API = 'https://carehia-admin.jjioji.workers.dev'; // Phase 25
 
 // ── Day abbreviation helper (Phase 24) ────────────────────────────────────
 const DAY_ABBR = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -236,6 +237,13 @@ export function HomeTab({ onNavigate }: Props) {
   const [shortlistCount, setShortlistCount] = useState(() => shortlist.length);
   // Phase 24: schedule data for On Duty card
   const [careSchedules, setCareSchedules] = useState<ScheduleRecord[]>([]);
+  // Phase 25: visit check-in / location status
+  const [visitCheckInStatus, setVisitCheckInStatus] = useState<{
+    statusLabel: string;
+    isLocationConfirmed: boolean;
+    isPendingReview: boolean;
+    checkInAt?: string;
+  } | null>(null);
   const clockRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -424,6 +432,17 @@ export function HomeTab({ onNavigate }: Props) {
           setCareSchedules(data.schedules as ScheduleRecord[]);
         }
       } catch {}
+
+      // Phase 25: load visit check-in status (non-blocking)
+      try {
+        const ciRes = await fetch(`${ADMIN_API}/visit-checkin-status`, {
+          headers: { Authorization: `Bearer ${clientToken}` },
+        });
+        if (ciRes.ok) {
+          const ciData = await ciRes.json();
+          if (ciData.activeVisit) setVisitCheckInStatus(ciData.activeVisit);
+        }
+      } catch {}
     }
 
     if (clientEmail) {
@@ -506,6 +525,7 @@ export function HomeTab({ onNavigate }: Props) {
           clockStr={clockStr}
           todayStatus={todayStatus}
           onNavigate={onNavigate}
+          checkInStatus={visitCheckInStatus}
         />
 
         {/* ── Phase 23: Next Best Action Hero Card ───────────────────── */}
@@ -591,10 +611,25 @@ interface OnDutyCardProps {
   clockStr: string;
   todayStatus: TodayStatusResult;
   onNavigate: (tab: TabId) => void;
+  // Phase 25: location check-in status (client-safe)
+  checkInStatus?: { statusLabel: string; isLocationConfirmed: boolean; isPendingReview: boolean; checkInAt?: string } | null;
 }
 
-function OnDutyCard({ onsiteActive, onsiteName, onsiteStart, clockStr, todayStatus, onNavigate }: OnDutyCardProps) {
+function OnDutyCard({ onsiteActive, onsiteName, onsiteStart, clockStr, todayStatus, onNavigate, checkInStatus }: OnDutyCardProps) {
   if (onsiteActive && onsiteName) {
+    // Phase 25: location status badge (calm, non-alarming)
+    const locationBadge = checkInStatus ? (
+      <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginTop: 6 }}>
+        <span style={{
+          width: 7, height: 7, borderRadius: '50%', display: 'inline-block', flexShrink: 0,
+          background: checkInStatus.isLocationConfirmed ? '#22C55E' : checkInStatus.isPendingReview ? '#F59E0B' : '#94A3B8',
+        }} />
+        <span style={{ fontSize: 12, color: checkInStatus.isLocationConfirmed ? '#15803D' : checkInStatus.isPendingReview ? '#92400E' : '#64748B', fontWeight: 600 }}>
+          {checkInStatus.statusLabel}
+        </span>
+      </div>
+    ) : null;
+
     return (
       <section style={{ background: '#F0FDF4', border: '1.5px solid #86EFAC', borderRadius: 14, padding: 16, marginBottom: 14, boxShadow: '0 8px 24px rgba(15,23,42,0.06)' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 10 }}>
@@ -604,6 +639,7 @@ function OnDutyCard({ onsiteActive, onsiteName, onsiteStart, clockStr, todayStat
         <div style={{ fontSize: 19, fontWeight: 900, color: '#0F172A', marginBottom: 3 }}>{onsiteName}</div>
         {clockStr && <div style={{ fontSize: 14, color: '#166534', fontWeight: 750 }}>On duty for {clockStr}</div>}
         {onsiteStart && <div style={{ fontSize: 12, color: '#4B5563', marginTop: 3 }}>Started at {formatTime12(onsiteStart.toTimeString().slice(0, 5))}</div>}
+        {locationBadge}
         <div style={{ display: 'flex', gap: 8, marginTop: 14, flexWrap: 'wrap' }}>
           <button onClick={() => onNavigate('team')} style={onDutyBtnPrimary}>View Team</button>
           <button onClick={() => onNavigate('team')} style={onDutyBtnSecondary}>View Schedule</button>
