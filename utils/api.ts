@@ -112,11 +112,11 @@ export async function hireCaregiver(token: string, caregiverId: number | string,
 }
 
 export async function getMyBookings(email: string, clientToken?: string) {
-  // AUTHZ-01: send session token so backend can verify ownership
-  if (clientToken) {
-    return request<{ bookings: unknown[] }>(`/my-bookings?clientToken=${encodeURIComponent(clientToken)}`);
-  }
-  return request<{ bookings: unknown[] }>(`/my-bookings?clientToken=${encodeURIComponent(email)}`);
+  // SECURITY (P18): token in Authorization header — not in URL (avoids browser history / log leakage)
+  const tok = clientToken || email; // fallback to email if no token (legacy)
+  return request<{ bookings: unknown[] }>('/my-bookings', {
+    headers: { 'Authorization': `Bearer ${tok}` },
+  });
 }
 
 export async function cancelBooking(bookingId: number, clientEmail: string, clientToken?: string) {
@@ -130,8 +130,10 @@ export async function cancelBooking(bookingId: number, clientEmail: string, clie
 
 // ── Team ──────────────────────────────────────────────────────────────
 export async function getMyTeam(token: string) {
+  // SECURITY (P18): token in Authorization header
   return request<{ success: boolean; hired: unknown[]; active: unknown[]; past: unknown[] }>(
-    `/client-team?token=${encodeURIComponent(token)}`
+    '/client-team',
+    { headers: { 'Authorization': `Bearer ${token}` } }
   );
 }
 
@@ -145,22 +147,28 @@ export async function removeFromTeam(token: string, caregiverId: number | string
 
 // ── Onsite tracker ────────────────────────────────────────────────────
 export async function getOnsiteCaregiver(clientToken: string) {
+  // SECURITY (P18): token in Authorization header
   return request<{ active: boolean; caregiver_name?: string; start_time?: string }>(
-    `/client-onsite-caregiver?clientToken=${encodeURIComponent(clientToken)}`
+    '/client-onsite-caregiver',
+    { headers: { 'Authorization': `Bearer ${clientToken}` } }
   );
 }
 
 // ── Live status (team check-in) ───────────────────────────────────────
 export async function getTeamLiveStatus(clientToken: string) {
+  // SECURITY (P18): token in Authorization header
   return request<{ success: boolean; statuses: unknown[] }>(
-    `/team-live-status?clientToken=${encodeURIComponent(clientToken)}`
+    '/team-live-status',
+    { headers: { 'Authorization': `Bearer ${clientToken}` } }
   );
 }
 
 // ── Care schedule ─────────────────────────────────────────────────────
 export async function getCareSchedule(clientToken: string, caregiverEmail: string) {
+  // SECURITY (P18): token in Authorization header; caregiverEmail stays in URL (not sensitive)
   return request<{ success: boolean; schedule?: unknown }>(
-    `/care-schedule?clientToken=${encodeURIComponent(clientToken)}&caregiverEmail=${encodeURIComponent(caregiverEmail)}`
+    `/care-schedule?caregiverEmail=${encodeURIComponent(caregiverEmail)}`,
+    { headers: { 'Authorization': `Bearer ${clientToken}` } }
   );
 }
 
@@ -183,17 +191,19 @@ export async function saveCareSchedule(payload: {
 
 // ── Shortlist / preferences ────────────────────────────────────────────
 export async function syncShortlist(clientToken: string, shortlistIds: (number | string)[]) {
-  return fetch(`${API}/client-shortlist?clientToken=${clientToken}`, {
+  // SECURITY (P18): token in Authorization header
+  return fetch(`${API}/client-shortlist`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${clientToken}` },
     body: JSON.stringify({ shortlist: shortlistIds }),
   }).catch(() => undefined);
 }
 
 export async function savePreferences(clientToken: string, location: string, careTypes: string[]) {
-  return fetch(`${API}/client-preferences?clientToken=${clientToken}`, {
+  // SECURITY (P18): token in Authorization header
+  return fetch(`${API}/client-preferences`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${clientToken}` },
     body: JSON.stringify({ location, careTypes }),
   }).catch(() => undefined);
 }
@@ -247,8 +257,10 @@ export async function createClientBillingPortal(email: string) {
 }
 
 export async function getCaregiverDocs(email: string, clientToken: string) {
+  // SECURITY (P18): token in Authorization header; email in URL (not secret)
   return request<{ success: boolean; subscribed: boolean; count: number; documents: { name: string }[] }>(
-    `/caregiver-profile-docs?email=${encodeURIComponent(email)}&clientToken=${clientToken}`
+    `/caregiver-profile-docs?email=${encodeURIComponent(email)}`,
+    { headers: { 'Authorization': `Bearer ${clientToken}` } }
   );
 }
 
