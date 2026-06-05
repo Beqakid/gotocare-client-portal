@@ -201,7 +201,7 @@ export function CaregiverSheet({ cg, onClose, onHire, onInterview }: Props) {
                     {sheetBadges.find(b => b.id === explainerBadge)!.icon} {sheetBadges.find(b => b.id === explainerBadge)!.label}
                   </div>
                   <div style={{ fontSize: 12, color: '#475569', lineHeight: 1.6 }}>
-                    {BADGE_EXPLANATIONS[explainerBadge] || 'This badge reflects a verified trust signal on this caregiver's Carehia profile.'}
+                    {BADGE_EXPLANATIONS[explainerBadge] || "This badge reflects a verified trust signal on this caregiver's Carehia profile."}
                   </div>
                   <div style={{ fontSize: 11, color: '#94A3B8', marginTop: 6 }}>Private verification details are never shown publicly.</div>
                 </div>
