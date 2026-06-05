@@ -4,6 +4,29 @@ import { getEmail, getName, getShortlistLocal, getToken } from '../utils/storage
 import { Caregiver, TabId } from '../types';
 import { CareJourney } from './CareJourney';
 
+// ── Phase 24 backend base ──────────────────────────────────────────────────
+const API_BASE = 'https://gotocare-original.jjioji.workers.dev/api';
+
+// ── Day abbreviation helper (Phase 24) ────────────────────────────────────
+const DAY_ABBR = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+// ── Phase 24 helpers ───────────────────────────────────────────────────────
+function parseTimeToMins(time: string): number {
+  const [h, m] = time.split(':').map(Number);
+  return (h || 0) * 60 + (m || 0);
+}
+
+function formatTime12(time: string): string {
+  try {
+    const [h, m] = time.split(':').map(Number);
+    const period = h < 12 ? 'AM' : 'PM';
+    const hour = h % 12 || 12;
+    return `${hour}:${String(m).padStart(2, '0')} ${period}`;
+  } catch { return time; }
+}
+
+// ── Types ─────────────────────────────────────────────────────────────────
+
 interface Props {
   onNavigate: (tab: TabId) => void;
 }
@@ -31,6 +54,24 @@ interface Booking {
   care_needs?: string;
   interview_type?: string;
 }
+
+// Phase 24: schedule record
+interface ScheduleRecord {
+  caregiver_email?: string;
+  days?: string;
+  start_time?: string;
+  end_time?: string;
+  care_type?: string;
+}
+
+// Phase 24: today status union type
+type TodayStatusResult =
+  | { type: 'conflict' }
+  | { type: 'scheduled_now'; caregiverName: string; careType?: string; scheduledStart?: string; scheduledEnd?: string }
+  | { type: 'next_visit'; caregiverName: string; careType?: string; scheduledStart?: string; scheduledEnd?: string }
+  | { type: 'empty' };
+
+// ── Utility functions ──────────────────────────────────────────────────────
 
 function firstName(value: string): string {
   return value.trim().split(/\s+/)[0] || '';
@@ -77,15 +118,19 @@ function bookingScheduleLabel(booking: Booking): string {
   return `${dateLabel(rawDate)} at ${timeLabel(rawTime)}`;
 }
 
+// ── HomeTab component ──────────────────────────────────────────────────────
+
 export function HomeTab({ onNavigate }: Props) {
   const [onsiteActive, setOnsiteActive] = useState(false);
   const [onsiteName, setOnsiteName] = useState('');
   const [onsiteStart, setOnsiteStart] = useState<Date | null>(null);
-  const [clockStr, setClockStr] = useState('No active visit');
+  const [clockStr, setClockStr] = useState('');
   const [team, setTeam] = useState<TeamMember[]>([]);
   const [pendingAgreements, setPendingAgreements] = useState<TeamMember[]>([]);
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [shortlistCount, setShortlistCount] = useState(() => getShortlistLocal<Caregiver>().length);
+  // Phase 24: schedule data for On Duty card
+  const [careSchedules, setCareSchedules] = useState<ScheduleRecord[]>([]);
   const clockRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -100,6 +145,74 @@ export function HomeTab({ onNavigate }: Props) {
     const activeStatuses = ['pending', 'accepted', 'hired'];
     return bookings.find(b => activeStatuses.includes(String(b.status || '').toLowerCase())) || null;
   }, [bookings]);
+
+  // Phase 24: compute today's duty status from schedule data
+  const todayStatus = useMemo((): TodayStatusResult => {
+    const todayAbbr = DAY_ABBR[new Date().getDay()];
+    const nowMins = new Date().getHours() * 60 + new Date().getMinutes();
+
+    // Build a name lookup from team
+    const nameByEmail = (cgEmail: string): string => {
+      const found = team.find(t => (t.email || t.caregiver_email) === cgEmail);
+      return found ? (found.name || found.caregiver_name || 'Caregiver') : 'Caregiver';
+    };
+
+    // Filter schedules that include today
+    const todaySchedules = careSchedules.filter(s => {
+      const days = (s.days || '').split(',').map(d => d.trim()).filter(Boolean);
+      return days.includes(todayAbbr);
+    });
+
+    // Check for conflicts: two schedules today that overlap
+    if (todaySchedules.length >= 2) {
+      for (let i = 0; i < todaySchedules.length; i++) {
+        for (let j = i + 1; j < todaySchedules.length; j++) {
+          const a = todaySchedules[i];
+          const b = todaySchedules[j];
+          if (a.start_time && a.end_time && b.start_time && b.end_time) {
+            if (
+              parseTimeToMins(a.start_time) < parseTimeToMins(b.end_time) &&
+              parseTimeToMins(a.end_time) > parseTimeToMins(b.start_time)
+            ) {
+              return { type: 'conflict' };
+            }
+          }
+        }
+      }
+    }
+
+    // Currently scheduled on duty (now falls inside schedule window)
+    const activeNow = todaySchedules.find(s => {
+      if (!s.start_time || !s.end_time) return false;
+      return nowMins >= parseTimeToMins(s.start_time) && nowMins < parseTimeToMins(s.end_time);
+    });
+    if (activeNow) {
+      return {
+        type: 'scheduled_now',
+        caregiverName: nameByEmail(activeNow.caregiver_email || ''),
+        careType: activeNow.care_type,
+        scheduledStart: activeNow.start_time,
+        scheduledEnd: activeNow.end_time,
+      };
+    }
+
+    // Next upcoming visit today
+    const upcoming = todaySchedules
+      .filter(s => s.start_time && parseTimeToMins(s.start_time) > nowMins)
+      .sort((a, b) => parseTimeToMins(a.start_time!) - parseTimeToMins(b.start_time!));
+    if (upcoming.length > 0) {
+      const next = upcoming[0];
+      return {
+        type: 'next_visit',
+        caregiverName: nameByEmail(next.caregiver_email || ''),
+        careType: next.care_type,
+        scheduledStart: next.start_time,
+        scheduledEnd: next.end_time,
+      };
+    }
+
+    return { type: 'empty' };
+  }, [careSchedules, team]);
 
   const actionItems = useMemo(() => {
     const items: Array<{ title: string; body: string; action: string; tab: TabId; tone: 'urgent' | 'default' | 'success' }> = [];
@@ -161,7 +274,7 @@ export function HomeTab({ onNavigate }: Props) {
         setOnsiteActive(false);
         setOnsiteName('');
         setOnsiteStart(null);
-        setClockStr('No active visit');
+        setClockStr('');
       }
     } catch {
       setOnsiteActive(false);
@@ -186,6 +299,15 @@ export function HomeTab({ onNavigate }: Props) {
         setTeam([]);
         setPendingAgreements([]);
       }
+
+      // Phase 24: load care schedules for On Duty card
+      try {
+        const res = await fetch(`${API_BASE}/care-schedule?clientToken=${encodeURIComponent(clientToken)}`);
+        const data = await res.json();
+        if (data.success && Array.isArray(data.schedules)) {
+          setCareSchedules(data.schedules as ScheduleRecord[]);
+        }
+      } catch {}
     }
 
     if (clientEmail) {
@@ -212,10 +334,10 @@ export function HomeTab({ onNavigate }: Props) {
     function tick() {
       if (!onsiteStart) return;
       const secs = Math.max(0, Math.floor((Date.now() - onsiteStart.getTime()) / 1000));
-      const h = String(Math.floor(secs / 3600)).padStart(2, '0');
-      const m = String(Math.floor((secs % 3600) / 60)).padStart(2, '0');
-      const s = String(secs % 60).padStart(2, '0');
-      setClockStr(`${h}:${m}:${s}`);
+      // Phase 24: friendly elapsed format "2h 15m" instead of HH:MM:SS
+      const h = Math.floor(secs / 3600);
+      const m = Math.floor((secs % 3600) / 60);
+      setClockStr(h > 0 ? `${h}h ${m}m` : `${m}m`);
     }
     tick();
     clockRef.current = setInterval(tick, 1000);
@@ -252,9 +374,10 @@ export function HomeTab({ onNavigate }: Props) {
         <div style={{ border: '1px solid #E3E8F0', borderRadius: 8, overflow: 'hidden', background: '#FFFFFF', boxShadow: '0 12px 32px rgba(15,23,42,0.08)' }}>
           <img src="/assets/carehia_client_welcome.png" alt="Carehia welcome" style={{ display: 'block', width: '100%', height: 'auto' }} />
           <div style={{ padding: 16 }}>
-            <h1 style={{ margin: 0, fontSize: 30, lineHeight: 1.05, fontWeight: 950, letterSpacing: 0, color: '#0F172A' }}>Quality care. Peace of mind.</h1>
+            {/* Phase 24: reframed title + subtitle */}
+            <h1 style={{ margin: 0, fontSize: 30, lineHeight: 1.05, fontWeight: 950, letterSpacing: 0, color: '#0F172A' }}>Today</h1>
             <div style={{ marginTop: 9, color: '#526173', fontSize: 15, lineHeight: 1.5 }}>
-              {clientName ? `${greeting}, ${firstName(clientName)}. ` : ''}Find trusted caregivers for your loved one in a few simple steps.
+              {clientName ? `${greeting}, ${firstName(clientName)}. ` : ''}Let's manage care for your loved one.
             </div>
             <div style={{ display: 'grid', gap: 9, marginTop: 16 }}>
               <button onClick={() => onNavigate('findcare')} style={{ width: '100%', minHeight: 54, border: 'none', borderRadius: 8, background: '#5B2FD6', color: '#FFFFFF', fontSize: 16, fontWeight: 950, cursor: 'pointer', boxShadow: '0 10px 22px rgba(91,47,214,0.22)' }}>Find a Caregiver</button>
@@ -265,35 +388,17 @@ export function HomeTab({ onNavigate }: Props) {
       </section>
 
       <main style={{ padding: '16px' }}>
-        <CareJourney stage={journeyStage} onNavigate={onNavigate} />
+        {/* Phase 24: On Duty Card — first element in Today screen */}
+        <OnDutyCard
+          onsiteActive={onsiteActive}
+          onsiteName={onsiteName}
+          onsiteStart={onsiteStart}
+          clockStr={clockStr}
+          todayStatus={todayStatus}
+          onNavigate={onNavigate}
+        />
 
-        <section
-          onClick={() => onNavigate(onsiteActive ? 'team' : team.length ? 'team' : 'findcare')}
-          style={{
-            background: onsiteActive ? '#EAFBF2' : '#FFFFFF',
-            border: `1.5px solid ${onsiteActive ? '#9BE7BA' : '#E3E8F0'}`,
-            borderRadius: 8,
-            padding: 16,
-            boxShadow: '0 8px 24px rgba(15,23,42,0.06)',
-            marginBottom: 14,
-            cursor: 'pointer',
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
-            <div>
-              <div style={{ fontSize: 12, fontWeight: 800, color: onsiteActive ? '#087A3D' : '#64748B', textTransform: 'uppercase', letterSpacing: 0.5 }}>
-                {onsiteActive ? 'Caregiver onsite now' : 'Today care status'}
-              </div>
-              <div style={{ fontSize: 19, fontWeight: 850, color: '#0F172A', marginTop: 4 }}>
-                {onsiteActive ? onsiteName : upcoming ? `${upcoming.caregiver_name || upcoming.caregiverName || 'Caregiver'} requested` : 'No visit active'}
-              </div>
-              <div style={{ fontSize: 13, color: onsiteActive ? '#0F7A42' : '#526173', marginTop: 4 }}>
-                {onsiteActive ? `Live visit timer: ${clockStr}` : upcoming ? bookingScheduleLabel(upcoming) : 'Find care or confirm your next booking.'}
-              </div>
-            </div>
-            <div style={{ fontSize: 24, color: onsiteActive ? '#10B981' : '#94A3B8' }}>{onsiteActive ? 'Live' : 'View'}</div>
-          </div>
-        </section>
+        <CareJourney stage={journeyStage} onNavigate={onNavigate} />
 
         <section style={{ marginBottom: 18 }}>
           <SectionHeader title="Priority Actions" action="Refresh" onAction={loadData} />
@@ -373,6 +478,175 @@ export function HomeTab({ onNavigate }: Props) {
   );
 }
 
+// ── Phase 24: On Duty Card ─────────────────────────────────────────────────
+
+const onDutyBtnPrimary: React.CSSProperties = {
+  border: 'none',
+  borderRadius: 10,
+  background: '#315DDF',
+  color: '#FFFFFF',
+  padding: '10px 14px',
+  fontSize: 13,
+  fontWeight: 900,
+  cursor: 'pointer',
+};
+
+const onDutyBtnSecondary: React.CSSProperties = {
+  border: '1.5px solid #CBD5E1',
+  borderRadius: 10,
+  background: '#FFFFFF',
+  color: '#315DDF',
+  padding: '10px 14px',
+  fontSize: 13,
+  fontWeight: 850,
+  cursor: 'pointer',
+};
+
+interface OnDutyCardProps {
+  onsiteActive: boolean;
+  onsiteName: string;
+  onsiteStart: Date | null;
+  clockStr: string;
+  todayStatus: TodayStatusResult;
+  onNavigate: (tab: TabId) => void;
+}
+
+function OnDutyCard({ onsiteActive, onsiteName, onsiteStart, clockStr, todayStatus, onNavigate }: OnDutyCardProps) {
+  // STATE A: live caregiver onsite (from backend timer)
+  if (onsiteActive && onsiteName) {
+    return (
+      <section style={{
+        background: '#F0FDF4',
+        border: '1.5px solid #86EFAC',
+        borderRadius: 14,
+        padding: 16,
+        marginBottom: 14,
+        boxShadow: '0 8px 24px rgba(15,23,42,0.06)',
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 10 }}>
+          <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#22C55E', display: 'inline-block', flexShrink: 0 }} />
+          <span style={{ fontSize: 11, fontWeight: 900, color: '#166534', textTransform: 'uppercase', letterSpacing: 0.6 }}>On Duty Now</span>
+        </div>
+        <div style={{ fontSize: 19, fontWeight: 900, color: '#0F172A', marginBottom: 3 }}>{onsiteName}</div>
+        {clockStr && (
+          <div style={{ fontSize: 14, color: '#166534', fontWeight: 750 }}>On duty for {clockStr}</div>
+        )}
+        {onsiteStart && (
+          <div style={{ fontSize: 12, color: '#4B5563', marginTop: 3 }}>
+            Started at {formatTime12(onsiteStart.toTimeString().slice(0, 5))}
+          </div>
+        )}
+        <div style={{ display: 'flex', gap: 8, marginTop: 14, flexWrap: 'wrap' }}>
+          <button onClick={() => onNavigate('team')} style={onDutyBtnPrimary}>View Team</button>
+          <button onClick={() => onNavigate('team')} style={onDutyBtnSecondary}>View Schedule</button>
+        </div>
+      </section>
+    );
+  }
+
+  // Schedule conflict today
+  if (todayStatus.type === 'conflict') {
+    return (
+      <section style={{
+        background: '#FFFBEB',
+        border: '1.5px solid #FCD34D',
+        borderRadius: 14,
+        padding: 16,
+        marginBottom: 14,
+        boxShadow: '0 8px 24px rgba(15,23,42,0.06)',
+      }}>
+        <div style={{ fontSize: 11, fontWeight: 900, color: '#92400E', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 8 }}>Schedule Conflict Today</div>
+        <div style={{ fontSize: 16, fontWeight: 850, color: '#0F172A', marginBottom: 4 }}>Two caregivers are scheduled at the same time.</div>
+        <div style={{ fontSize: 13, color: '#78350F', lineHeight: 1.5, marginBottom: 14 }}>Please review your team schedule to fix the overlap before care begins.</div>
+        <button onClick={() => onNavigate('team')} style={onDutyBtnPrimary}>Review Team Schedule</button>
+      </section>
+    );
+  }
+
+  // STATE B-a: caregiver is scheduled right now (from schedule window)
+  if (todayStatus.type === 'scheduled_now') {
+    return (
+      <section style={{
+        background: '#F0F9FF',
+        border: '1.5px solid #BAE6FD',
+        borderRadius: 14,
+        padding: 16,
+        marginBottom: 14,
+        boxShadow: '0 8px 24px rgba(15,23,42,0.06)',
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 10 }}>
+          <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#0EA5E9', display: 'inline-block', flexShrink: 0 }} />
+          <span style={{ fontSize: 11, fontWeight: 900, color: '#0369A1', textTransform: 'uppercase', letterSpacing: 0.6 }}>Scheduled On Duty</span>
+        </div>
+        <div style={{ fontSize: 19, fontWeight: 900, color: '#0F172A', marginBottom: 3 }}>{todayStatus.caregiverName}</div>
+        {todayStatus.careType && (
+          <div style={{ fontSize: 13, color: '#0369A1', fontWeight: 750, marginBottom: 3 }}>{todayStatus.careType}</div>
+        )}
+        {todayStatus.scheduledStart && todayStatus.scheduledEnd && (
+          <div style={{ fontSize: 13, color: '#4B5563' }}>
+            {formatTime12(todayStatus.scheduledStart)} &ndash; {formatTime12(todayStatus.scheduledEnd)}
+          </div>
+        )}
+        <div style={{ display: 'flex', gap: 8, marginTop: 14 }}>
+          <button onClick={() => onNavigate('team')} style={onDutyBtnSecondary}>View Schedule</button>
+        </div>
+      </section>
+    );
+  }
+
+  // STATE B-b: next care visit later today
+  if (todayStatus.type === 'next_visit') {
+    return (
+      <section style={{
+        background: '#F8FAFC',
+        border: '1.5px solid #CBD5E1',
+        borderRadius: 14,
+        padding: 16,
+        marginBottom: 14,
+        boxShadow: '0 8px 24px rgba(15,23,42,0.06)',
+      }}>
+        <div style={{ fontSize: 11, fontWeight: 900, color: '#475569', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 8 }}>Next Care Visit</div>
+        <div style={{ fontSize: 19, fontWeight: 900, color: '#0F172A', marginBottom: 3 }}>{todayStatus.caregiverName}</div>
+        {todayStatus.careType && (
+          <div style={{ fontSize: 13, color: '#475569', fontWeight: 750, marginBottom: 3 }}>{todayStatus.careType}</div>
+        )}
+        {todayStatus.scheduledStart && todayStatus.scheduledEnd && (
+          <div style={{ fontSize: 13, color: '#475569' }}>
+            Scheduled today from {formatTime12(todayStatus.scheduledStart)} &ndash; {formatTime12(todayStatus.scheduledEnd)}
+          </div>
+        )}
+        <div style={{ display: 'flex', gap: 8, marginTop: 14 }}>
+          <button onClick={() => onNavigate('team')} style={onDutyBtnSecondary}>View Schedule</button>
+        </div>
+      </section>
+    );
+  }
+
+  // STATE C: no care today
+  return (
+    <section style={{
+      background: '#FFFFFF',
+      border: '1.5px solid #E2E8F0',
+      borderRadius: 14,
+      padding: 16,
+      marginBottom: 14,
+      boxShadow: '0 8px 24px rgba(15,23,42,0.06)',
+    }}>
+      <div style={{ fontSize: 11, fontWeight: 900, color: '#64748B', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 8 }}>Today</div>
+      <div style={{ fontSize: 16, fontWeight: 850, color: '#0F172A', marginBottom: 4 }}>No care scheduled right now</div>
+      <div style={{ fontSize: 13, color: '#64748B', lineHeight: 1.55, marginBottom: 14 }}>
+        Your team schedule will appear here when care is active.
+      </div>
+      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+        <button onClick={() => onNavigate('findcare')} style={onDutyBtnPrimary}>Find Care</button>
+        <button onClick={() => onNavigate('team')} style={onDutyBtnSecondary}>View Team</button>
+      </div>
+    </section>
+  );
+}
+
+// ── Shared sub-components ──────────────────────────────────────────────────
+
 function SectionHeader({ title, action, onAction }: { title: string; action?: string; onAction?: () => void }) {
   return (
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
@@ -382,16 +656,6 @@ function SectionHeader({ title, action, onAction }: { title: string; action?: st
           {action}
         </button>
       )}
-    </div>
-  );
-}
-
-function MetricCard({ label, value, sub }: { label: string; value: string; sub: string }) {
-  return (
-    <div style={{ border: '1px solid #E3E8F0', borderRadius: 8, padding: 13, background: '#F8FAFC' }}>
-      <div style={{ fontSize: 11, color: '#64748B', fontWeight: 800, textTransform: 'uppercase', letterSpacing: 0.5 }}>{label}</div>
-      <div style={{ fontSize: 18, color: '#0F172A', fontWeight: 850, marginTop: 4 }}>{value}</div>
-      <div style={{ fontSize: 12, color: '#64748B', marginTop: 2 }}>{sub}</div>
     </div>
   );
 }

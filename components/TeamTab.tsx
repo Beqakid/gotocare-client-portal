@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { getMyTeam, removeFromTeam, saveCareSchedule } from '../utils/api';
 import { getToken } from '../utils/storage';
 import { TabId, TeamTabId } from '../types';
@@ -7,6 +7,83 @@ import { CareJourney } from './CareJourney';
 const API = 'https://gotocare-original.jjioji.workers.dev/api';
 const PRINT_BASE = 'https://gotocare-original.jjioji.workers.dev/api/hire-agreement';
 const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+
+// ── Phase 24: Conflict helpers ─────────────────────────────────────────────
+
+export interface ConflictInfo {
+  caregiverName: string;
+  caregiverEmail: string;
+  day: string;
+  conflictStart: string;
+  conflictEnd: string;
+  existingStart: string;
+  existingEnd: string;
+}
+
+function parseTimeToMins(time: string): number {
+  const [h, m] = time.split(':').map(Number);
+  return (h || 0) * 60 + (m || 0);
+}
+
+function timeRangesOverlap(startA: string, endA: string, startB: string, endB: string): boolean {
+  return parseTimeToMins(startA) < parseTimeToMins(endB) &&
+         parseTimeToMins(endA) > parseTimeToMins(startB);
+}
+
+function formatTime12(time: string): string {
+  if (!time) return '';
+  try {
+    const [h, m] = time.split(':').map(Number);
+    const period = h < 12 ? 'AM' : 'PM';
+    const hour = h % 12 || 12;
+    return `${hour}:${String(m).padStart(2, '0')} ${period}`;
+  } catch { return time; }
+}
+
+function findTeamScheduleConflicts({
+  targetEmail,
+  selectedDays,
+  startTime,
+  endTime,
+  scheduleMap,
+  activeMembers,
+}: {
+  targetEmail: string;
+  selectedDays: string[];
+  startTime: string;
+  endTime: string;
+  scheduleMap: Record<string, ScheduleRecord>;
+  activeMembers: TeamMember[];
+}): ConflictInfo[] {
+  const conflicts: ConflictInfo[] = [];
+  for (const member of activeMembers) {
+    const email = memberEmail(member);
+    if (!email || email === targetEmail) continue;
+    const schedule = scheduleMap[email];
+    if (!schedule?.days || !schedule.start_time || !schedule.end_time) continue;
+    const existingDays = schedule.days.split(',').map((d: string) => d.trim()).filter(Boolean);
+    for (const day of selectedDays) {
+      if (!existingDays.includes(day)) continue;
+      if (timeRangesOverlap(startTime, endTime, schedule.start_time, schedule.end_time)) {
+        // Compute overlap window
+        const oStart = parseTimeToMins(startTime) > parseTimeToMins(schedule.start_time) ? startTime : schedule.start_time;
+        const oEnd = parseTimeToMins(endTime) < parseTimeToMins(schedule.end_time) ? endTime : schedule.end_time;
+        conflicts.push({
+          caregiverName: memberName(member),
+          caregiverEmail: email,
+          day,
+          conflictStart: oStart,
+          conflictEnd: oEnd,
+          existingStart: schedule.start_time,
+          existingEnd: schedule.end_time,
+        });
+      }
+    }
+  }
+  return conflicts;
+}
+
+// ── Types ──────────────────────────────────────────────────────────────────
 
 interface TeamMember {
   id?: number;
@@ -38,6 +115,8 @@ interface ScheduleRecord {
   end_time?: string;
   care_type?: string;
 }
+
+// ── TeamTab ────────────────────────────────────────────────────────────────
 
 export function TeamTab({ onNavigate, onBadgeChange }: Props) {
   const [activeSubTab, setActiveSubTab] = useState<TeamTabId>('active');
@@ -115,6 +194,19 @@ export function TeamTab({ onNavigate, onBadgeChange }: Props) {
   const actionRequired = pending.filter(m => memberStatus(m) === 'pending_client').length;
   const unscheduledActive = activeList.filter(member => !scheduleMap[memberEmail(member)]).length;
 
+  // Phase 24: compute schedule conflicts in real-time as user changes modal fields
+  const scheduleConflicts = useMemo((): ConflictInfo[] => {
+    if (!scheduleTarget || scheduleDays.length === 0 || scheduleStart >= scheduleEnd) return [];
+    return findTeamScheduleConflicts({
+      targetEmail: memberEmail(scheduleTarget),
+      selectedDays: scheduleDays,
+      startTime: scheduleStart,
+      endTime: scheduleEnd,
+      scheduleMap,
+      activeMembers: activeList,
+    });
+  }, [scheduleTarget, scheduleDays, scheduleStart, scheduleEnd, scheduleMap, activeList]);
+
   async function handleRemove(m: TeamMember) {
     const token = getToken();
     const id = m.caregiver_id || m.id;
@@ -163,6 +255,8 @@ export function TeamTab({ onNavigate, onBadgeChange }: Props) {
       alert('End time must be after start time.');
       return;
     }
+    // Phase 24: block save when conflicts exist (inline modal warning already shows)
+    if (scheduleConflicts.length > 0) return;
 
     setSavingSchedule(true);
     try {
@@ -350,6 +444,15 @@ export function TeamTab({ onNavigate, onBadgeChange }: Props) {
             </button>
           </>
         )}
+
+        {/* Phase 24: This Week's Team Schedule summary */}
+        {activeSubTab === 'active' && (
+          <TeamScheduleSummary
+            scheduleMap={scheduleMap}
+            activeMembers={activeList}
+            onScheduleClick={openSchedule}
+          />
+        )}
       </main>
 
       {scheduleTarget && (
@@ -362,6 +465,7 @@ export function TeamTab({ onNavigate, onBadgeChange }: Props) {
           recurring={scheduleRecurring}
           saving={savingSchedule}
           success={scheduleSuccess}
+          conflicts={scheduleConflicts}
           onClose={() => !savingSchedule && setScheduleTarget(null)}
           onToggleDay={toggleDay}
           onStart={setScheduleStart}
@@ -388,6 +492,76 @@ export function TeamTab({ onNavigate, onBadgeChange }: Props) {
     </div>
   );
 }
+
+// ── Phase 24: Team Schedule Summary ───────────────────────────────────────
+
+function TeamScheduleSummary({
+  scheduleMap,
+  activeMembers,
+  onScheduleClick,
+}: {
+  scheduleMap: Record<string, ScheduleRecord>;
+  activeMembers: TeamMember[];
+  onScheduleClick: (m: TeamMember) => void;
+}) {
+  const scheduled = activeMembers.filter(m => scheduleMap[memberEmail(m)]);
+
+  return (
+    <div style={{ marginTop: 24 }}>
+      <div style={{ color: '#0F172A', fontSize: 15, fontWeight: 900, marginBottom: 10 }}>This Week's Team Schedule</div>
+      {scheduled.length === 0 ? (
+        <div style={{ border: '1px solid #E3E8F0', borderRadius: 14, background: '#FFFFFF', padding: '16px', boxShadow: '0 4px 14px rgba(15,23,42,0.04)' }}>
+          <div style={{ color: '#475569', fontSize: 14, fontWeight: 750 }}>No team schedule yet.</div>
+          <div style={{ color: '#94A3B8', fontSize: 12, marginTop: 4 }}>Set schedules for your active caregivers.</div>
+        </div>
+      ) : (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 9 }}>
+          {scheduled.map(m => {
+            const s = scheduleMap[memberEmail(m)];
+            const days = s.days ? s.days.split(',').map(d => d.trim()).join(', ') : 'Days TBD';
+            const start = formatTime12(s.start_time || '');
+            const end = formatTime12(s.end_time || '');
+            return (
+              <div
+                key={memberEmail(m)}
+                style={{
+                  border: '1px solid #E3E8F0',
+                  borderRadius: 12,
+                  background: '#FFFFFF',
+                  padding: '13px 14px',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  gap: 12,
+                  boxShadow: '0 4px 14px rgba(15,23,42,0.04)',
+                }}
+              >
+                <div style={{ minWidth: 0 }}>
+                  <div style={{ fontSize: 14, fontWeight: 900, color: '#0F172A' }}>{memberName(m)}</div>
+                  <div style={{ fontSize: 12, color: '#64748B', marginTop: 2 }}>
+                    {days}
+                    {start && end ? ` \u00b7 ${start}\u2013${end}` : ''}
+                  </div>
+                  {s.care_type && (
+                    <div style={{ fontSize: 11, color: '#94A3B8', marginTop: 2 }}>{s.care_type}</div>
+                  )}
+                </div>
+                <button
+                  onClick={() => onScheduleClick(m)}
+                  style={{ border: '1px solid #D8E1EC', background: '#F8FAFC', borderRadius: 8, color: '#315DDF', fontSize: 12, fontWeight: 850, padding: '8px 11px', cursor: 'pointer', flexShrink: 0 }}
+                >
+                  Edit
+                </button>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── TeamMemberCard ─────────────────────────────────────────────────────────
 
 function TeamMemberCard({
   member,
@@ -488,6 +662,8 @@ function TeamMemberCard({
   );
 }
 
+// ── ScheduleModal (Phase 24: conflict detection) ───────────────────────────
+
 function ScheduleModal({
   target,
   days,
@@ -497,6 +673,7 @@ function ScheduleModal({
   recurring,
   saving,
   success,
+  conflicts,
   onClose,
   onToggleDay,
   onStart,
@@ -513,6 +690,7 @@ function ScheduleModal({
   recurring: boolean;
   saving: boolean;
   success: boolean;
+  conflicts: ConflictInfo[];
   onClose: () => void;
   onToggleDay: (day: string) => void;
   onStart: (value: string) => void;
@@ -521,6 +699,8 @@ function ScheduleModal({
   onRecurring: () => void;
   onSave: () => void;
 }) {
+  const hasConflicts = conflicts.length > 0;
+
   return (
     <div onClick={onClose} style={modalOverlayStyle}>
       <div onClick={e => e.stopPropagation()} style={modalSheetStyle}>
@@ -562,8 +742,34 @@ function ScheduleModal({
                 <textarea value={notes} onChange={e => onNotes(e.target.value)} placeholder="Access notes, care preferences, or reminders" rows={3} style={textareaStyle} />
               </FormBlock>
 
-              <button onClick={onSave} disabled={saving || days.length === 0} style={{ ...primaryButtonStyle, width: '100%', minHeight: 52, opacity: saving || days.length === 0 ? 0.6 : 1, cursor: saving || days.length === 0 ? 'not-allowed' : 'pointer' }}>
-                {saving ? 'Saving...' : 'Confirm schedule'}
+              {/* Phase 24: conflict warning — shown inline, above confirm button */}
+              {hasConflicts && (
+                <div style={{ border: '1px solid #FCA5A5', background: '#FEF2F2', borderRadius: 12, padding: 13, marginBottom: 14 }}>
+                  <div style={{ color: '#B91C1C', fontSize: 13, fontWeight: 900, marginBottom: 6 }}>Schedule overlap</div>
+                  {conflicts.slice(0, 2).map((c, i) => (
+                    <div key={i} style={{ color: '#B91C1C', fontSize: 13, lineHeight: 1.5, marginBottom: i < Math.min(conflicts.length, 2) - 1 ? 5 : 0 }}>
+                      This overlaps with {c.caregiverName} on {c.day} from {formatTime12(c.conflictStart)} to {formatTime12(c.conflictEnd)}.
+                    </div>
+                  ))}
+                  {conflicts.length > 2 && (
+                    <div style={{ color: '#B91C1C', fontSize: 12, marginTop: 5 }}>+ {conflicts.length - 2} more conflict{conflicts.length - 2 > 1 ? 's' : ''}</div>
+                  )}
+                  <div style={{ color: '#7F1D1D', fontSize: 12, marginTop: 7, lineHeight: 1.4 }}>Please choose a different time to avoid double booking.</div>
+                </div>
+              )}
+
+              <button
+                onClick={onSave}
+                disabled={saving || days.length === 0 || hasConflicts}
+                style={{
+                  ...primaryButtonStyle,
+                  width: '100%',
+                  minHeight: 52,
+                  opacity: saving || days.length === 0 || hasConflicts ? 0.5 : 1,
+                  cursor: saving || days.length === 0 || hasConflicts ? 'not-allowed' : 'pointer',
+                }}
+              >
+                {saving ? 'Saving...' : hasConflicts ? 'Resolve overlap to confirm' : 'Confirm schedule'}
               </button>
             </>
           )}
@@ -572,6 +778,8 @@ function ScheduleModal({
     </div>
   );
 }
+
+// ── CountersignModal (unchanged) ───────────────────────────────────────────
 
 function CountersignModal({
   target,
@@ -628,6 +836,8 @@ function CountersignModal({
     </div>
   );
 }
+
+// ── Sub-components ─────────────────────────────────────────────────────────
 
 function MetricCard({ label, value, color }: { label: string; value: number; color: string }) {
   return (
@@ -737,6 +947,8 @@ function ErrorBanner({ message }: { message: string }) {
   return <div style={{ background: '#FEF2F2', border: '1px solid #FECACA', borderRadius: 14, padding: 13, color: '#B91C1C', fontSize: 13, fontWeight: 750, marginBottom: 14 }}>{message}</div>;
 }
 
+// ── Status / member helpers ────────────────────────────────────────────────
+
 function getStatusInfo(status: string) {
   const statusMap: Record<string, { label: string; tone: string; border: string; bg: string; color: string; title: string; body: string }> = {
     pending_caregiver: {
@@ -807,6 +1019,10 @@ function memberStatus(m: TeamMember): string {
   return m.status || 'active';
 }
 
+function initials(value: string): string {
+  return value ? value.trim().split(/\s+/).map(part => part[0]).join('').toUpperCase().slice(0, 2) : 'CG';
+}
+
 function getJourneyStage({
   pending,
   actionRequired,
@@ -825,9 +1041,7 @@ function getJourneyStage({
   return 'search' as const;
 }
 
-function initials(value: string): string {
-  return value ? value.trim().split(/\s+/).map(part => part[0]).join('').toUpperCase().slice(0, 2) : 'CG';
-}
+// ── Style constants ────────────────────────────────────────────────────────
 
 const modalOverlayStyle: React.CSSProperties = {
   position: 'fixed',
