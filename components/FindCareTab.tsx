@@ -375,6 +375,8 @@ export function FindCareTab({ onNavigate, onRequireAuth }: { onNavigate?: (tab: 
 
   const [toast, setToastMsg] = useState('');
   function showToast(msg: string) { setToastMsg(msg); setTimeout(() => setToastMsg(''), 3000); }
+  // Phase 10: compact trust badges for current card
+  const [cardBadges, setCardBadges] = useState<{id:string;label:string;icon:string;color:string;bg:string}[]>([]);
 
   useEffect(() => {
     if (!getToken()) return;
@@ -514,6 +516,18 @@ export function FindCareTab({ onNavigate, onRequireAuth }: { onNavigate?: (tab: 
       });
     return () => { cancelled = true; };
   }, [screen, bookingCg, selectedDate, interviewDuration]);
+
+  // Phase 10: fetch trust badges for currently visible caregiver card
+  useEffect(() => {
+    const cg = caregivers[currentIdx % Math.max(caregivers.length, 1)];
+    if (!cg?.id || screen !== 'swiper') { setCardBadges([]); return; }
+    let cancelled = false;
+    fetch(`https://carehia-admin.jjioji.workers.dev/public-trust-badges?caregiver_id=${cg.id}`)
+      .then(r => r.json())
+      .then(data => { if (!cancelled && data.success) setCardBadges(data.badges || []); })
+      .catch(() => { if (!cancelled) setCardBadges([]); });
+    return () => { cancelled = true; };
+  }, [caregivers, currentIdx, screen]);
 
   // ── Care tile toggle ─────────────────────────────────────────────────
   function toggleNeed(need: string) {
@@ -1066,7 +1080,14 @@ export function FindCareTab({ onNavigate, onRequireAuth }: { onNavigate?: (tab: 
                 <div style={{ position: 'absolute', bottom: 4, right: 4, width: 16, height: 16, borderRadius: '50%', background: '#22C55E', border: '2px solid #fff', boxShadow: '0 0 6px rgba(34,197,94,0.5)' }} />
               </div>
               <div style={{ fontSize: 24, fontWeight: 800, color: '#0F172A', marginBottom: 4 }}>{caregiverName(cg)}</div>
-              <div style={{ fontSize: 14, color: '#475569', marginBottom: 12 }}>{specs}</div>
+              <div style={{ fontSize: 14, color: '#475569', marginBottom: 8 }}>{specs}</div>
+              {cardBadges.length > 0 && (
+                <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap', justifyContent: 'center', marginBottom: 10 }}>
+                  {cardBadges.slice(0, 4).map(b => (
+                    <span key={b.id} style={{ background: b.bg, color: b.color, border: `1px solid ${b.color}30`, borderRadius: 50, padding: '3px 9px', fontSize: 11, fontWeight: 700, whiteSpace: 'nowrap' }}>{b.icon} {b.label}</span>
+                  ))}
+                </div>
+              )}
               <div style={{ display: 'flex', gap: 12, alignItems: 'center', marginBottom: 16 }}>
                 <span style={{ fontSize: 14, fontWeight: 700, color: '#0F172A' }}>⭐ {Number(rating).toFixed(1)}</span>
                 <span style={{ fontSize: 13, color: '#94A3B8' }}>({reviewCount} reviews)</span>

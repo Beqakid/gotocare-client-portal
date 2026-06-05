@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Caregiver } from '../types';
 import { isSafeProfileImageSrc } from '../utils/images';
 
@@ -29,9 +29,12 @@ function initials(name: string): string {
   return name.split(' ').map(part => part[0]).join('').toUpperCase().slice(0, 2) || 'CG';
 }
 
+type TrustBadge = { id: string; label: string; icon: string; color: string; bg: string };
+
 export function CaregiverSheet({ cg, onClose, onHire, onInterview }: Props) {
   const sheetRef = useRef<HTMLDivElement>(null);
   const handleRef = useRef<HTMLDivElement>(null);
+  const [sheetBadges, setSheetBadges] = useState<TrustBadge[]>([]);
 
   useEffect(() => {
     if (!cg || !handleRef.current || !sheetRef.current) return;
@@ -64,6 +67,17 @@ export function CaregiverSheet({ cg, onClose, onHire, onInterview }: Props) {
     document.body.style.overflow = cg ? 'hidden' : '';
     return () => { document.body.style.overflow = ''; };
   }, [cg]);
+
+  // Phase 10: fetch public trust badges when sheet opens
+  useEffect(() => {
+    if (!cg?.id) { setSheetBadges([]); return; }
+    let cancelled = false;
+    fetch(`https://carehia-admin.jjioji.workers.dev/public-trust-badges?caregiver_id=${cg.id}`)
+      .then(r => r.json())
+      .then(data => { if (!cancelled && data.success) setSheetBadges(data.badges || []); })
+      .catch(() => { if (!cancelled) setSheetBadges([]); });
+    return () => { cancelled = true; };
+  }, [cg?.id]);
 
   if (!cg) return null;
 
@@ -152,6 +166,19 @@ export function CaregiverSheet({ cg, onClose, onHire, onInterview }: Props) {
             <InfoPanel title="Certifications">
               <ChipWrap>
                 {certs.map(c => <Chip key={c} tone="green">{c}</Chip>)}
+              </ChipWrap>
+            </InfoPanel>
+          )}
+
+          {sheetBadges.length > 0 && (
+            <InfoPanel title="Carehia Trust Passport">
+              <div style={{ fontSize: 11, color: '#64748B', marginBottom: 10, lineHeight: 1.5 }}>Verified trust signals to help families choose with confidence.</div>
+              <ChipWrap>
+                {sheetBadges.map(b => (
+                  <span key={b.id} style={{ background: b.bg, color: b.color, border: `1px solid ${b.color}30`, padding: '5px 11px', borderRadius: 999, fontSize: 12, fontWeight: 800, display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                    {b.icon} {b.label}
+                  </span>
+                ))}
               </ChipWrap>
             </InfoPanel>
           )}
