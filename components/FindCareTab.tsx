@@ -134,14 +134,19 @@ function caregiverDecisionScore(cg: Caregiver, selectedNeeds: string[], index: n
   const rateScore = rate <= 25 ? 1 : rate <= 35 ? 0.82 : rate <= 45 ? 0.64 : 0.48;
   const certScore = parseCareText(cg.certifications).length ? 1 : 0.68;
   const dataScore = backendScore ? backendScore / 100 : 0.78 - index * 0.015;
+  // Phase 12: trust badge bonus — caregivers with more public trust badges rank higher
+  // cg.publicBadgeCount is populated by the trust badge fetch in the swiper (Phase 10)
+  const badgeCount = typeof (cg as any).publicBadgeCount === 'number' ? (cg as any).publicBadgeCount : 0;
+  const trustBonus = Math.min(badgeCount * 0.04, 0.16); // up to +16% boost for 4 badges
 
   const score =
     needRatio * 34 +
     ratingScore * 18 +
-    expScore * 16 +
-    rateScore * 12 +
+    expScore * 14 +
+    rateScore * 10 +
     certScore * 8 +
-    dataScore * 12;
+    dataScore * 10 +
+    trustBonus * 6;
 
   return Math.max(72, Math.min(99, Math.round(score)));
 }
@@ -158,6 +163,13 @@ function caregiverDecisionLabel(cg: Caregiver, selectedNeeds: string[], index: n
 function caregiverDecisionReasons(cg: Caregiver, selectedNeeds: string[], location: string): string[] {
   const reasons: string[] = [];
   const matchedNeeds = needMatchCount(cg, selectedNeeds);
+
+  // Phase 12: trust-based reasons at the top (most credible signals first)
+  const publicBadges: string[] = Array.isArray((cg as any).publicBadges) ? (cg as any).publicBadges : [];
+  if (publicBadges.includes('Trusted Pro'))        reasons.push('Trusted Pro caregiver');
+  else if (publicBadges.includes('Carehia Verified')) reasons.push('Carehia Verified');
+  if (publicBadges.includes('CPR Verified'))       reasons.push('CPR Certified');
+  if (publicBadges.includes('Background Check Completed')) reasons.push('Background check completed');
 
   if (selectedNeeds.length && matchedNeeds > 0) {
     reasons.push(`Matches ${matchedNeeds} of ${selectedNeeds.length} selected needs`);
@@ -524,7 +536,18 @@ export function FindCareTab({ onNavigate, onRequireAuth }: { onNavigate?: (tab: 
     let cancelled = false;
     fetch(`https://carehia-admin.jjioji.workers.dev/public-trust-badges?caregiver_id=${cg.id}`)
       .then(r => r.json())
-      .then(data => { if (!cancelled && data.success) setCardBadges(data.badges || []); })
+      .then(data => {
+        if (!cancelled && data.success) {
+          const badgeLabels = (data.badges || []).map((b: any) => b.label || b);
+          setCardBadges(data.badges || []);
+          // Cache on caregiver object for trust-based ranking (Phase 12)
+          setCaregivers(prev => prev.map(c =>
+            c.id === cg.id
+              ? { ...c, publicBadgeCount: badgeLabels.length, publicBadges: badgeLabels } as any
+              : c
+          ));
+        }
+      })
       .catch(() => { if (!cancelled) setCardBadges([]); });
     return () => { cancelled = true; };
   }, [caregivers, currentIdx, screen]);
