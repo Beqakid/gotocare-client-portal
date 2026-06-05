@@ -4,24 +4,17 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>Carehia - Find Care Fast</title>
-  <link rel="manifest" href="/manifest.json" />
+  <meta name="description" content="Find trusted caregivers near you. Browse caregiver profiles, check trust badges, and book interviews — free." />
   <meta name="theme-color" content="#7C5CFF" />
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-  <meta name="apple-mobile-web-app-title" content="Carehia" />
-  <link rel="apple-touch-icon" href="/assets/carehia_client_welcome.png" />
+  <link rel="manifest" href="/manifest.json" />
   <link rel="stylesheet" href="/styles.css" />
+  <!-- Google Sign-In -->
   <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <!-- Plausible Analytics -->
+  <script defer data-domain="app.carehia.com" src="https://plausible.io/js/pa-ItdAIlsEBj1VBmyRkJi6f.js"></script>
 </head>
 <body>
   <div id="root"></div>
-  <script type="module" src="/dist/app.js?v=20260605-img-fix"></script>
-  <script>
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/sw.js').catch(() => {});
-      });
-    }
-  </script>
+  <script type="module" src="/dist/app.js?v=20260605-p23"></script>
 </body>
 </html>
