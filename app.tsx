@@ -17,10 +17,25 @@ const ProfileTab  = lazy(() => import('./components/ProfileTab').then(m => ({ de
 // ── Handle Stripe return ──────────────────────────────────────────────
 function getInitialTab(): TabId {
   const params = new URLSearchParams(window.location.search);
-  if (params.get('subscription') === 'success') {
-    // Restore to findcare if pending caregiver is in sessionStorage OR URL (new-tab safe)
-    if (sessionStorage.getItem('gc_pending_hire_caregiver') || params.get('caregiver_return')) return 'findcare';
-    return 'profile';
+  if (params.get('subscription') === 'success' || params.get('subscription') === 'cancelled') {
+    // Phase 26A: Route to findcare if any caregiver/action context exists
+    const hasCgReturn = !!params.get('caregiver_return');
+    const hasCareAction = !!params.get('care_action');
+    const hasReturnTo = params.get('return_to') === 'findcare';
+    const hasSessionStorage = !!sessionStorage.getItem('gc_pending_hire_caregiver') || !!sessionStorage.getItem('gc_pending_care_action_context');
+    // Check localStorage backup (survives new tabs / iOS Safari)
+    let hasLocalBackup = false;
+    try {
+      const lsBackup = localStorage.getItem('gc_pending_care_action_context_backup');
+      if (lsBackup) {
+        const ctx = JSON.parse(lsBackup);
+        const age = Date.now() - new Date(ctx.createdAt || 0).getTime();
+        if (age < 30 * 60 * 1000) hasLocalBackup = true;
+      }
+    } catch {}
+    if (hasCgReturn || hasCareAction || hasReturnTo || hasSessionStorage || hasLocalBackup) return 'findcare';
+    // subscription=success but no caregiver context — go to profile
+    return params.get('subscription') === 'success' ? 'profile' : 'findcare';
   }
   if (params.get('booking_unlocked')) return 'bookings';
   const hash = window.location.hash.replace('#', '') as TabId;

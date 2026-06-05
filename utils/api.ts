@@ -231,11 +231,22 @@ export async function removeBookingFromView(bookingId: number) {
   });
 }
 
-export async function createCaregiverAccessCheckout(email: string, plan: string, caregiverId?: number | string) {
+export async function createCaregiverAccessCheckout(
+  email: string,
+  plan: string,
+  caregiverId?: number | string,
+  // Phase 26A: pass action context so backend can embed in success_url
+  careAction?: string,
+  returnContext?: string,
+) {
   return request<{ url?: string; error?: string }>('/create-subscription-checkout', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email, plan, caregiverId }),
+    body: JSON.stringify({
+      email, plan, caregiverId,
+      careAction: careAction || undefined,
+      returnContext: returnContext || 'caregiver_unlock',
+    }),
   });
 }
 
