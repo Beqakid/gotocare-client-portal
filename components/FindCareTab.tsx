@@ -12,6 +12,9 @@ import { BookingStatusTracker } from './BookingStatusTracker';
 type Screen = 'dispatch' | 'swiper' | 'available-now' | 'shortlist' | 'booking' | 'confirm' | 'subscribe' | 'hire-status';
 const PENDING_HIRE_CAREGIVER_KEY = 'gc_pending_hire_caregiver';
 const PENDING_CARE_ACTION_KEY = 'gc_pending_care_action';
+// Phase 26A: structured dual-storage keys (survives new tabs / iOS Safari)
+const PENDING_CARE_ACTION_CTX_KEY = 'gc_pending_care_action_context';
+const PENDING_CARE_ACTION_BACKUP_KEY = 'gc_pending_care_action_context_backup';
 type InterviewSlot = { value: string; label: string; startTime: string; endTime: string; durationMinutes: number };
 type CareAction = 'interview' | 'hire';
 type AccessPlanKey = 'caregiver_access_30' | 'essential' | 'family';
@@ -268,26 +271,78 @@ function rankedCaregivers(caregivers: Caregiver[], selectedNeeds: string[]) {
     .sort((a, b) => b.score - a.score || a.originalIndex - b.originalIndex);
 }
 
+// Phase 26A — structured pending action context
+interface PendingCareActionContext {
+  caregiverId: string | number;
+  caregiver: Caregiver;
+  action: 'interview' | 'hire' | 'contact';
+  plan?: string;
+  createdAt: string;
+  returnTab: 'findcare';
+  source: 'subscription_unlock';
+}
+
 function savePendingCareAction(cg: Caregiver, action: CareAction) {
   try {
+    const ctx: PendingCareActionContext = {
+      caregiverId: cg.id,
+      caregiver: cg,
+      action: action as 'interview' | 'hire' | 'contact',
+      createdAt: new Date().toISOString(),
+      returnTab: 'findcare',
+      source: 'subscription_unlock',
+    };
+    const serialized = JSON.stringify(ctx);
+    // New structured keys (primary)
+    sessionStorage.setItem(PENDING_CARE_ACTION_CTX_KEY, serialized);
+    localStorage.setItem(PENDING_CARE_ACTION_BACKUP_KEY, serialized);
+    // Legacy keys (backward compat)
     sessionStorage.setItem(PENDING_HIRE_CAREGIVER_KEY, JSON.stringify(cg));
     sessionStorage.setItem(PENDING_CARE_ACTION_KEY, action);
   } catch {}
 }
 
 function readPendingCareAction(): { caregiver: Caregiver; action: CareAction } | null {
+  // 1. New structured sessionStorage key
+  try {
+    const rawCtx = sessionStorage.getItem(PENDING_CARE_ACTION_CTX_KEY);
+    if (rawCtx) {
+      const ctx = JSON.parse(rawCtx) as PendingCareActionContext;
+      if (ctx.caregiver && ctx.action) {
+        const action: CareAction = ctx.action === 'interview' ? 'interview' : 'hire';
+        return { caregiver: ctx.caregiver, action };
+      }
+    }
+  } catch {}
+  // 2. Legacy sessionStorage keys
   try {
     const raw = sessionStorage.getItem(PENDING_HIRE_CAREGIVER_KEY);
-    if (!raw) return null;
-    const action = sessionStorage.getItem(PENDING_CARE_ACTION_KEY) === 'interview' ? 'interview' : 'hire';
-    return { caregiver: JSON.parse(raw) as Caregiver, action };
-  } catch {
-    return null;
-  }
+    if (raw) {
+      const action: CareAction = sessionStorage.getItem(PENDING_CARE_ACTION_KEY) === 'interview' ? 'interview' : 'hire';
+      return { caregiver: JSON.parse(raw) as Caregiver, action };
+    }
+  } catch {}
+  // 3. localStorage backup (survives new tabs / iOS Safari sessionStorage loss)
+  try {
+    const rawBackup = localStorage.getItem(PENDING_CARE_ACTION_BACKUP_KEY);
+    if (rawBackup) {
+      const ctx = JSON.parse(rawBackup) as PendingCareActionContext;
+      if (ctx.caregiver && ctx.action) {
+        const age = Date.now() - new Date(ctx.createdAt).getTime();
+        if (age < 30 * 60 * 1000) {
+          const action: CareAction = ctx.action === 'interview' ? 'interview' : 'hire';
+          return { caregiver: ctx.caregiver, action };
+        }
+      }
+    }
+  } catch {}
+  return null;
 }
 
 function clearPendingCareAction() {
   try {
+    sessionStorage.removeItem(PENDING_CARE_ACTION_CTX_KEY);
+    localStorage.removeItem(PENDING_CARE_ACTION_BACKUP_KEY);
     sessionStorage.removeItem(PENDING_HIRE_CAREGIVER_KEY);
     sessionStorage.removeItem(PENDING_CARE_ACTION_KEY);
   } catch {}
@@ -389,52 +444,134 @@ export function FindCareTab({ onNavigate, onRequireAuth }: { onNavigate?: (tab: 
 
   const [toast, setToastMsg] = useState('');
   function showToast(msg: string) { setToastMsg(msg); setTimeout(() => setToastMsg(''), 3000); }
+  // Phase 26A: subscription return failure states (do not show plan screen on payment error)
+  const [p26aError, setP26aError] = useState<'' | 'sub_confirm_failed' | 'sub_confirm_failed_no_cg' | 'cg_not_found'>('');
+  const [p26aErrorCg, setP26aErrorCg] = useState<Caregiver | null>(null);
+  const [p26aCancelledCg, setP26aCancelledCg] = useState<Caregiver | null>(null);
   // Phase 21: extended request form state
   const [careRecipient, setCareRecipient] = useState('');
   const [preferredQualities, setPreferredQualities] = useState<string[]>([]);
   // Phase 10: compact trust badges for current card
   const [cardBadges, setCardBadges] = useState<{id:string;label:string;icon:string;color:string;bg:string}[]>([]);
 
+  // Phase 26A — improved subscription return + pending action restore
   useEffect(() => {
-    if (!getToken()) return;
-    const pending = readPendingCareAction();
-    const _urlParams = new URLSearchParams(window.location.search);
-    const _subResult = _urlParams.get('subscription');
-    const _cgReturn = _urlParams.get('caregiver_return');
+    const urlParams = new URLSearchParams(window.location.search);
+    const subResult = urlParams.get('subscription');
+    const sessionId = urlParams.get('session_id') || '';
+    const planParam = urlParams.get('plan') || '';
+    const cgReturnId = urlParams.get('caregiver_return') || '';
+    const careActionParam = urlParams.get('care_action') || '';
 
-    // Fallback: sessionStorage was cleared (e.g. iOS new tab) but caregiver_return is in URL
-    if (!pending && _subResult === 'success' && _cgReturn) {
-      const _email = getEmail();
-      setLoading(true);
-      setLoadingText('Restoring your caregiver...');
-      getPublicCaregiverProfile(_cgReturn)
-        .then(async (data) => {
-          if (!data.success || !data.profile) return;
-          const _cg = publicProfileToCaregiver(data.profile, Number(_cgReturn));
-          setCaregivers([_cg]);
-          setCurrentIdx(0);
-          setProfileCg(null);
-          setBookingCg(null);
-          setScreen('swiper');
-          clearSubscriptionReturnParams();
-          if (_email) {
-            const _plan = _urlParams.get('plan') || '';
-            const _emailParam = _urlParams.get('email') || _email;
-            const _sessionId = _urlParams.get('session_id') || '';
-            if (_plan) await confirmClientSubscription(_emailParam, _plan, _sessionId).catch(() => {});
-            const _sub = await checkSubscription(_email).catch(() => ({ subscribed: false }));
-            if (_sub.subscribed) {
-              showToast('✅ Subscribed! Contact info is now visible.');
-            } else {
-              setAccessPrompt({ caregiver: _cg, action: 'hire' });
+    // ── Handle Stripe cancel (Fix 11) ─────────────────────────────────
+    if (subResult === 'cancelled') {
+      clearSubscriptionReturnParams();
+      if (cgReturnId) {
+        getPublicCaregiverProfile(cgReturnId)
+          .then(data => {
+            if (data.success && data.profile) {
+              const cg = publicProfileToCaregiver(data.profile, Number(cgReturnId));
+              setCaregivers([cg]);
+              setCurrentIdx(0);
+              setScreen('swiper');
+              setP26aCancelledCg(cg);
             }
-          }
-        })
-        .catch(() => showToast('Could not restore caregiver. Please search again.'))
-        .finally(() => setLoading(false));
+          })
+          .catch(() => {});
+      }
+      showToast('Checkout was cancelled. You can choose a plan when you are ready.');
       return;
     }
 
+    if (!getToken()) return;
+
+    // ── Helper: resolve caregiver from storage or URL (Fix 5) ─────────
+    async function p26aResolveCg(): Promise<{ cg: Caregiver; action: CareAction } | null> {
+      const pending = readPendingCareAction();
+      if (pending) return pending;
+      if (cgReturnId) {
+        try {
+          const data = await getPublicCaregiverProfile(cgReturnId);
+          if (data.success && data.profile) {
+            const cg = publicProfileToCaregiver(data.profile, Number(cgReturnId));
+            const action: CareAction = careActionParam === 'interview' ? 'interview' : 'hire';
+            return { cg, action };
+          }
+        } catch {}
+      }
+      return null;
+    }
+
+    // ── Helper: retry checkSubscription 3× with 1s gap (Fix 6) ───────
+    async function p26aCheckSubWithRetry(email: string): Promise<boolean> {
+      for (let i = 0; i < 3; i++) {
+        if (i > 0) {
+          setLoadingText('Almost done — confirming your subscription…');
+          await new Promise(r => setTimeout(r, 1000));
+        }
+        try {
+          const result = await checkSubscription(email);
+          if (result.subscribed) return true;
+        } catch {}
+      }
+      return false;
+    }
+
+    // ── Handle subscription=success (Fix 3, 4, 5, 6, 7, 8) ───────────
+    if (subResult === 'success') {
+      const email = urlParams.get('email') || getEmail() || '';
+      if (!email) return;
+
+      setLoading(true);
+      setLoadingText('Confirming your care access…');
+
+      (async () => {
+        try {
+          const resolved = await p26aResolveCg();
+
+          // Restore caregiver to swiper immediately so UI isn't blank
+          if (resolved) {
+            setCaregivers([resolved.cg]);
+            setCurrentIdx(0);
+            setProfileCg(null);
+            setBookingCg(null);
+            setScreen('swiper');
+          }
+
+          // Confirm subscription server-side (Fix 5)
+          if (planParam) {
+            setLoadingText('Activating care access…');
+            await confirmClientSubscription(email, planParam, sessionId).catch(() => {});
+          }
+          clearSubscriptionReturnParams();
+
+          // Check subscription with retry (Fix 6)
+          const subscribed = await p26aCheckSubWithRetry(email);
+
+          if (subscribed) {
+            if (resolved) {
+              // Resume exact action (Fix 7) — clear pending only after success (Fix 8)
+              continueWithCareAction(resolved.cg, resolved.action);
+              showToast('✅ Care access active. Continuing with ' + caregiverName(resolved.cg) + '.');
+            } else {
+              showToast('✅ Subscription confirmed! Find a caregiver to continue.');
+            }
+          } else {
+            // Fix 9: friendly failure — do NOT show plan screen
+            setP26aErrorCg(resolved?.cg || null);
+            setP26aError(resolved ? 'sub_confirm_failed' : 'sub_confirm_failed_no_cg');
+          }
+        } catch {
+          setP26aError('sub_confirm_failed');
+        } finally {
+          setLoading(false);
+        }
+      })();
+      return;
+    }
+
+    // ── Non-payment: restore pending action if logged in (Fix 10) ─────
+    const pending = readPendingCareAction();
     if (!pending) return;
     setCaregivers([pending.caregiver]);
     setCurrentIdx(0);
@@ -444,38 +581,24 @@ export function FindCareTab({ onNavigate, onRequireAuth }: { onNavigate?: (tab: 
     const email = getEmail();
     if (!email) {
       setAccessPrompt({ caregiver: pending.caregiver, action: pending.action });
-      showToast(`Choose access to continue with ${caregiverName(pending.caregiver)}.`);
+      showToast('Choose access to continue with ' + caregiverName(pending.caregiver) + '.');
       return;
     }
     setLoading(true);
     setLoadingText('Checking care access...');
-    const params = new URLSearchParams(window.location.search);
-    const subResult = params.get('subscription');
-    const sessionId = params.get('session_id') || '';
-    const planParam = params.get('plan') || '';
-    const emailParam = params.get('email') || email;
 
-    async function resumePendingCareAction() {
-      if (subResult === 'success' && planParam) {
-        setLoadingText('Activating care access...');
-        await confirmClientSubscription(emailParam, planParam, sessionId);
-        clearSubscriptionReturnParams();
-      }
-      setLoadingText('Checking care access...');
-      const sub = await checkSubscription(email);
+    checkSubscription(email)
+      .then(sub => {
         if (sub.subscribed) {
           continueWithCareAction(pending.caregiver, pending.action);
-          showToast(`Continue with ${caregiverName(pending.caregiver)}.`);
+          showToast('Continue with ' + caregiverName(pending.caregiver) + '.');
         } else {
           setAccessPrompt({ caregiver: pending.caregiver, action: pending.action });
-          showToast(`Choose access to continue with ${caregiverName(pending.caregiver)}.`);
+          showToast('Choose access to continue with ' + caregiverName(pending.caregiver) + '.');
         }
-    }
-
-    resumePendingCareAction()
+      })
       .catch(() => {
         setAccessPrompt({ caregiver: pending.caregiver, action: pending.action });
-        showToast(`Choose access to continue with ${caregiverName(pending.caregiver)}.`);
       })
       .finally(() => setLoading(false));
   }, []);
@@ -767,7 +890,11 @@ export function FindCareTab({ onNavigate, onRequireAuth }: { onNavigate?: (tab: 
     setSelectedPlan(plan);
     setPlanLoading(plan);
     try {
-      const result = await createCaregiverAccessCheckout(email, plan, accessPrompt.caregiver.id);
+      const result = await createCaregiverAccessCheckout(
+        email, plan, accessPrompt.caregiver.id,
+        accessPrompt.action,  // Phase 26A: pass action so backend embeds in success_url
+        'caregiver_unlock',
+      );
       if (result.url) {
         window.location.href = result.url;
       } else {
@@ -893,6 +1020,62 @@ export function FindCareTab({ onNavigate, onRequireAuth }: { onNavigate?: (tab: 
   const cg = caregivers[currentIdx];
   const isShortlisted = cg ? shortlist.some(s => s.id === cg.id) : false;
   const isLast = currentIdx === caregivers.length - 1;
+
+  // Phase 26A: Subscription confirm failure states (Fix 9) — render before any screen
+  if (p26aError === 'sub_confirm_failed' || p26aError === 'sub_confirm_failed_no_cg') {
+    const cgName = p26aErrorCg ? caregiverName(p26aErrorCg) : null;
+    return (
+      <div style={{ minHeight: '100dvh', background: '#F8FAFC', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '24px 20px', paddingBottom: 'calc(80px + env(safe-area-inset-bottom,0px))' }}>
+        {toast && <Toast msg={toast} />}
+        <div style={{ background: '#fff', borderRadius: 20, boxShadow: '0 4px 20px rgba(0,0,0,0.08)', padding: '32px 24px', maxWidth: 400, width: '100%', textAlign: 'center' }}>
+          <div style={{ fontSize: 48, marginBottom: 16 }}>{p26aError === 'sub_confirm_failed' && cgName ? '⏳' : '✅'}</div>
+          <div style={{ fontSize: 20, fontWeight: 800, color: '#0F172A', marginBottom: 12 }}>
+            {p26aError === 'sub_confirm_failed_no_cg'
+              ? 'Your subscription is active'
+              : 'Your subscription is active'}
+          </div>
+          <div style={{ fontSize: 14, color: '#475569', lineHeight: 1.6, marginBottom: 24 }}>
+            {p26aError === 'sub_confirm_failed' && cgName
+              ? `Your subscription is active, but we could not restore ${cgName}. Please search again or go to your Care Team.`
+              : 'We could not confirm your subscription yet. If you just paid, wait a moment and try again.'}
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {p26aError === 'sub_confirm_failed' && (
+              <button
+                onClick={() => { setP26aError(''); setScreen('dispatch'); }}
+                style={{ padding: '14px 0', borderRadius: 50, border: 'none', background: 'linear-gradient(135deg,#7C5CFF,#4A90E2)', color: '#fff', fontSize: 15, fontWeight: 700, cursor: 'pointer' }}
+              >Find Care</button>
+            )}
+            {p26aError === 'sub_confirm_failed_no_cg' && (
+              <>
+                <button
+                  onClick={() => {
+                    setLoadingText('Checking subscription…');
+                    setLoading(true);
+                    const em = getEmail() || '';
+                    checkSubscription(em).then(s => {
+                      if (s.subscribed) { setP26aError(''); showToast('✅ Subscription confirmed!'); setScreen('dispatch'); }
+                      else showToast('Still confirming… Please try again in a moment.');
+                    }).catch(() => showToast('Could not reach server. Please try again.')).finally(() => setLoading(false));
+                  }}
+                  style={{ padding: '14px 0', borderRadius: 50, border: 'none', background: 'linear-gradient(135deg,#7C5CFF,#4A90E2)', color: '#fff', fontSize: 15, fontWeight: 700, cursor: 'pointer' }}
+                >Try Again</button>
+                <button
+                  onClick={() => { setP26aError(''); setScreen('dispatch'); }}
+                  style={{ padding: '14px 0', borderRadius: 50, border: '1.5px solid #7C5CFF', background: 'transparent', color: '#7C5CFF', fontSize: 15, fontWeight: 700, cursor: 'pointer' }}
+                >Go to Find Care</button>
+              </>
+            )}
+            <button
+              onClick={() => { setP26aError(''); if (onNavigate) onNavigate('team'); }}
+              style={{ padding: '14px 0', borderRadius: 50, border: '1.5px solid #E2E8F0', background: 'transparent', color: '#475569', fontSize: 15, fontWeight: 600, cursor: 'pointer' }}
+            >Go to Team</button>
+            <a href="mailto:support@carehia.com" style={{ fontSize: 13, color: '#7C5CFF', textDecoration: 'none', marginTop: 4 }}>Contact Support</a>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (screen === 'dispatch') return (
     <CareRequestForm
