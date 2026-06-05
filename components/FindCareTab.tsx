@@ -6,6 +6,8 @@ import { reverseGeocode, syncShortlist } from '../utils/api';
 import { CaregiverSheet } from './CaregiverSheet';
 import { HireAgreementModal } from './HireAgreementModal';
 import { isSafeProfileImageSrc } from '../utils/images';
+import { CareRequestForm, CareFormData } from './CareRequestForm';
+import { BookingStatusTracker } from './BookingStatusTracker';
 
 type Screen = 'dispatch' | 'swiper' | 'available-now' | 'shortlist' | 'booking' | 'confirm' | 'subscribe' | 'hire-status';
 const PENDING_HIRE_CAREGIVER_KEY = 'gc_pending_hire_caregiver';
@@ -387,6 +389,9 @@ export function FindCareTab({ onNavigate, onRequireAuth }: { onNavigate?: (tab: 
 
   const [toast, setToastMsg] = useState('');
   function showToast(msg: string) { setToastMsg(msg); setTimeout(() => setToastMsg(''), 3000); }
+  // Phase 21: extended request form state
+  const [careRecipient, setCareRecipient] = useState('');
+  const [preferredQualities, setPreferredQualities] = useState<string[]>([]);
   // Phase 10: compact trust badges for current card
   const [cardBadges, setCardBadges] = useState<{id:string;label:string;icon:string;color:string;bg:string}[]>([]);
 
@@ -594,6 +599,27 @@ export function FindCareTab({ onNavigate, onRequireAuth }: { onNavigate?: (tab: 
       setCaregivers(cgs);
       setCurrentIdx(0);
       setScreen('swiper');
+    } catch { showToast('⚠️ Could not load caregivers. Please try again.'); }
+    finally { setLoading(false); }
+  }
+
+  // Phase 21: accept data from CareRequestForm and run search
+  async function handleFindWithData(data: CareFormData) {
+    setLocation(data.location);
+    setSelectedNeeds(data.selectedNeeds);
+    setUrgency(data.urgency);
+    setCareSchedule(data.scheduleDetails);
+    setCareNotes(data.notes);
+    setCareRecipient(data.recipientName);
+    setPreferredQualities(data.preferredQualities);
+    const loc = data.location.trim() || 'Atlanta, GA';
+    setLastLocation(loc);
+    setLastCareTypes(data.selectedNeeds);
+    setLoading(true); setLoadingText('Finding caregivers near you…');
+    try {
+      const result = await searchCaregivers(loc, data.selectedNeeds[0]);
+      const cgs: Caregiver[] = (result.caregivers || result.docs || []) as Caregiver[];
+      setCaregivers(cgs); setCurrentIdx(0); setScreen('swiper');
     } catch { showToast('⚠️ Could not load caregivers. Please try again.'); }
     finally { setLoading(false); }
   }
@@ -869,27 +895,13 @@ export function FindCareTab({ onNavigate, onRequireAuth }: { onNavigate?: (tab: 
   const isLast = currentIdx === caregivers.length - 1;
 
   if (screen === 'dispatch') return (
-    <ModernCareSearch
-      selectedNeeds={selectedNeeds}
-      openCards={openCards}
-      location={location}
-      urgency={urgency}
-      careSchedule={careSchedule}
-      careNotes={careNotes}
+    <CareRequestForm
+      initialNeeds={selectedNeeds}
+      initialLocation={location}
       loading={loading}
       loadingText={loadingText}
       toast={toast}
-      knownCaregiverQuery={knownCaregiverQuery}
-      onToggleNeed={toggleNeed}
-      onToggleCard={toggleCard}
-      onLocationChange={setLocation}
-      onCareScheduleChange={setCareSchedule}
-      onCareNotesChange={setCareNotes}
-      onKnownCaregiverQueryChange={setKnownCaregiverQuery}
-      onKnownCaregiverSearch={handleKnownCaregiverSearch}
-      onUrgencyChange={setUrgency}
-      onGps={handleGps}
-      onFind={handleFind}
+      onSubmit={handleFindWithData}
       onAvailableNow={handleAvailableNow}
     />
   );
@@ -1312,6 +1324,8 @@ export function FindCareTab({ onNavigate, onRequireAuth }: { onNavigate?: (tab: 
               </div>
             ))}
           </section>
+
+          <BookingStatusTracker currentStage="matching" caregiverName={name} />
 
           <section style={{ background: '#FFFFFF', border: '1px solid #E3E8F0', borderRadius: 8, padding: 16, marginBottom: 14 }}>
             <div style={{ color: '#0F172A', fontSize: 15, fontWeight: 900, marginBottom: 12 }}>What happens next</div>

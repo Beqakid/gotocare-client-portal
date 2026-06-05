@@ -31,10 +31,25 @@ function initials(name: string): string {
 
 type TrustBadge = { id: string; label: string; icon: string; color: string; bg: string };
 
+// Phase 21: Trust badge explanations (public-safe — no private data)
+const BADGE_EXPLANATIONS: Record<string, string> = {
+  'phone_verified':            'This caregiver has verified their phone number through Carehia.',
+  'identity_ready':            'This caregiver has completed initial identity steps in their Carehia profile.',
+  'references_verified':       'References provided by this caregiver have been reviewed.',
+  'cpr_verified':              'This caregiver holds a current CPR certification that has been reviewed.',
+  'first_aid_verified':        'This caregiver holds a current First Aid certification that has been reviewed.',
+  'certification_verified':    'One or more care certifications on this profile have been reviewed.',
+  'background_check_completed':'This caregiver has completed a background check process through Carehia. Private report details are never shown.',
+  'carehia_verified':          'This caregiver has completed key Carehia trust and verification steps. They have demonstrated commitment to professional care.',
+  'trusted_pro':               'This caregiver has completed real care work through Carehia and has strong ongoing trust signals from clients and work history.',
+};
+
 export function CaregiverSheet({ cg, onClose, onHire, onInterview }: Props) {
   const sheetRef = useRef<HTMLDivElement>(null);
   const handleRef = useRef<HTMLDivElement>(null);
   const [sheetBadges, setSheetBadges] = useState<TrustBadge[]>([]);
+  // Phase 21: badge explainer
+  const [explainerBadge, setExplainerBadge] = useState<string | null>(null);
 
   useEffect(() => {
     if (!cg || !handleRef.current || !sheetRef.current) return;
@@ -175,11 +190,22 @@ export function CaregiverSheet({ cg, onClose, onHire, onInterview }: Props) {
               <div style={{ fontSize: 11, color: '#64748B', marginBottom: 10, lineHeight: 1.5 }}>Verified trust signals to help families choose with confidence.</div>
               <ChipWrap>
                 {sheetBadges.map(b => (
-                  <span key={b.id} style={{ background: b.bg, color: b.color, border: `1px solid ${b.color}30`, padding: '5px 11px', borderRadius: 999, fontSize: 12, fontWeight: 800, display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-                    {b.icon} {b.label}
+                  <span key={b.id} onClick={() => setExplainerBadge(explainerBadge === b.id ? null : b.id)} style={{ background: b.bg, color: b.color, border: `1px solid ${b.color}50`, padding: '5px 11px', borderRadius: 999, fontSize: 12, fontWeight: 800, display: 'inline-flex', alignItems: 'center', gap: 4, cursor: 'pointer', WebkitTapHighlightColor: 'transparent' }}>
+                    {b.icon} {b.label} <span style={{ fontSize: 10, opacity: 0.7 }}>{explainerBadge === b.id ? '▲' : '?'}</span>
                   </span>
                 ))}
               </ChipWrap>
+              {explainerBadge && sheetBadges.find(b => b.id === explainerBadge) && (
+                <div style={{ marginTop: 10, padding: '12px 14px', background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: 12 }}>
+                  <div style={{ fontSize: 13, fontWeight: 800, color: '#0F172A', marginBottom: 4 }}>
+                    {sheetBadges.find(b => b.id === explainerBadge)!.icon} {sheetBadges.find(b => b.id === explainerBadge)!.label}
+                  </div>
+                  <div style={{ fontSize: 12, color: '#475569', lineHeight: 1.6 }}>
+                    {BADGE_EXPLANATIONS[explainerBadge] || 'This badge reflects a verified trust signal on this caregiver's Carehia profile.'}
+                  </div>
+                  <div style={{ fontSize: 11, color: '#94A3B8', marginTop: 6 }}>Private verification details are never shown publicly.</div>
+                </div>
+              )}
             </InfoPanel>
           )}
 
