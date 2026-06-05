@@ -4,13 +4,18 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>Carehia - Find Care Fast</title>
-  <meta name="description" content="Find trusted caregivers for your loved one. Browse verified caregiver profiles, check trust badges, and request care in minutes." />
-  <meta name="theme-color" content="#7C5CFF" />
   <link rel="manifest" href="/manifest.json" />
-  <link rel="apple-touch-icon" href="/icons/icon-192.png" />
-  <link rel="icon" type="image/png" href="/icons/icon-192.png" />
-  <link rel="stylesheet" href="styles.css" />
+  <meta name="theme-color" content="#7C5CFF" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="Carehia" />
+  <link rel="apple-touch-icon" href="/assets/carehia_client_welcome.png" />
+  <link rel="stylesheet" href="/styles.css" />
   <script src="https://accounts.google.com/gsi/client" async defer></script>
+</head>
+<body>
+  <div id="root"></div>
+  <script type="module" src="/dist/app.js?v=20260605-img-fix"></script>
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
@@ -18,9 +23,5 @@
       });
     }
   </script>
-</head>
-<body>
-  <div id="root"></div>
-  <script type="module" src="dist/app.js?v=20260605-p24"></script>
 </body>
 </html>
