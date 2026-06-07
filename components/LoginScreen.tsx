@@ -243,11 +243,12 @@ export function LoginScreen({ onSuccess, onGuest }: Props) {
 
         {/* ── logo + header ── */}
         <header style={{ width: '100%', maxWidth: 920, textAlign: 'center', marginBottom: 28 }}>
-          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
-            <div style={{ width: 36, height: 36, borderRadius: 10, background: 'linear-gradient(135deg, #7C5CFF 0%, #4A90E2 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <span style={{ color: '#fff', fontWeight: 900, fontSize: 18 }}>C</span>
-            </div>
-            <span style={{ fontSize: 20, fontWeight: 900, color: '#0F172A', letterSpacing: '-0.3px' }}>Carehia</span>
+          <div style={{ marginBottom: 16 }}>
+            <img
+              src="https://cdn.jsdelivr.net/gh/Beqakid/gotocare-client-portal@main/assets/carehia-logo-full.png"
+              alt="Carehia"
+              style={{ height: '40px', width: 'auto', display: 'block', margin: '0 auto' }}
+            />
           </div>
           <h1 style={{ fontSize: 'clamp(22px, 5vw, 32px)', fontWeight: 900, color: '#0F172A', margin: '0 0 10px', lineHeight: 1.2 }}>
             Find trusted care for your loved one
