@@ -48,6 +48,22 @@ export function CaregiverSheet({ cg, onClose, onHire, onInterview }: Props) {
   const sheetRef = useRef<HTMLDivElement>(null);
   const handleRef = useRef<HTMLDivElement>(null);
   const [sheetBadges, setSheetBadges] = useState<TrustBadge[]>([]);
+  const [reviewsOpen, setReviewsOpen] = useState(false);
+  const [reviewsData, setReviewsData] = useState<any[]>([]);
+  const [reviewsLoading, setReviewsLoading] = useState(false);
+  const [reviewsFetched, setReviewsFetched] = useState(false);
+
+  const toggleReviews = () => {
+    if (!reviewsFetched && cg?.id) {
+      setReviewsLoading(true);
+      fetch(`https://gotocare-original.jjioji.workers.dev/api/caregiver-reviews?id=${cg.id}`)
+        .then(r => r.json())
+        .then(d => { setReviewsData(d.reviews || []); setReviewsFetched(true); })
+        .catch(() => { setReviewsData([]); setReviewsFetched(true); })
+        .finally(() => setReviewsLoading(false));
+    }
+    setReviewsOpen(prev => !prev);
+  };
   // Phase 21: badge explainer
   const [explainerBadge, setExplainerBadge] = useState<string | null>(null);
 
@@ -157,11 +173,63 @@ export function CaregiverSheet({ cg, onClose, onHire, onInterview }: Props) {
               </div>
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, marginTop: 14 }}>
-              <TrustBox label="Reviews" value={rating ? `${rating} (${reviewCount})` : 'New'} />
+              <div onClick={toggleReviews} style={{ cursor: 'pointer', position: 'relative' }}>
+                <TrustBox label="Reviews" value={rating ? `${rating} (${reviewCount})` : 'New'} />
+                <div style={{ position: 'absolute', bottom: 2, right: 6, fontSize: 9, color: '#7C5CFF', fontWeight: 800 }}>{reviewsOpen ? 'Hide' : 'Read'}</div>
+              </div>
               <TrustBox label="Experience" value={exp ? `${exp} yrs` : 'Verified'} />
               <TrustBox label="Trust" value="ID verified" />
             </div>
           </section>
+
+          {reviewsOpen && (
+            <section style={{ background: '#FFFFFF', border: '1px solid #E3E8F0', borderRadius: 8, padding: 15, marginBottom: 14 }}>
+              <div style={{ fontSize: 12, fontWeight: 900, color: '#64748B', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 10 }}>
+                Family Reviews {reviewsFetched && `(${reviewsData.length})`}
+              </div>
+              {reviewsLoading && (
+                <div style={{ textAlign: 'center', padding: '18px 0', color: '#94A3B8', fontSize: 13 }}>Loading reviews...</div>
+              )}
+              {reviewsFetched && reviewsData.length === 0 && !reviewsLoading && (
+                <div style={{ textAlign: 'center', padding: '18px 0' }}>
+                  <div style={{ fontSize: 28, marginBottom: 6 }}>📝</div>
+                  <div style={{ fontSize: 14, fontWeight: 800, color: '#475569' }}>No reviews yet</div>
+                  <div style={{ fontSize: 12, color: '#94A3B8', marginTop: 4 }}>This caregiver is new to Carehia. Be the first to leave a review after care.</div>
+                </div>
+              )}
+              {reviewsFetched && reviewsData.length > 0 && reviewsData.map((rv: any, idx: number) => {
+                const stars = rv.rating ? Number(rv.rating) : 0;
+                const starStr = Array.from({ length: 5 }, (_, i) => i < stars ? '★' : '☆').join('');
+                const dateStr = rv.created_at ? new Date(rv.created_at.replace(' ', 'T')).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }) : '';
+                const tags: string[] = [];
+                if (rv.is_repeat_client) tags.push('Returning family');
+                if (rv.would_hire_again) tags.push('Would hire again');
+                if (rv.is_punctual) tags.push('Punctual');
+                if (rv.is_caring) tags.push('Caring');
+                if (rv.is_professional) tags.push('Professional');
+                return (
+                  <div key={idx} style={{ padding: '12px 0', borderTop: idx > 0 ? '1px solid #EEF2F7' : 'none' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <span style={{ color: '#F59E0B', fontSize: 14, letterSpacing: 1 }}>{starStr}</span>
+                        <span style={{ fontSize: 12, fontWeight: 800, color: '#0F172A' }}>{stars}.0</span>
+                      </div>
+                      {dateStr && <span style={{ fontSize: 11, color: '#94A3B8' }}>{dateStr}</span>}
+                    </div>
+                    <div style={{ fontSize: 11, color: '#7C5CFF', fontWeight: 800, marginBottom: 4 }}>Family client</div>
+                    {rv.review_text && <div style={{ fontSize: 13, color: '#475569', lineHeight: 1.6 }}>{rv.review_text}</div>}
+                    {tags.length > 0 && (
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, marginTop: 8 }}>
+                        {tags.map(t => (
+                          <span key={t} style={{ background: '#F0FDF4', color: '#087A3D', border: '1px solid #B7E8CA', padding: '3px 8px', borderRadius: 999, fontSize: 10, fontWeight: 800 }}>{t}</span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </section>
+          )}
 
           {bio && (
             <InfoPanel title="About">

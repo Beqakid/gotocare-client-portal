@@ -196,6 +196,22 @@ function caregiverDecisionReasons(cg: Caregiver, selectedNeeds: string[], locati
   return reasons.slice(0, 3);
 }
 
+// Phase 16B: Map any internal reason codes to plain English (defensive — codes should not reach client)
+function humanizeMatchReason(reason: string): string {
+  const MAP: Record<string, string> = {
+    'radius_filter_failed': 'Outside this caregiver\'s travel radius',
+    'availability_false': 'Not available at your requested time',
+    'care_type_mismatch': 'Does not offer this type of care',
+    'trust_level_mismatch': 'Trust steps not complete for this request',
+    'offline_for_requests': 'Caregiver is not currently accepting requests',
+    'safety_status_blocked': 'Caregiver is not available on Carehia right now',
+    'missing_location': 'Location is missing, so distance could not be checked',
+    'low_match_score': 'Lower match for your specific needs',
+    'schedule_conflict': 'Has a scheduling conflict at your requested time',
+  };
+  return MAP[reason] || reason;
+}
+
 function caregiverNeedFit(cg: Caregiver, selectedNeeds: string[]): string {
   const matchedNeeds = needMatchCount(cg, selectedNeeds);
   if (!selectedNeeds.length) return 'Strong general profile';
@@ -1308,7 +1324,7 @@ export function FindCareTab({ onNavigate, onRequireAuth }: { onNavigate?: (tab: 
               )}
               <div style={{ display: 'flex', gap: 12, alignItems: 'center', marginBottom: 16 }}>
                 <span style={{ fontSize: 14, fontWeight: 700, color: '#0F172A' }}>⭐ {Number(rating).toFixed(1)}</span>
-                <span style={{ fontSize: 13, color: '#94A3B8' }}>({reviewCount} reviews)</span>
+                <span onClick={(e) => { e.stopPropagation(); setProfileCg(cg); }} style={{ fontSize: 13, color: '#7C5CFF', cursor: 'pointer', fontWeight: 700 }}>({reviewCount} reviews) Read ›</span>
                 <span style={{ fontSize: 14, fontWeight: 700, color: '#7C5CFF' }}>🎯 {match}%</span>
               </div>
               <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', justifyContent: 'center', marginBottom: 16 }}>
@@ -1930,7 +1946,7 @@ function AvailableNowScreen({
                       <div style={{ fontSize: 11, color: '#64748B', fontWeight: 850 }}>{caregiverDistanceMiles(caregiver, index)} mi</div>
                     </div>
                   </div>
-                  <div style={{ fontSize: 12, color: '#64748B', marginTop: 5 }}>{caregiverRating(caregiver)} rating ({reviews} reviews)</div>
+                  <div style={{ fontSize: 12, color: '#64748B', marginTop: 5 }}>{caregiverRating(caregiver)} rating <span onClick={(e) => {{ e.stopPropagation(); setProfileCg(caregiver); }}} style={{ color: '#7C5CFF', cursor: 'pointer', fontWeight: 700 }}>({reviews} reviews) Read ›</span></div>
                   <div style={{ display: 'flex', gap: 7, flexWrap: 'wrap', marginTop: 10 }}>
                     <MatchChip label="Background checked" />
                     <MatchChip label="ID verified" />
@@ -2218,7 +2234,7 @@ function BestMatchCard({
         <div style={{ display: 'grid', gap: 5 }}>
           {reasons.slice(0, 3).map(reason => (
             <div key={reason} style={{ fontSize: 12, fontWeight: 750, lineHeight: 1.35 }}>
-              {reason}
+              {humanizeMatchReason(reason)}
             </div>
           ))}
         </div>
