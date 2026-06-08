@@ -1679,7 +1679,7 @@ function ModernCareSearch({
               </div>
             </section>
             <CareCategoryDetails selectedNeeds={selectedNeeds} openCards={openCards} onToggleNeed={onToggleNeed} onToggleCard={onToggleCard} />
-            <button onClick={primaryNext} style={{ width: '100%', minHeight: 54, border: 'none', borderRadius: 8, background: '#315DDF', color: '#FFFFFF', fontSize: 16, fontWeight: 950, cursor: 'pointer' }}>{selectedCount ? `Next (${selectedCount} selected)` : 'Next'}</button>
+            <button onClick={primaryNext} style={{ width: '100%', minHeight: 54, border: 'none', borderRadius: 8, background: '#315DDF', color: '#FFFFFF', fontSize: 16, fontWeight: 950, cursor: 'pointer' }}>{selectedCount ? `Continue to Timing (${selectedCount} selected) →` : 'Continue to Timing →'}</button>
           </>
         )}
 
@@ -1702,7 +1702,7 @@ function ModernCareSearch({
             </section>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
               <button onClick={() => setStep('care')} style={{ minHeight: 52, border: '1px solid #D8E1EC', borderRadius: 8, background: '#FFFFFF', color: '#334155', fontSize: 15, fontWeight: 900, cursor: 'pointer' }}>Back</button>
-              <button onClick={primaryNext} style={{ minHeight: 52, border: 'none', borderRadius: 8, background: '#315DDF', color: '#FFFFFF', fontSize: 15, fontWeight: 950, cursor: 'pointer' }}>Next</button>
+              <button onClick={primaryNext} style={{ minHeight: 52, border: 'none', borderRadius: 8, background: '#315DDF', color: '#FFFFFF', fontSize: 15, fontWeight: 950, cursor: 'pointer' }}>Continue to Details →</button>
             </div>
           </>
         )}

@@ -142,7 +142,7 @@ export function CareRequestForm({ initialNeeds, initialLocation, loading, loadin
         <button onClick={handleBack} style={{ flex: 1, padding: '14px 0', borderRadius: 12, border: '1.5px solid #E2E8F0', background: '#fff', color: '#475569', fontSize: 15, fontWeight: 700, cursor: 'pointer' }}>← Back</button>
       )}
       <button onClick={isLastStep ? handleSubmit : handleNext} disabled={loading} style={{ flex: step > 1 ? 2 : 1, padding: '14px 0', borderRadius: 12, border: 'none', background: loading ? '#94A3B8' : 'linear-gradient(135deg,#7C5CFF,#4A90E2)', color: '#fff', fontSize: 15, fontWeight: 800, cursor: loading ? 'not-allowed' : 'pointer', boxShadow: loading ? 'none' : '0 2px 12px rgba(124,92,255,0.3)' }}>
-        {loading ? loadingText : isLastStep ? '🔍 Find Caregivers' : step === 6 ? 'Review & Submit →' : 'Next →'}
+        {loading ? loadingText : isLastStep ? '🔍 Find Caregivers' : step === 6 ? 'Review & Submit →' : step === 5 ? 'Continue to Preferences →' : step === 4 ? 'Continue to Notes →' : step === 3 ? 'Continue to Location →' : step === 2 ? 'Continue to Timing →' : 'Continue →'}
       </button>
     </div>
   );
