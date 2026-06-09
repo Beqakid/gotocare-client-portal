@@ -128,6 +128,16 @@ function needMatchCount(cg: Caregiver, selectedNeeds: string[]): number {
   }).length;
 }
 
+function caregiverMissingNeeds(cg: Caregiver, selectedNeeds: string[]): string[] {
+  if (!selectedNeeds.length) return [];
+  const terms = caregiverMatchTerms(cg).join(' ');
+  return selectedNeeds.filter(need => {
+    const normalized = need.toLowerCase();
+    const importantWords = normalized.split(/\s+/).filter((word: string) => word.length > 3);
+    return !terms.includes(normalized) && !importantWords.some((word: string) => terms.includes(word));
+  });
+}
+
 function caregiverDecisionScore(cg: Caregiver, selectedNeeds: string[], index: number): number {
   const backendScore = typeof cg.matchScore === 'number' ? cg.matchScore : null;
   const matchedNeeds = needMatchCount(cg, selectedNeeds);
@@ -728,7 +738,7 @@ export function FindCareTab({ onNavigate, onRequireAuth }: { onNavigate?: (tab: 
 
   // ── Search ────────────────────────────────────────────────────────────
   async function handleFind() {
-    const loc = location.trim() || 'Atlanta, GA';
+    const loc = location.trim() || '';
     setLastLocation(loc);
     setLoading(true); setLoadingText('Finding caregivers near you…');
     try {
@@ -751,7 +761,7 @@ export function FindCareTab({ onNavigate, onRequireAuth }: { onNavigate?: (tab: 
     setCareNotes(data.notes);
     setCareRecipient(data.recipientName);
     setPreferredQualities(data.preferredQualities);
-    const loc = data.location.trim() || 'Atlanta, GA';
+    const loc = data.location.trim() || '';
     setLastLocation(loc);
     setLastCareTypes(data.selectedNeeds);
     setLoading(true); setLoadingText('Finding caregivers near you…');
@@ -764,7 +774,7 @@ export function FindCareTab({ onNavigate, onRequireAuth }: { onNavigate?: (tab: 
   }
 
   async function handleAvailableNow() {
-    const loc = location.trim() || 'Atlanta, GA';
+    const loc = location.trim() || '';
     setLastLocation(loc);
     setUrgency('today');
     setLoading(true); setLoadingText('Checking who is available soon...');
@@ -799,7 +809,7 @@ export function FindCareTab({ onNavigate, onRequireAuth }: { onNavigate?: (tab: 
       return;
     }
 
-    const loc = location.trim() || 'Atlanta, GA';
+    const loc = location.trim() || '';
     setLastLocation(loc);
     setLoading(true); setLoadingText('Looking for that caregiver...');
     try {
@@ -2111,6 +2121,11 @@ function ModernMatches({
                   <div style={{ display: 'flex', gap: 7, flexWrap: 'wrap', marginTop: 10 }}>
                     <MatchChip label={label} />
                     <MatchChip label={caregiverNeedFit(person, selectedNeeds)} />
+                    {caregiverMissingNeeds(person, selectedNeeds).length > 0 && (
+                      <div style={{ fontSize: 10, color: '#EF4444', fontWeight: 700, marginTop: 2, padding: '2px 6px', background: 'rgba(239,68,68,0.08)', borderRadius: 6 }}>
+                        Missing: {caregiverMissingNeeds(person, selectedNeeds).join(', ')}
+                      </div>
+                    )}
                     <MatchChip label={`${caregiverRating(person)} rating`} />
                   </div>
                   {/* Phase 13: trust badge row on ranked card */}
@@ -2238,6 +2253,11 @@ function BestMatchCard({
             </div>
           ))}
         </div>
+        {(() => { const missing = caregiverMissingNeeds(person, selectedNeeds); return missing.length > 0 ? (
+          <div style={{ marginTop: 8, paddingTop: 8, borderTop: '1px solid rgba(255,255,255,0.1)' }}>
+            <div style={{ fontSize: 11, color: '#FCA5A5', fontWeight: 700, marginBottom: 3 }}>Not listed: {missing.join(', ')}</div>
+          </div>
+        ) : null; })()}
       </div>
 
       <div className="carehia-primary-actions" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>

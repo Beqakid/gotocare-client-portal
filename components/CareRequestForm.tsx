@@ -149,7 +149,7 @@ export function CareRequestForm({ initialNeeds, initialLocation, loading, loadin
 
   // ── STEP 1: Who needs care? ──────────────────────────────────────────
   if (step === 1) return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100dvh', background: '#F8FAFC' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', background: '#F8FAFC' }}>
       {activeToast && <CRFToast msg={activeToast} />}
       {loading && <CRFLoader text={loadingText} />}
       {Header}
@@ -183,7 +183,7 @@ export function CareRequestForm({ initialNeeds, initialLocation, loading, loadin
 
   // ── STEP 2: Care types ───────────────────────────────────────────────
   if (step === 2) return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100dvh', background: '#F8FAFC' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', background: '#F8FAFC' }}>
       {activeToast && <CRFToast msg={activeToast} />}
       {loading && <CRFLoader text={loadingText} />}
       {Header}
@@ -228,7 +228,7 @@ export function CareRequestForm({ initialNeeds, initialLocation, loading, loadin
 
   // ── STEP 3: When ─────────────────────────────────────────────────────
   if (step === 3) return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100dvh', background: '#F8FAFC' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', background: '#F8FAFC' }}>
       {activeToast && <CRFToast msg={activeToast} />}
       {loading && <CRFLoader text={loadingText} />}
       {Header}
@@ -259,7 +259,7 @@ export function CareRequestForm({ initialNeeds, initialLocation, loading, loadin
 
   // ── STEP 4: Where ────────────────────────────────────────────────────
   if (step === 4) return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100dvh', background: '#F8FAFC' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', background: '#F8FAFC' }}>
       {activeToast && <CRFToast msg={activeToast} />}
       {loading && <CRFLoader text={loadingText} />}
       {Header}
@@ -280,7 +280,7 @@ export function CareRequestForm({ initialNeeds, initialLocation, loading, loadin
 
   // ── STEP 5: Notes ────────────────────────────────────────────────────
   if (step === 5) return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100dvh', background: '#F8FAFC' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', background: '#F8FAFC' }}>
       {activeToast && <CRFToast msg={activeToast} />}
       {loading && <CRFLoader text={loadingText} />}
       {Header}
@@ -298,7 +298,7 @@ export function CareRequestForm({ initialNeeds, initialLocation, loading, loadin
 
   // ── STEP 6: Preferred qualities ──────────────────────────────────────
   if (step === 6) return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100dvh', background: '#F8FAFC' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', background: '#F8FAFC' }}>
       {activeToast && <CRFToast msg={activeToast} />}
       {loading && <CRFLoader text={loadingText} />}
       {Header}
@@ -331,7 +331,7 @@ export function CareRequestForm({ initialNeeds, initialLocation, loading, loadin
   const urgencyLabel = URGENCY_OPTIONS.find(u => u.v === urgency)?.l || urgency;
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100dvh', background: '#F8FAFC' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', background: '#F8FAFC' }}>
       {activeToast && <CRFToast msg={activeToast} />}
       {loading && <CRFLoader text={loadingText} />}
       {Header}
