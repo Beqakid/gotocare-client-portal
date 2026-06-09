@@ -15,6 +15,8 @@ interface SubscriptionState {
   contactUnlocksUsed?: number;
 }
 
+const API_BASE = 'https://gotocare-original.jjioji.workers.dev/api';
+
 const PLANS = [
   {
     key: 'essential',
@@ -58,6 +60,7 @@ export function ProfileTab({ onNavigate, onSignOut }: Props) {
   const [bookingCount, setBookingCount] = React.useState<number | null>(null);
   const [teamCount, setTeamCount] = React.useState<number | null>(null);
   const [subSuccess, setSubSuccess] = React.useState(false);
+  const [apiPlans, setApiPlans] = React.useState<any[]>([]);
 
   React.useEffect(() => {
     const emailVal = getEmail();
@@ -70,6 +73,14 @@ export function ProfileTab({ onNavigate, onSignOut }: Props) {
       .then(d => setSub(d as SubscriptionState))
       .catch(() => setSub(null))
       .finally(() => setSubLoading(false));
+  }, []);
+
+  // Phase 21A: fetch plans from backend; falls back to PLANS if unavailable
+  React.useEffect(() => {
+    fetch(`${API_BASE}/public-plans?audience=client`)
+      .then(r => r.json())
+      .then((d: any) => { if (d.plans && d.plans.length > 0) setApiPlans(d.plans); })
+      .catch(() => {});
   }, []);
 
   React.useEffect(() => {
@@ -275,6 +286,7 @@ export function ProfileTab({ onNavigate, onSignOut }: Props) {
           upgradeLoading={upgradeLoading}
           onClose={() => setShowUpgradeModal(false)}
           onUpgrade={handleUpgrade}
+          apiPlans={apiPlans}
         />
       )}
     </div>
@@ -429,11 +441,13 @@ function UpgradeModal({
   upgradeLoading,
   onClose,
   onUpgrade,
+  apiPlans = [],
 }: {
   sub: SubscriptionState | null;
   upgradeLoading: string;
   onClose: () => void;
   onUpgrade: (plan: string) => void;
+  apiPlans?: any[];
 }) {
   return (
     <div
@@ -451,7 +465,16 @@ function UpgradeModal({
           <button onClick={onClose} aria-label="Close" style={{ background: '#F1F5F9', border: 'none', borderRadius: 999, width: 36, height: 36, cursor: 'pointer', fontSize: 18, color: '#475569' }}>x</button>
         </div>
 
-        {PLANS.map(plan => {
+        {(apiPlans.length > 0 ? apiPlans.map((p: any) => ({
+          key: p.slug,
+          name: p.name,
+          price: '$' + Math.floor(p.priceCents / 100),
+          period: p.billingInterval === 'monthly' ? '/mo' : p.billingInterval === 'yearly' ? '/yr' : '',
+          features: p.features || [],
+          color: p.isRecommended ? '#0F766E' : p.slug === 'premium' ? '#B45309' : '#315DDF',
+          popular: p.isRecommended,
+          highlightLabel: p.highlightLabel || null,
+        })) : PLANS).map(plan => {
           const isCurrent = sub?.plan === plan.key && sub.subscribed;
           return (
             <div
@@ -469,7 +492,7 @@ function UpgradeModal({
                 <div>
                   <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
                     <span style={{ color: '#0F172A', fontSize: 16, fontWeight: 900 }}>{plan.name}</span>
-                    {plan.popular && <span style={{ background: '#EEF2FF', color: '#315DDF', borderRadius: 999, padding: '4px 8px', fontSize: 10, fontWeight: 900 }}>Popular</span>}
+                    {((plan as any).highlightLabel || plan.popular) && <span style={{ background: '#EEF2FF', color: '#315DDF', borderRadius: 999, padding: '4px 8px', fontSize: 10, fontWeight: 900 }}>{(plan as any).highlightLabel || 'Popular'}</span>}
                   </div>
                   <div style={{ marginTop: 5, color: plan.color, fontSize: 24, fontWeight: 900 }}>
                     {plan.price}<span style={{ color: '#94A3B8', fontSize: 13, fontWeight: 650 }}>{plan.period}</span>
