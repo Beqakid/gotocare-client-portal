@@ -473,9 +473,9 @@ export function LoginScreen({ onSuccess, onGuest }: Props) {
             {/* Privacy note */}
             <p style={{ margin: '12px 0 0', fontSize: 11, color: '#94A3B8', textAlign: 'center', lineHeight: 1.4 }}>
               By continuing, you agree to Carehia's{' '}
-              <a href="/terms" target="_blank" style={{ color: '#7C5CFF', textDecoration: 'none' }}>Terms</a>
+              <a href="https://carehia.com/terms" target="_blank" style={{ color: '#7C5CFF', textDecoration: 'none' }}>Terms</a>
               {' '}and{' '}
-              <a href="/privacy" target="_blank" style={{ color: '#7C5CFF', textDecoration: 'none' }}>Privacy Policy</a>.
+              <a href="https://carehia.com/privacy" target="_blank" style={{ color: '#7C5CFF', textDecoration: 'none' }}>Privacy Policy</a>.
             </p>
           </section>
         </main>
