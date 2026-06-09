@@ -173,14 +173,33 @@ export function CaregiverSheet({ cg, onClose, onHire, onInterview }: Props) {
               </div>
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, marginTop: 14 }}>
-              <div onClick={toggleReviews} style={{ cursor: 'pointer', position: 'relative' }}>
+              <div style={{ cursor: 'pointer' }} onClick={toggleReviews}>
                 <TrustBox label="Reviews" value={rating ? `${rating} (${reviewCount})` : 'New'} />
-                <div style={{ position: 'absolute', bottom: 2, right: 6, fontSize: 9, color: '#7C5CFF', fontWeight: 800 }}>{reviewsOpen ? 'Hide' : 'Read'}</div>
               </div>
               <TrustBox label="Experience" value={exp ? `${exp} yrs` : 'Verified'} />
               <TrustBox label="Trust" value="ID verified" />
             </div>
           </section>
+
+          <div style={{ marginBottom: 12 }}>
+            <button
+              onClick={toggleReviews}
+              style={{
+                width: '100%', padding: '10px 16px',
+                background: reviewsOpen ? 'rgba(124,92,255,0.08)' : '#fff',
+                border: '1.5px solid rgba(124,92,255,0.25)',
+                borderRadius: 12,
+                cursor: 'pointer',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                fontSize: 14, fontWeight: 700, color: '#7C5CFF',
+              }}
+              aria-label={reviewsOpen ? 'Hide reviews' : 'Read family reviews'}
+            >
+              <span style={{ fontSize: 16 }}>&#11088;</span>
+              {reviewsOpen ? 'Hide Reviews' : (reviewCount > 0 ? `Read ${reviewCount} Family Review${reviewCount === 1 ? '' : 's'}` : 'Read Reviews')}
+              <span style={{ fontSize: 12, opacity: 0.7 }}>{reviewsOpen ? '&#9650;' : '&#9660;'}</span>
+            </button>
+          </div>
 
           {reviewsOpen && (
             <section style={{ background: '#FFFFFF', border: '1px solid #E3E8F0', borderRadius: 8, padding: 15, marginBottom: 14 }}>
