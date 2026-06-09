@@ -1184,7 +1184,7 @@ function BrowseSection({ onNavigate, hasTeam, hasBookings }: BrowseSectionProps)
           <button onClick={() => onNavigate('findcare')} style={{ border: 'none', background: '#5B2FD6', color: '#FFF', borderRadius: 10, padding: '14px 18px', fontSize: 15, fontWeight: 900, cursor: 'pointer', boxShadow: '0 8px 20px rgba(91,47,214,0.22)' }}>
             Find Care Now
           </button>
-          <button onClick={() => onNavigate('care')} style={{ border: '1.5px solid #5B2FD6', background: 'transparent', color: '#5B2FD6', borderRadius: 10, padding: '13px 18px', fontSize: 14, fontWeight: 850, cursor: 'pointer' }}>
+          <button onClick={() => onNavigate('findcare')} style={{ border: '1.5px solid #5B2FD6', background: 'transparent', color: '#5B2FD6', borderRadius: 10, padding: '13px 18px', fontSize: 14, fontWeight: 850, cursor: 'pointer' }}>
             Browse Caregivers
           </button>
         </div>
@@ -1200,7 +1200,7 @@ function BrowseSection({ onNavigate, hasTeam, hasBookings }: BrowseSectionProps)
         <button onClick={() => onNavigate('findcare')} style={{ flex: 1, border: 'none', background: '#5B2FD6', color: '#FFF', borderRadius: 8, padding: '11px 10px', fontSize: 13, fontWeight: 900, cursor: 'pointer' }}>
           Find Care
         </button>
-        <button onClick={() => onNavigate('care')} style={{ flex: 1, border: '1.5px solid #5B2FD6', background: 'transparent', color: '#5B2FD6', borderRadius: 8, padding: '11px 10px', fontSize: 13, fontWeight: 850, cursor: 'pointer' }}>
+        <button onClick={() => onNavigate('findcare')} style={{ flex: 1, border: '1.5px solid #5B2FD6', background: 'transparent', color: '#5B2FD6', borderRadius: 8, padding: '11px 10px', fontSize: 13, fontWeight: 850, cursor: 'pointer' }}>
           Browse Caregivers
         </button>
         <button onClick={() => onNavigate('findcare')} style={{ flex: 1, border: '1px solid #E3E8F0', background: '#FFFFFF', color: '#0F172A', borderRadius: 8, padding: '11px 10px', fontSize: 13, fontWeight: 750, cursor: 'pointer' }}>
