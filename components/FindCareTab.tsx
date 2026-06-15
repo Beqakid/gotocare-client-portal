@@ -1906,6 +1906,10 @@ function AvailableNowScreen({
         <div style={{ fontSize: 14, color: '#526173', lineHeight: 1.45, marginTop: 9 }}>
           {caregivers.length} caregiver{caregivers.length === 1 ? '' : 's'} near {location || 'your area'} with the fastest options shown first.
         </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 10, padding: '8px 12px', background: '#F5F3FF', borderRadius: 8, border: '1px solid #DDD6FE' }}>
+          <span style={{ fontSize: 13 }}>&#128197;</span>
+          <span style={{ fontSize: 12, color: '#5B2FD6', fontWeight: 750, lineHeight: 1.4 }}>Save caregivers to your shortlist, then book an interview or hire directly.</span>
+        </div>
       </div>
       <div style={{ padding: 16 }}>
         <section style={{ background: '#FFFFFF', border: '1px solid #D8E1EC', borderRadius: 8, padding: 12, marginBottom: 14, boxShadow: '0 6px 22px rgba(15,23,42,0.05)' }}>
@@ -2051,6 +2055,15 @@ function ModernMatches({
   const ranked = useMemo(() => rankedCaregivers(caregivers, selectedNeeds), [caregivers, selectedNeeds]);
   const best = ranked[0];
 
+  // ── Swipe Coach ──────────────────────────────────────────────────────────
+  const [coachSeen, setCoachSeen] = React.useState<boolean>(() => {
+    try { return localStorage.getItem('carehia_swipe_coach_seen') === 'true'; } catch { return false; }
+  });
+  function dismissCoach() {
+    try { localStorage.setItem('carehia_swipe_coach_seen', 'true'); } catch {}
+    setCoachSeen(true);
+  }
+
   if (!caregivers.length) return (
     <div style={{ minHeight: '100dvh', padding: '56px 24px 110px', textAlign: 'center', background: '#F6F8FB', color: '#0F172A' }}>
       <div style={{ width: 64, height: 64, borderRadius: 18, background: '#EEF4FF', color: '#315DDF', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 18px', fontSize: 22, fontWeight: 900 }}>0</div>
@@ -2070,6 +2083,10 @@ function ModernMatches({
         </div>
         <h1 style={{ margin: 0, fontSize: 24, fontWeight: 950, letterSpacing: 0 }}>We found great matches for you.</h1>
         <div style={{ fontSize: 13, color: '#526173', lineHeight: 1.45, marginTop: 6 }}>Verified caregivers near {location || 'your area'}. Start with the best fit, then compare details.</div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 10, padding: '8px 12px', background: '#F5F3FF', borderRadius: 8, border: '1px solid #DDD6FE' }}>
+          <span style={{ fontSize: 14 }}>💜</span>
+          <span style={{ fontSize: 12, color: '#5B2FD6', fontWeight: 750, lineHeight: 1.4 }}>Save favorites to your shortlist &bull; Book or hire directly</span>
+        </div>
       </div>
       <div style={{ padding: 16 }}>
         {best && (
@@ -2148,12 +2165,23 @@ function ModernMatches({
                 <button onClick={() => onHire(person)} style={{ padding: '12px 10px', background: '#F8FAFC', border: '1px solid #D8E1EC', borderRadius: 8, color: '#0F172A', fontSize: 13, fontWeight: 900, cursor: 'pointer' }}>Hire</button>
               </div>
               <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
-                <button onClick={() => onSave(person)} style={{ flex: 1, padding: '10px', background: saved ? '#EAFBF2' : '#FFFFFF', border: `1px solid ${saved ? '#B7E8CA' : '#D8E1EC'}`, borderRadius: 8, color: saved ? '#087A3D' : '#334155', fontSize: 12, fontWeight: 850, cursor: 'pointer' }}>{saved ? 'Saved' : 'Save for later'}</button>
+                <button onClick={() => onSave(person)} style={{ flex: 1, padding: '10px', background: saved ? '#EAFBF2' : '#FFFFFF', border: `1px solid ${saved ? '#B7E8CA' : '#D8E1EC'}`, borderRadius: 8, color: saved ? '#087A3D' : '#334155', fontSize: 12, fontWeight: 850, cursor: 'pointer' }}>{saved ? '\u2713 Shortlisted' : '\u2665 Shortlist'}</button>
                 <button onClick={() => onProfile(person)} style={{ flex: 1, padding: '10px', background: '#FFFFFF', border: '1px solid #D8E1EC', borderRadius: 8, color: '#315DDF', fontSize: 12, fontWeight: 850, cursor: 'pointer' }}>View profile</button>
               </div>
             </article>
           );
         })}
+
+        {/* End-of-results note */}
+        {ranked.length > 1 && (
+          <div style={{ textAlign: 'center', padding: '20px 0 4px' }}>
+            <div style={{ fontSize: 13, color: '#64748B', fontWeight: 700, marginBottom: 12 }}>You have reviewed all {ranked.length} caregivers</div>
+            <div style={{ display: 'flex', gap: 8, justifyContent: 'center' }}>
+              <button onClick={onShortlist} style={{ padding: '10px 18px', background: '#7C5CFF', border: 'none', borderRadius: 8, color: '#fff', fontSize: 13, fontWeight: 850, cursor: 'pointer' }}>View Shortlist ({shortlist.length})</button>
+              <button onClick={onBack} style={{ padding: '10px 18px', background: '#F8FAFC', border: '1px solid #D8E1EC', borderRadius: 8, color: '#334155', fontSize: 13, fontWeight: 850, cursor: 'pointer' }}>Search Again</button>
+            </div>
+          </div>
+        )}
       </div>
       <CaregiverSheet cg={profileCg} onClose={onCloseProfile} onHire={onHire} onInterview={onInterview} />
       {agreementCg && (
@@ -2175,6 +2203,35 @@ function ModernMatches({
           onSelectPlan={onSelectPlan}
           onPlanCheckout={onPlanCheckout}
         />
+      )}
+      {/* First-time results coach modal */}
+      {!coachSeen && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 9999, background: 'rgba(15,23,42,0.65)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px 20px' }}>
+          <div style={{ background: '#FFFFFF', borderRadius: 18, padding: '28px 24px', maxWidth: 340, width: '100%', boxShadow: '0 24px 60px rgba(0,0,0,0.25)' }}>
+            <div style={{ fontSize: 28, marginBottom: 8, textAlign: 'center' }}>&#x1F44B;</div>
+            <div style={{ fontSize: 18, fontWeight: 950, color: '#0F172A', marginBottom: 6, textAlign: 'center' }}>How to review caregivers</div>
+            <div style={{ fontSize: 13, color: '#64748B', textAlign: 'center', marginBottom: 18 }}>Use the buttons on each card. Works on mobile and desktop.</div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 22 }}>
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
+                <span style={{ fontSize: 18, flexShrink: 0, marginTop: 1 }}>&#x1F49C;</span>
+                <span style={{ fontSize: 14, color: '#334155', lineHeight: 1.45 }}>Tap <strong>Shortlist</strong> to save a caregiver for later.</span>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
+                <span style={{ fontSize: 18, flexShrink: 0, marginTop: 1 }}>&#x1F4C5;</span>
+                <span style={{ fontSize: 14, color: '#334155', lineHeight: 1.45 }}>Tap <strong>Request to Book</strong> to schedule a free interview.</span>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
+                <span style={{ fontSize: 18, flexShrink: 0, marginTop: 1 }}>&#x1F464;</span>
+                <span style={{ fontSize: 14, color: '#334155', lineHeight: 1.45 }}>Tap <strong>View profile</strong> to read reviews and experience.</span>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
+                <span style={{ fontSize: 18, flexShrink: 0, marginTop: 1 }}>&#x1F5C2;</span>
+                <span style={{ fontSize: 14, color: '#334155', lineHeight: 1.45 }}>Tap <strong>Saved</strong> at the top to review your shortlist anytime.</span>
+              </div>
+            </div>
+            <button onClick={dismissCoach} style={{ width: '100%', padding: '14px', background: 'linear-gradient(135deg,#7C5CFF,#4A90E2)', border: 'none', borderRadius: 12, color: '#ffffff', fontSize: 15, fontWeight: 850, cursor: 'pointer' }}>Got it</button>
+          </div>
+        </div>
       )}
     </div>
   );
@@ -2265,7 +2322,7 @@ function BestMatchCard({
         <button onClick={() => onHire(person)} style={{ padding: '13px 10px', background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.18)', borderRadius: 8, color: '#FFFFFF', fontSize: 13, fontWeight: 900, cursor: 'pointer' }}>Hire</button>
       </div>
       <div className="carehia-secondary-actions" style={{ display: 'flex', gap: 8, marginTop: 8 }}>
-        <button onClick={() => onSave(person)} style={{ flex: 1, padding: '10px', background: saved ? '#EAFBF2' : 'rgba(255,255,255,0.06)', border: `1px solid ${saved ? '#B7E8CA' : 'rgba(255,255,255,0.16)'}`, borderRadius: 8, color: saved ? '#087A3D' : '#E0E7FF', fontSize: 12, fontWeight: 850, cursor: 'pointer' }}>{saved ? 'Saved' : 'Save'}</button>
+        <button onClick={() => onSave(person)} style={{ flex: 1, padding: '10px', background: saved ? '#EAFBF2' : 'rgba(255,255,255,0.06)', border: `1px solid ${saved ? '#B7E8CA' : 'rgba(255,255,255,0.16)'}`, borderRadius: 8, color: saved ? '#087A3D' : '#E0E7FF', fontSize: 12, fontWeight: 850, cursor: 'pointer' }}>{saved ? '✓ Shortlisted' : '♥ Shortlist'}</button>
         <button onClick={() => onProfile(person)} style={{ flex: 1, padding: '10px', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.16)', borderRadius: 8, color: '#E0E7FF', fontSize: 12, fontWeight: 850, cursor: 'pointer' }}>View Profile</button>
       </div>
     </section>
