@@ -228,7 +228,7 @@ function computeMatchBreakdown(cg: Caregiver, selectedNeeds: string[], location:
   if (availabilityScore < 70) thingsToConfirm.push('Confirm availability for your schedule');
   if (locationScore < 70) thingsToConfirm.push('Confirm travel distance works for both of you');
   if (!publicBadges.length) thingsToConfirm.push('Trust Passport is still in progress');
-  if (rating === 0) thingsToConfirm.push('No family reviews yet \u2014 consider a trial period');
+  if (rating === 0) thingsToConfirm.push('No family reviews yet — consider a trial period');
 
   // Suggested questions
   const suggestedQuestions = generateSuggestedQuestions(cg, selectedNeeds, missingNeeds, location);
@@ -589,6 +589,7 @@ export function FindCareTab({ onNavigate, onRequireAuth }: { onNavigate?: (tab: 
   const [planLoading, setPlanLoading] = useState('');
 
   const [toast, setToastMsg] = useState('');
+  const [shortlistWhyMatchCg, setShortlistWhyMatchCg] = useState<Caregiver | null>(null);
   function showToast(msg: string) { setToastMsg(msg); setTimeout(() => setToastMsg(''), 3000); }
   // Phase 26A: subscription return failure states (do not show plan screen on payment error)
   const [p26aError, setP26aError] = useState<'' | 'sub_confirm_failed' | 'sub_confirm_failed_no_cg' | 'cg_not_found'>('');
@@ -1505,15 +1506,12 @@ export function FindCareTab({ onNavigate, onRequireAuth }: { onNavigate?: (tab: 
   }
 
   // ── SHORTLIST SCREEN ───────────────────────────────────────────────────
-  // Phase 26E: shortlist "Why Match" panel state
-  const [shortlistWhyMatchCg, setShortlistWhyMatchCg] = useState<Caregiver | null>(null);
-
   if (screen === 'shortlist') return (
     <div style={{ minHeight: '100dvh', paddingBottom: 'calc(92px + env(safe-area-inset-bottom,0px))', background: '#F6F8FB', color: '#0F172A' }}>
       {toast && <Toast msg={toast} />}
       <div style={{ background: '#FFFFFF', borderBottom: '1px solid #E3E8F0', padding: '42px 16px 16px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14 }}>
-          <button onClick={() => setScreen('swiper')} style={{ background: '#F8FAFC', border: '1px solid #D8E1EC', borderRadius: 8, padding: '9px 12px', color: '#334155', fontSize: 13, fontWeight: 850, cursor: 'pointer' }}>\u2190 Back</button>
+          <button onClick={() => setScreen('swiper')} style={{ background: '#F8FAFC', border: '1px solid #D8E1EC', borderRadius: 8, padding: '9px 12px', color: '#334155', fontSize: 13, fontWeight: 850, cursor: 'pointer' }}>← Back</button>
           <div style={{ flex: 1 }} />
           <div style={{ fontSize: 12, color: '#64748B', fontWeight: 800 }}>{shortlist.length} saved</div>
         </div>
@@ -1523,7 +1521,7 @@ export function FindCareTab({ onNavigate, onRequireAuth }: { onNavigate?: (tab: 
       <div style={{ padding: 16 }}>
         {shortlist.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '60px 20px' }}>
-            <div style={{ fontSize: 56, marginBottom: 16 }}>\uD83D\uDC9C</div>
+            <div style={{ fontSize: 56, marginBottom: 16 }}>💜</div>
             <p style={{ fontSize: 15, fontWeight: 800, color: '#0F172A' }}>No caregivers shortlisted yet</p>
             <p style={{ fontSize: 13, color: '#64748B', marginTop: 6 }}>Browse caregiver matches and save your favorites here</p>
             <button onClick={() => setScreen('swiper')} style={{ marginTop: 16, padding: '12px 24px', background: '#315DDF', border: 'none', borderRadius: 8, color: '#fff', fontSize: 14, fontWeight: 900, cursor: 'pointer' }}>Browse Caregivers</button>
@@ -1552,7 +1550,7 @@ export function FindCareTab({ onNavigate, onRequireAuth }: { onNavigate?: (tab: 
                       <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, alignItems: 'flex-start' }}>
                         <div style={{ minWidth: 0 }}>
                           <div style={{ fontSize: 17, fontWeight: 950, color: '#0F172A', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{n}</div>
-                          <div style={{ fontSize: 12, color: '#64748B', marginTop: 3 }}>\u2B50 {Number(rating).toFixed(1)} \u00B7 ${rate}/hr</div>
+                          <div style={{ fontSize: 12, color: '#64748B', marginTop: 3 }}>⭐ {Number(rating).toFixed(1)} · ${rate}/hr</div>
                         </div>
                         <div style={{ textAlign: 'right', flexShrink: 0 }}>
                           <div style={{ fontSize: 15, fontWeight: 950, color: '#087A3D' }}>{score}%</div>
@@ -2203,7 +2201,7 @@ function WhyThisMatchPanel({
             <div style={{ fontSize: 11, fontWeight: 950, color: '#7C5CFF', textTransform: 'uppercase', letterSpacing: 0.5 }}>Match Breakdown</div>
             <h2 style={{ margin: '4px 0 0', fontSize: 22, fontWeight: 950, color: '#0F172A' }}>Why {breakdown.totalScore}% for {cgName}?</h2>
           </div>
-          <button onClick={onClose} aria-label="Close" style={{ width: 36, height: 36, borderRadius: 999, border: 'none', background: '#F1F5F9', color: '#475569', fontSize: 18, cursor: 'pointer', flexShrink: 0 }}>\u2715</button>
+          <button onClick={onClose} aria-label="Close" style={{ width: 36, height: 36, borderRadius: 999, border: 'none', background: '#F1F5F9', color: '#475569', fontSize: 18, cursor: 'pointer', flexShrink: 0 }}>✕</button>
         </div>
 
         {/* Factor breakdown bars */}
@@ -2216,7 +2214,7 @@ function WhyThisMatchPanel({
               <div key={key} style={{ marginBottom: 10 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
                   <span style={{ fontSize: 12, fontWeight: 800, color: '#334155' }}>{label}</span>
-                  <span style={{ fontSize: 11, color: '#64748B', fontWeight: 700 }}>{score}% \u00B7 {weight} weight</span>
+                  <span style={{ fontSize: 11, color: '#64748B', fontWeight: 700 }}>{score}% · {weight} weight</span>
                 </div>
                 <div style={{ height: 6, borderRadius: 999, background: '#E2E8F0', overflow: 'hidden' }}>
                   <div style={{ width: `${Math.min(score, 100)}%`, height: '100%', borderRadius: 999, background: barColor, transition: 'width 0.3s ease' }} />
@@ -2229,7 +2227,7 @@ function WhyThisMatchPanel({
         {/* Strong matches */}
         {breakdown.strongMatches.length > 0 && (
           <section style={{ marginBottom: 14 }}>
-            <div style={{ fontSize: 13, fontWeight: 900, color: '#087A3D', marginBottom: 8 }}>\u2713 Strong Matches</div>
+            <div style={{ fontSize: 13, fontWeight: 900, color: '#087A3D', marginBottom: 8 }}>✓ Strong Matches</div>
             {breakdown.strongMatches.map((m, i) => (
               <div key={i} style={{ fontSize: 13, color: '#334155', lineHeight: 1.5, padding: '4px 0', paddingLeft: 12, borderLeft: '2px solid #22C55E' }}>{m}</div>
             ))}
@@ -2239,7 +2237,7 @@ function WhyThisMatchPanel({
         {/* Things to confirm */}
         {breakdown.thingsToConfirm.length > 0 && (
           <section style={{ marginBottom: 14 }}>
-            <div style={{ fontSize: 13, fontWeight: 900, color: '#B45309', marginBottom: 8 }}>\u2691 Things to Confirm</div>
+            <div style={{ fontSize: 13, fontWeight: 900, color: '#B45309', marginBottom: 8 }}>⚑ Things to Confirm</div>
             {breakdown.thingsToConfirm.map((t, i) => (
               <div key={i} style={{ fontSize: 13, color: '#334155', lineHeight: 1.5, padding: '4px 0', paddingLeft: 12, borderLeft: '2px solid #F59E0B' }}>{t}</div>
             ))}
@@ -2249,7 +2247,7 @@ function WhyThisMatchPanel({
         {/* Suggested interview questions */}
         {breakdown.suggestedQuestions.length > 0 && (
           <section style={{ background: '#F5F3FF', border: '1px solid #DDD6FE', borderRadius: 12, padding: 16, marginBottom: 16 }}>
-            <div style={{ fontSize: 13, fontWeight: 900, color: '#5B2FD6', marginBottom: 10 }}>\uD83D\uDCAC Suggested Interview Questions</div>
+            <div style={{ fontSize: 13, fontWeight: 900, color: '#5B2FD6', marginBottom: 10 }}>💬 Suggested Interview Questions</div>
             {breakdown.suggestedQuestions.map((q, i) => (
               <div key={i} style={{ fontSize: 13, color: '#334155', lineHeight: 1.5, padding: '5px 0' }}>
                 <span style={{ color: '#7C5CFF', fontWeight: 900, marginRight: 8 }}>{i + 1}.</span>{q}
@@ -2260,7 +2258,7 @@ function WhyThisMatchPanel({
 
         {/* CTAs */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 8 }}>
-          <button onClick={onShortlist} style={{ padding: '13px 10px', background: isShortlisted ? '#EAFBF2' : '#EEF4FF', border: `1px solid ${isShortlisted ? '#B7E8CA' : '#BFD2FF'}`, borderRadius: 10, color: isShortlisted ? '#087A3D' : '#315DDF', fontSize: 13, fontWeight: 900, cursor: 'pointer' }}>{isShortlisted ? '\u2713 Shortlisted' : '\u2665 Shortlist'}</button>
+          <button onClick={onShortlist} style={{ padding: '13px 10px', background: isShortlisted ? '#EAFBF2' : '#EEF4FF', border: `1px solid ${isShortlisted ? '#B7E8CA' : '#BFD2FF'}`, borderRadius: 10, color: isShortlisted ? '#087A3D' : '#315DDF', fontSize: 13, fontWeight: 900, cursor: 'pointer' }}>{isShortlisted ? '✓ Shortlisted' : '♥ Shortlist'}</button>
           <button onClick={onInterview} style={{ padding: '13px 10px', background: '#5B2FD6', border: 'none', borderRadius: 10, color: '#fff', fontSize: 13, fontWeight: 900, cursor: 'pointer' }}>Request Interview</button>
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
@@ -2354,7 +2352,7 @@ function ModernMatches({
         <div style={{ fontSize: 13, color: '#526173', lineHeight: 1.45, marginTop: 6 }}>Verified caregivers near {location || 'your area'}. Start with the best fit, then compare details.</div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 10, padding: '8px 12px', background: '#F5F3FF', borderRadius: 8, border: '1px solid #DDD6FE' }}>
           <span style={{ fontSize: 14 }}>💜</span>
-          <span style={{ fontSize: 12, color: '#5B2FD6', fontWeight: 750, lineHeight: 1.4 }}>Review each caregiver \u00B7 Shortlist favorites \u00B7 Book or hire when ready</span>
+          <span style={{ fontSize: 12, color: '#5B2FD6', fontWeight: 750, lineHeight: 1.4 }}>Review each caregiver · Shortlist favorites · Book or hire when ready</span>
         </div>
       </div>
       <div style={{ padding: 16 }}>
@@ -2436,7 +2434,7 @@ function ModernMatches({
                 <button onClick={() => onHire(person)} style={{ padding: '12px 10px', background: '#F8FAFC', border: '1px solid #D8E1EC', borderRadius: 8, color: '#0F172A', fontSize: 13, fontWeight: 900, cursor: 'pointer' }}>Hire</button>
               </div>
               <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
-                <button onClick={() => onSave(person)} style={{ flex: 1, padding: '10px', background: saved ? '#EAFBF2' : '#FFFFFF', border: `1px solid ${saved ? '#B7E8CA' : '#D8E1EC'}`, borderRadius: 8, color: saved ? '#087A3D' : '#334155', fontSize: 12, fontWeight: 850, cursor: 'pointer' }}>{saved ? '\u2713 Shortlisted' : '\u2665 Shortlist'}</button>
+                <button onClick={() => onSave(person)} style={{ flex: 1, padding: '10px', background: saved ? '#EAFBF2' : '#FFFFFF', border: `1px solid ${saved ? '#B7E8CA' : '#D8E1EC'}`, borderRadius: 8, color: saved ? '#087A3D' : '#334155', fontSize: 12, fontWeight: 850, cursor: 'pointer' }}>{saved ? '✓ Shortlisted' : '♥ Shortlist'}</button>
                 <button onClick={() => onProfile(person)} style={{ flex: 1, padding: '10px', background: '#FFFFFF', border: '1px solid #D8E1EC', borderRadius: 8, color: '#315DDF', fontSize: 12, fontWeight: 850, cursor: 'pointer' }}>View profile</button>
               </div>
             </article>
@@ -2446,7 +2444,7 @@ function ModernMatches({
         {/* End-of-results note */}
         {ranked.length > 1 && (
           <div style={{ textAlign: 'center', padding: '20px 0 4px' }}>
-            <div style={{ fontSize: 13, color: '#64748B', fontWeight: 700, marginBottom: 12 }}>You\u2019ve reviewed all available caregivers</div>
+            <div style={{ fontSize: 13, color: '#64748B', fontWeight: 700, marginBottom: 12 }}>You’ve reviewed all available caregivers</div>
             <div style={{ display: 'flex', gap: 8, justifyContent: 'center', flexWrap: 'wrap' }}>
               <button onClick={onShortlist} style={{ padding: '10px 18px', background: '#7C5CFF', border: 'none', borderRadius: 8, color: '#fff', fontSize: 13, fontWeight: 850, cursor: 'pointer' }}>View Shortlist ({shortlist.length})</button>
               <button onClick={onBack} style={{ padding: '10px 18px', background: '#F8FAFC', border: '1px solid #D8E1EC', borderRadius: 8, color: '#334155', fontSize: 13, fontWeight: 850, cursor: 'pointer' }}>Adjust Request</button>
