@@ -9,6 +9,37 @@ import { isSafeProfileImageSrc } from '../utils/images';
 import { CareRequestForm, CareFormData } from './CareRequestForm';
 import { BookingStatusTracker } from './BookingStatusTracker';
 
+class ShortlistErrorBoundary extends React.Component<
+  { children: React.ReactNode },
+  { error: string | null; errorInfo: string | null }
+> {
+  constructor(props: any) {
+    super(props);
+    this.state = { error: null, errorInfo: null };
+  }
+  static getDerivedStateFromError(error: Error) {
+    return { error: error.message + ' | ' + error.stack };
+  }
+  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+    this.setState({ errorInfo: errorInfo.componentStack || '' });
+  }
+  render() {
+    if (this.state.error) {
+      return (
+        <div style={{ padding: 20, margin: 16, background: '#FEF2F2', border: '2px solid #DC2626', borderRadius: 12 }}>
+          <h3 style={{ color: '#991B1B', margin: '0 0 8px' }}>Shortlist Debug Error</h3>
+          <pre style={{ fontSize: 11, color: '#7F1D1D', whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}>{this.state.error}</pre>
+          {this.state.errorInfo && (
+            <pre style={{ fontSize: 10, color: '#92400E', whiteSpace: 'pre-wrap', marginTop: 8 }}>{this.state.errorInfo}</pre>
+          )}
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
+
 type Screen = 'dispatch' | 'swiper' | 'available-now' | 'shortlist' | 'booking' | 'confirm' | 'subscribe' | 'hire-status';
 const PENDING_HIRE_CAREGIVER_KEY = 'gc_pending_hire_caregiver';
 const PENDING_CARE_ACTION_KEY = 'gc_pending_care_action';
@@ -1507,7 +1538,7 @@ export function FindCareTab({ onNavigate, onRequireAuth }: { onNavigate?: (tab: 
 
   // ── SHORTLIST SCREEN ───────────────────────────────────────────────────
   if (screen === 'shortlist') return (
-    <div style={{ minHeight: '100dvh', paddingBottom: 'calc(92px + env(safe-area-inset-bottom,0px))', background: '#F6F8FB', color: '#0F172A' }}>
+    <ShortlistErrorBoundary><div style={{ minHeight: '100dvh', paddingBottom: 'calc(92px + env(safe-area-inset-bottom,0px))', background: '#F6F8FB', color: '#0F172A' }}>
       {toast && <Toast msg={toast} />}
       <div style={{ background: '#FFFFFF', borderBottom: '1px solid #E3E8F0', padding: '42px 16px 16px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14 }}>
@@ -1606,7 +1637,7 @@ export function FindCareTab({ onNavigate, onRequireAuth }: { onNavigate?: (tab: 
           isShortlisted={true}
         />
       )}
-    </div>
+    </div></ShortlistErrorBoundary>
   );
 
   // ── BOOKING SCREEN ────────────────────────────────────────────────────
