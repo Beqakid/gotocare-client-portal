@@ -1,5 +1,5 @@
 // Carehia Client Portal Service Worker v7
-const CACHE_NAME = 'carehia-client-v7-restore1';
+const CACHE_NAME = 'carehia-client-v8-p26e';
 
 // Always network-first for HTML + JS bundles
 const NETWORK_FIRST = ['/index.html', '/', '/dist/'];
